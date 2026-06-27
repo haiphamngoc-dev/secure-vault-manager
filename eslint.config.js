@@ -7,7 +7,12 @@ import eslintConfigPrettier from "eslint-config-prettier";
 
 export default defineConfig([
   {
-    ignores: ["dist/**", "src-tauri/**", "node_modules/**"],
+    ignores: [
+      "dist/**",
+      "src-tauri/**",
+      "node_modules/**",
+      "postcss.config.cjs",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
