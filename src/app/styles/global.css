@@ -1,0 +1,65 @@
+@import "@mantine/core/styles.css";
+
+:root {
+  --font-native:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-native);
+  overflow: hidden; /* Disable scrollbars for the entire app */
+}
+
+body {
+  /* Optimise UI for desktop app (Native Feel) */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+  overscroll-behavior: none;
+
+  background-color: transparent;
+  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+}
+
+/* Allow users to select text in specific elements */
+input,
+textarea,
+.selectable-text,
+code,
+pre {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+/* Disable drag and drop for images and links */
+img,
+a {
+  -webkit-user-drag: none;
+}
+
+/* Custom drag region for app window */
+[data-tauri-drag-region] {
+  cursor: grab;
+}
+
+[data-tauri-drag-region]:active {
+  cursor: grabbing;
+}
+
+/* Add spacing between label and input in Mantine inputs */
+.mantine-InputWrapper-label,
+.mantine-Input-label {
+  margin-bottom: 6px !important;
+}

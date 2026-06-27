@@ -1,0 +1,28 @@
+.wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: light-dark(
+    var(--mantine-color-white),
+    var(--mantine-color-dark-8)
+  );
+  border: 1px solid
+    light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-5));
+}
+
+.wrapper.maximized {
+  border-radius: 0;
+  border: none;
+}
+
+.content {
+  flex: 1;
+  height: calc(100vh - 32px);
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
