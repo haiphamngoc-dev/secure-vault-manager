@@ -8,6 +8,10 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import sharedEn from "@/shared/i18n/en.json";
 import sharedVi from "@/shared/i18n/vi.json";
+import onboardingEn from "@/features/onboarding/i18n/en.json";
+import onboardingVi from "@/features/onboarding/i18n/vi.json";
+import unlockEn from "@/features/unlock/i18n/en.json";
+import unlockVi from "@/features/unlock/i18n/vi.json";
 import { invoke } from "@tauri-apps/api/core";
 
 /**
@@ -17,11 +21,15 @@ const resources = {
   en: {
     translation: {
       ...sharedEn,
+      ...onboardingEn,
+      ...unlockEn,
     },
   },
   vi: {
     translation: {
       ...sharedVi,
+      ...onboardingVi,
+      ...unlockVi,
     },
   },
 };

@@ -1,0 +1,9 @@
+{
+  "unlockTitle": "Mở khóa Vault",
+  "unlockDesc": "Vui lòng nhập mật khẩu Master để mở khóa dữ liệu của bạn.",
+  "unlockPasswordLabel": "Mật khẩu Master",
+  "unlockPasswordPlaceholder": "Nhập mật khẩu Master...",
+  "unlockSubmitBtn": "Mở khóa",
+  "unlockErrorTitle": "Mở khóa thất bại",
+  "unlockErrorInvalid": "Mật khẩu Master không chính xác. Vui lòng thử lại!"
+}

@@ -1,0 +1,9 @@
+{
+  "unlockTitle": "Unlock Vault",
+  "unlockDesc": "Please enter your Master Password to unlock your credentials.",
+  "unlockPasswordLabel": "Master Password",
+  "unlockPasswordPlaceholder": "Enter Master Password...",
+  "unlockSubmitBtn": "Unlock Database",
+  "unlockErrorTitle": "Unlock Failed",
+  "unlockErrorInvalid": "Incorrect Master Password. Please try again!"
+}

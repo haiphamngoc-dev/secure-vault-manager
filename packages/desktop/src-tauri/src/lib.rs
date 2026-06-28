@@ -5,6 +5,10 @@
 
 use std::sync::Mutex;
 
+pub mod commands;
+pub mod core;
+pub mod ipc;
+
 use serde::{Deserialize, Serialize};
 use tauri::{
     menu::{Menu, MenuItem},
@@ -46,6 +50,9 @@ pub struct AppState {
     /// The encryption key for the secure vault, wrapped in a Mutex for thread-safety.
     /// Holds `None` when locked/uninitialized.
     pub vault_key: Mutex<Option<[u8; 32]>>,
+    /// The salt used to derive the encryption key, wrapped in a Mutex.
+    /// Holds `None` when locked/uninitialized.
+    pub vault_salt: Mutex<Option<[u8; 16]>>,
     /// The currently selected application language/locale.
     pub lang: Mutex<AppLang>,
     /// Track whether the main window is currently visible or hidden.
@@ -170,6 +177,7 @@ pub fn run() {
         }))
         .manage(AppState {
             vault_key: std::sync::Mutex::new(None),
+            vault_salt: std::sync::Mutex::new(None),
             lang: std::sync::Mutex::new(AppLang::Vi),
             is_visible: std::sync::Mutex::new(true),
         })
@@ -223,7 +231,16 @@ pub fn run() {
             }
         })
         // Custom command handlers callable from frontend React app
-        .invoke_handler(tauri::generate_handler![set_tray_menu_lang, exit_app,])
+        .invoke_handler(tauri::generate_handler![
+            set_tray_menu_lang,
+            exit_app,
+            commands::vault::check_vault_initialized,
+            commands::vault::check_is_unlocked,
+            commands::vault::initialize_vault,
+            commands::vault::unlock_vault,
+            commands::vault::lock_vault,
+            commands::pairing::start_pairing,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

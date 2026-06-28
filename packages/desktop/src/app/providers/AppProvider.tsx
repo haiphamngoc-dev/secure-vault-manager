@@ -7,6 +7,7 @@ import { MantineProvider } from "@mantine/core";
 import { theme } from "@/app/styles/theme";
 import "@/app/styles/global.css";
 import "@/app/i18n/config";
+import { VaultProvider } from "./VaultProvider";
 
 /**
  * Properties for the AppProvider component.
@@ -30,7 +31,7 @@ export function AppProvider({ children }: Readonly<AppProviderProps>) {
       defaultColorScheme="auto"
       deduplicateInlineStyles
     >
-      {children}
+      <VaultProvider>{children}</VaultProvider>
     </MantineProvider>
   );
 }
