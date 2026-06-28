@@ -17,5 +17,8 @@
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["activeTab", "storage", "nativeMessaging"]
+  "permissions": ["activeTab", "storage", "nativeMessaging"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  }
 }
