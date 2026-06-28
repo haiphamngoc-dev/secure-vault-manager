@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Box,
   Tooltip,
@@ -8,8 +8,6 @@ import {
   NavLink,
   Button,
   Drawer,
-  Group,
-  Text,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
@@ -20,7 +18,6 @@ import {
   IconCreditCard,
   IconSettings,
   IconPlus,
-  IconMenu2,
 } from "@tabler/icons-react";
 import { SidebarHeader } from "./SidebarHeader";
 import { SidebarFooter } from "./SidebarFooter";
@@ -37,6 +34,8 @@ interface SidebarProps {
   setSelectedItemId: (id: string | null) => void;
   onOpenAdd: () => void;
   onLock: () => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 }
 
 export function Sidebar({
@@ -49,9 +48,10 @@ export function Sidebar({
   setSelectedItemId,
   onOpenAdd,
   onLock,
+  mobileOpen,
+  onMobileClose,
 }: Readonly<SidebarProps>) {
   const { t } = useTranslation();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
   const isTablet = useMediaQuery("(max-width: 991px) and (min-width: 768px)");
   const wasTabletRef = useRef(false);
@@ -69,7 +69,7 @@ export function Sidebar({
   const handleOpenAdd = () => {
     onOpenAdd();
     if (isMobile) {
-      setMobileOpen(false);
+      onMobileClose();
     }
   };
 
@@ -77,7 +77,7 @@ export function Sidebar({
     setActiveTab(tab);
     setSelectedItemId(null);
     if (isMobile) {
-      setMobileOpen(false);
+      onMobileClose();
     }
   };
 
@@ -86,7 +86,7 @@ export function Sidebar({
     setActiveCategory(category);
     setSelectedItemId(null);
     if (isMobile) {
-      setMobileOpen(false);
+      onMobileClose();
     }
   };
 
@@ -100,9 +100,7 @@ export function Sidebar({
       {/* Sidebar Header */}
       <SidebarHeader
         isCollapsed={effectiveCollapsed}
-        onToggleCollapse={
-          isMobile ? () => setMobileOpen(false) : onToggleCollapse
-        }
+        onToggleCollapse={isMobile ? onMobileClose : onToggleCollapse}
       />
 
       {/* Sidebar Navigation */}
@@ -233,39 +231,22 @@ export function Sidebar({
 
   if (isMobile) {
     return (
-      <>
-        {/* Mobile top floating bar to toggle drawer */}
-        <Group className={classes.mobileHeader} justify="space-between" px="md">
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            onClick={() => setMobileOpen(true)}
-          >
-            <IconMenu2 size={24} />
-          </ActionIcon>
-          <Text fw={800} size="sm" className={classes.mobileTitle}>
-            Secure Vault
-          </Text>
-          <div style={{ width: 24 }} /> {/* Spacer */}
-        </Group>
-
-        <Drawer
-          opened={mobileOpen}
-          onClose={() => setMobileOpen(false)}
-          size="270px"
-          withCloseButton={false}
-          classNames={{
-            inner: classes.drawerInner,
-            content: classes.drawerContent,
-            overlay: classes.drawerOverlay,
-          }}
-          styles={{
-            body: { padding: 0, height: "100%" },
-          }}
-        >
-          {sidebarContent}
-        </Drawer>
-      </>
+      <Drawer
+        opened={mobileOpen}
+        onClose={onMobileClose}
+        size="270px"
+        withCloseButton={false}
+        classNames={{
+          inner: classes.drawerInner,
+          content: classes.drawerContent,
+          overlay: classes.drawerOverlay,
+        }}
+        styles={{
+          body: { padding: 0, height: "100%" },
+        }}
+      >
+        {sidebarContent}
+      </Drawer>
     );
   }
 

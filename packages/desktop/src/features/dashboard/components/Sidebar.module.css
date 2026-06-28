@@ -46,31 +46,6 @@
   font-size: var(--mantine-font-size-xs) !important;
 }
 
-/* Mobile responsive styles */
-.mobileHeader {
-  height: 48px;
-  width: 100%;
-  background-color: var(--mantine-color-dark-8);
-  border-bottom: 1px solid var(--mantine-color-dark-5);
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 20;
-}
-
-.mobileTitle {
-  font-family: "Outfit", "Inter", sans-serif;
-  letter-spacing: -0.5px;
-  background: linear-gradient(
-    135deg,
-    var(--mantine-color-indigo-4) 0%,
-    var(--mantine-color-cyan-4) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
 .drawerInner {
   top: 32px !important;
   height: calc(100vh - 32px) !important;

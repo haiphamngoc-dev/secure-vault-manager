@@ -1,14 +1,17 @@
 import React, { useState } from "react";
-import { Box, Text, Stack } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { Sidebar } from "../components/Sidebar";
 import { DashboardHeader } from "../components/DashboardHeader";
 import { useVault } from "@/app/providers/VaultProvider";
 import { useTranslation } from "react-i18next";
+import { useMediaQuery } from "@mantine/hooks";
 import classes from "./DashboardPage.module.css";
 
 export function DashboardPage() {
   const { lock } = useVault();
   const { t } = useTranslation();
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<"vault" | "settings">("vault");
   const [activeCategory, setActiveCategory] = useState("all");
@@ -38,55 +41,29 @@ export function DashboardPage() {
     }
   };
 
-  const renderContent = () => {
+  const getHeaderDescription = () => {
     if (activeTab === "settings") {
-      return (
-        <Stack gap="xs">
-          <Text c="dimmed">
-            Configure auto-lock intervals, language, and proxy settings.
-          </Text>
-        </Stack>
-      );
+      return t("settingsSyncDesc");
     }
-
     switch (activeCategory) {
       case "all":
-        return (
-          <Stack gap="xs">
-            <Text c="dimmed">
-              Manage all your secure credentials and notes here.
-            </Text>
-          </Stack>
-        );
+        return t("allSubDesc");
       case "Login":
-        return (
-          <Stack gap="xs">
-            <Text c="dimmed">Your encrypted login credentials.</Text>
-          </Stack>
-        );
+        return t("loginsDesc");
       case "Card":
-        return (
-          <Stack gap="xs">
-            <Text c="dimmed">Secure credit and debit card information.</Text>
-          </Stack>
-        );
+        return t("cardsDesc");
       case "Note":
-        return (
-          <Stack gap="xs">
-            <Text c="dimmed">Encrypted personal notes and keys.</Text>
-          </Stack>
-        );
+        return t("notesDesc");
       case "Database":
-        return (
-          <Stack gap="xs">
-            <Text c="dimmed">
-              Encrypted database keys and connection settings.
-            </Text>
-          </Stack>
-        );
+        return t("databasesDesc");
       default:
-        return null;
+        return "";
     }
+  };
+
+  const renderContent = () => {
+    // Content body will render items lists/settings controls here later.
+    return null;
   };
 
   return (
@@ -101,9 +78,16 @@ export function DashboardPage() {
         setSelectedItemId={setSelectedItemId}
         onOpenAdd={onOpenAdd}
         onLock={lock}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
       />
       <Box className={classes.mainContent}>
-        <DashboardHeader title={getHeaderTitle()} />
+        <DashboardHeader
+          title={getHeaderTitle()}
+          description={getHeaderDescription()}
+          showMenuButton={isMobile}
+          onMenuClick={() => setMobileOpen(true)}
+        />
         <Box className={classes.scrollContainer}>{renderContent()}</Box>
       </Box>
     </Box>
