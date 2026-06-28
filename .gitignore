@@ -1,3 +1,20 @@
+# Core dependencies
+node_modules/
+
+# Frontend builds
+dist/
+dist-ssr
+**/dist/
+**/pkg/
+
+# Rust / Cargo builds
+target/
+**/target/
+packages/desktop/src-tauri/target/
+
+# Tauri Sidecars and built binaries
+packages/desktop/src-tauri/binaries/
+
 # Logs
 logs
 *.log
@@ -6,11 +23,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*

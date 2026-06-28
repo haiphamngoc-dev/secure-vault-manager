@@ -8,11 +8,26 @@ import eslintConfigPrettier from "eslint-config-prettier";
 export default defineConfig([
   {
     ignores: [
-      "dist/**",
-      "src-tauri/**",
-      "node_modules/**",
-      "postcss.config.cjs",
+      "**/dist/**",
+      "**/src-tauri/**",
+      "**/node_modules/**",
+      "**/target/**",
+      "**/pkg/**",
+      "**/*.config.cjs",
+      "**/vite.config.ts",
     ],
+  },
+  {
+    languageOptions: {
+      globals: {
+        console: "readonly",
+        process: "readonly",
+        window: "readonly",
+        document: "readonly",
+        setTimeout: "readonly",
+        __dirname: "readonly",
+      },
+    },
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -24,7 +39,12 @@ export default defineConfig([
     },
     languageOptions: {
       parserOptions: {
-        project: ["./tsconfig.json", "./tsconfig.node.json"],
+        project: [
+          "./packages/desktop/tsconfig.json",
+          "./packages/desktop/tsconfig.node.json",
+          "./packages/shared/tsconfig.json",
+          "./packages/extension/tsconfig.json",
+        ],
         tsconfigRootDir: import.meta.dirname,
       },
     },

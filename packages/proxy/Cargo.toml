@@ -1,0 +1,7 @@
+[package]
+name = "secure-vault-manager-proxy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Dependencies like serde, tokio can be added as implementation continues.

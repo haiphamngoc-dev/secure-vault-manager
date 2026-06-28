@@ -7,6 +7,41 @@ settings:
 importers:
 
   .:
+    devDependencies:
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@9.39.4)
+      '@tauri-apps/cli':
+        specifier: ^2
+        version: 2.11.3
+      '@types/node':
+        specifier: ^26.0.1
+        version: 26.0.1
+      eslint:
+        specifier: ^9.39.4
+        version: 9.39.4
+      eslint-config-prettier:
+        specifier: ^10.1.8
+        version: 10.1.8(eslint@9.39.4)
+      eslint-plugin-react:
+        specifier: ^7.37.5
+        version: 7.37.5(eslint@9.39.4)
+      eslint-plugin-react-hooks:
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@9.39.4)
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
+      typescript:
+        specifier: ~5.8.3
+        version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.62.0
+        version: 8.62.0(eslint@9.39.4)(typescript@5.8.3)
+
+  packages/crypto-wasm: {}
+
+  packages/desktop:
     dependencies:
       '@mantine/core':
         specifier: ^9.4.0
@@ -17,6 +52,12 @@ importers:
       '@mantine/notifications':
         specifier: ^9.4.0
         version: 9.4.0(@mantine/core@9.4.0(@mantine/hooks@9.4.0(react@19.2.7))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(@mantine/hooks@9.4.0(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@secure-vault/crypto-wasm':
+        specifier: workspace:*
+        version: link:../crypto-wasm
+      '@secure-vault/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@tabler/icons-react':
         specifier: ^3.44.0
         version: 3.44.0(react@19.2.7)
@@ -42,15 +83,6 @@ importers:
         specifier: ^7.18.0
         version: 7.18.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     devDependencies:
-      '@eslint/js':
-        specifier: ^10.0.1
-        version: 10.0.1(eslint@9.39.4)
-      '@tauri-apps/cli':
-        specifier: ^2
-        version: 2.11.3
-      '@types/node':
-        specifier: ^26.0.1
-        version: 26.0.1
       '@types/react':
         specifier: ^19.1.8
         version: 19.2.17
@@ -60,18 +92,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^4.6.0
         version: 4.7.0(vite@7.3.6(@types/node@26.0.1)(sugarss@5.0.1(postcss@8.5.15)))
-      eslint:
-        specifier: ^9.39.4
-        version: 9.39.4
-      eslint-config-prettier:
-        specifier: ^10.1.8
-        version: 10.1.8(eslint@9.39.4)
-      eslint-plugin-react:
-        specifier: ^7.37.5
-        version: 7.37.5(eslint@9.39.4)
-      eslint-plugin-react-hooks:
-        specifier: ^7.1.1
-        version: 7.1.1(eslint@9.39.4)
       postcss:
         specifier: ^8.5.15
         version: 8.5.15
@@ -81,18 +101,40 @@ importers:
       postcss-simple-vars:
         specifier: ^7.0.1
         version: 7.0.1(postcss@8.5.15)
-      prettier:
-        specifier: ^3.8.4
-        version: 3.8.4
-      typescript:
-        specifier: ~5.8.3
-        version: 5.8.3
-      typescript-eslint:
-        specifier: ^8.62.0
-        version: 8.62.0(eslint@9.39.4)(typescript@5.8.3)
       vite:
         specifier: ^7.0.4
         version: 7.3.6(@types/node@26.0.1)(sugarss@5.0.1(postcss@8.5.15))
+
+  packages/extension:
+    dependencies:
+      '@secure-vault/shared':
+        specifier: workspace:*
+        version: link:../shared
+      react:
+        specifier: ^19.1.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.1.0
+        version: 19.2.7(react@19.2.7)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.1.8
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.1.6
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitejs/plugin-react':
+        specifier: ^4.6.0
+        version: 4.7.0(vite@7.3.6(@types/node@26.0.1)(sugarss@5.0.1(postcss@8.5.15)))
+      vite:
+        specifier: ^7.0.4
+        version: 7.3.6(@types/node@26.0.1)(sugarss@5.0.1(postcss@8.5.15))
+
+  packages/shared:
+    dependencies:
+      '@secure-vault/crypto-wasm':
+        specifier: workspace:*
+        version: link:../crypto-wasm
 
 packages:
 
