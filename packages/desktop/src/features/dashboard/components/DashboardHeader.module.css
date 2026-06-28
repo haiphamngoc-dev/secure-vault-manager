@@ -1,0 +1,19 @@
+.headerContainer {
+  height: 70px;
+  width: 100%;
+  border-bottom: 1px solid var(--mantine-color-dark-5);
+  background-color: rgba(20, 21, 23, 0.4);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.title {
+  font-family: "Outfit", "Inter", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--mantine-color-white);
+}

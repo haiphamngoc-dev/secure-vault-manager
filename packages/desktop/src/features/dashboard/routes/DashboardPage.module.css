@@ -16,6 +16,8 @@
     var(--mantine-color-dark-9) 100%
   );
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Ambient glowing backgrounds behind dashboard content */
@@ -52,7 +54,8 @@
 }
 
 .scrollContainer {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   padding: var(--mantine-spacing-xl);
   overflow-y: auto;

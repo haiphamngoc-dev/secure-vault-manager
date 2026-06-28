@@ -15,7 +15,7 @@ export function SidebarHeader({
   const { t } = useTranslation();
 
   return (
-    <Box p="md" className={classes.headerContainer}>
+    <Box px="md" className={classes.headerContainer}>
       <Group justify={isCollapsed ? "center" : "space-between"} wrap="nowrap">
         <Group gap="xs" wrap="nowrap" style={{ overflow: "hidden" }}>
           <Avatar radius="md" color="indigo" style={{ fontWeight: 800 }}>

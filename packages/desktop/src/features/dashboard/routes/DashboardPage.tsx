@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { Box, Title, Text, Stack } from "@mantine/core";
+import React, { useState } from "react";
+import { Box, Text, Stack } from "@mantine/core";
 import { Sidebar } from "../components/Sidebar";
+import { DashboardHeader } from "../components/DashboardHeader";
 import { useVault } from "@/app/providers/VaultProvider";
+import { useTranslation } from "react-i18next";
 import classes from "./DashboardPage.module.css";
 
 export function DashboardPage() {
   const { lock } = useVault();
+  const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<"vault" | "settings">("vault");
   const [activeCategory, setActiveCategory] = useState("all");
@@ -15,11 +18,30 @@ export function DashboardPage() {
     console.log("Open add new item modal");
   };
 
+  const getHeaderTitle = () => {
+    if (activeTab === "settings") {
+      return t("settingsSync");
+    }
+    switch (activeCategory) {
+      case "all":
+        return t("allSub");
+      case "Login":
+        return t("logins");
+      case "Card":
+        return t("cards");
+      case "Note":
+        return t("notes");
+      case "Database":
+        return t("databases");
+      default:
+        return "";
+    }
+  };
+
   const renderContent = () => {
     if (activeTab === "settings") {
       return (
         <Stack gap="xs">
-          <Title order={2}>Settings & Sync</Title>
           <Text c="dimmed">
             Configure auto-lock intervals, language, and proxy settings.
           </Text>
@@ -31,7 +53,6 @@ export function DashboardPage() {
       case "all":
         return (
           <Stack gap="xs">
-            <Title order={2}>All Items</Title>
             <Text c="dimmed">
               Manage all your secure credentials and notes here.
             </Text>
@@ -40,28 +61,24 @@ export function DashboardPage() {
       case "Login":
         return (
           <Stack gap="xs">
-            <Title order={2}>Logins</Title>
             <Text c="dimmed">Your encrypted login credentials.</Text>
           </Stack>
         );
       case "Card":
         return (
           <Stack gap="xs">
-            <Title order={2}>Payment Cards</Title>
             <Text c="dimmed">Secure credit and debit card information.</Text>
           </Stack>
         );
       case "Note":
         return (
           <Stack gap="xs">
-            <Title order={2}>Secure Notes</Title>
             <Text c="dimmed">Encrypted personal notes and keys.</Text>
           </Stack>
         );
       case "Database":
         return (
           <Stack gap="xs">
-            <Title order={2}>Databases</Title>
             <Text c="dimmed">
               Encrypted database keys and connection settings.
             </Text>
@@ -86,6 +103,7 @@ export function DashboardPage() {
         onLock={lock}
       />
       <Box className={classes.mainContent}>
+        <DashboardHeader title={getHeaderTitle()} />
         <Box className={classes.scrollContainer}>{renderContent()}</Box>
       </Box>
     </Box>
