@@ -1,0 +1,27 @@
+.dashboardContainer {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.mainContent {
+  flex: 1;
+  height: 100%;
+  padding: var(--mantine-spacing-xl);
+  overflow-y: auto;
+  background-color: var(--mantine-color-dark-9);
+}
+
+/* Mobile responsive padding due to floating mobile header */
+@media (max-width: 767px) {
+  .dashboardContainer {
+    flex-direction: column;
+    padding-top: 48px; /* Height of mobile header */
+  }
+
+  .mainContent {
+    padding: var(--mantine-spacing-md);
+  }
+}

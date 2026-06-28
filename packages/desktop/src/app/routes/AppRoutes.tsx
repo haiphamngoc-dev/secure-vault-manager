@@ -6,6 +6,7 @@
 
 import { AppLayout } from "@/shared/layouts/AppLayout";
 import { createHashRouter } from "react-router-dom";
+import { DashboardPage } from "@/features/dashboard";
 
 /**
  * Global application router instance.
@@ -15,6 +16,11 @@ export const router = createHashRouter([
   {
     path: "/",
     element: <AppLayout />,
-    children: [],
+    children: [
+      {
+        index: true,
+        element: <DashboardPage />,
+      },
+    ],
   },
 ]);
