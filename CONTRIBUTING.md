@@ -1,4 +1,4 @@
-# Hướng Dẫn Đóng Góp Mã Nguồn (CONTRIBUTING.md)
+# CONTRIBUTING
 
 Trước hết, xin cảm ơn bạn đã quan tâm và muốn đóng góp mã nguồn cho **Secure Vault Manager (SVM)**! Để dự án luôn duy trì được chất lượng cao và quy trình cộng tác chuyên nghiệp, hãy vui lòng tuân thủ các quy tắc hướng dẫn dưới đây.
 

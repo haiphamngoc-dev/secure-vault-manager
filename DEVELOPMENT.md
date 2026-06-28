@@ -1,4 +1,4 @@
-# Hướng Dẫn Phát Triển Dự Án (DEVELOPMENT.md)
+# DEVELOPMENT
 
 Chào mừng bạn đến với quy trình phát triển của **Secure Vault Manager (SVM)**. Tài liệu này hướng dẫn bạn cách thiết lập môi trường phát triển cục bộ và vận hành hệ thống Monorepo một cách toàn diện.
 
