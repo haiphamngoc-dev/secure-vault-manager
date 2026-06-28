@@ -1,85 +1,106 @@
-import React from "react";
-import { Stack, Tooltip, UnstyledButton, Group, Text } from "@mantine/core";
-import { IconSettings, IconLock } from "@tabler/icons-react";
-import { useTranslation } from "react-i18next";
+import { Box, Group, Tooltip, ActionIcon, Button } from "@mantine/core";
+import {
+  IconLock,
+  IconBrandGithub,
+  IconWorld,
+  IconChevronRight,
+} from "@tabler/icons-react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import classes from "./SidebarFooter.module.css";
+import { useTranslation } from "react-i18next";
 
 interface SidebarFooterProps {
-  collapsed: boolean;
-  activeSection: string;
-  onSectionChange: (section: string) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
   onLock: () => void;
-  isMobile: boolean;
 }
 
 export function SidebarFooter({
-  collapsed,
-  activeSection,
-  onSectionChange,
+  isCollapsed,
+  onToggleCollapse,
   onLock,
-  isMobile,
 }: Readonly<SidebarFooterProps>) {
   const { t } = useTranslation();
-  const isSettingsActive = activeSection === "settings";
 
-  const settingsBtn = (
-    <UnstyledButton
-      className={`${classes.link} ${isSettingsActive ? classes.activeLink : ""}`}
-      onClick={() => onSectionChange("settings")}
-    >
-      <Group gap="xs" wrap="nowrap">
-        <IconSettings size={20} className={classes.linkIcon} />
-        {(!collapsed || isMobile) && (
-          <Text size="sm" className={classes.linkLabel}>
-            {t("navSettings", "Settings")}
-          </Text>
-        )}
-      </Group>
-    </UnstyledButton>
-  );
-
-  const lockBtn = (
-    <UnstyledButton
-      className={`${classes.link} ${classes.lockLink}`}
-      onClick={onLock}
-    >
-      <Group gap="xs" wrap="nowrap">
-        <IconLock size={20} className={classes.linkIcon} />
-        {(!collapsed || isMobile) && (
-          <Text size="sm" className={classes.linkLabel}>
-            {t("navLock", "Lock Vault")}
-          </Text>
-        )}
-      </Group>
-    </UnstyledButton>
-  );
+  const handleOpenUrl = (url: string) => {
+    openUrl(url).catch((err) => console.error("Failed to open URL:", err));
+  };
 
   return (
-    <Stack gap="xs" className={classes.footer} mt="auto">
-      {collapsed && !isMobile ? (
-        <Tooltip
-          label={t("navSettings", "Settings")}
-          position="right"
-          transitionProps={{ duration: 150 }}
+    <Box p="md" className={classes.footerContainer}>
+      {/* Expand Action (only when collapsed) */}
+      {isCollapsed && (
+        <Group
+          justify="center"
+          onClick={onToggleCollapse}
+          className={classes.collapseAction}
         >
-          {settingsBtn}
-        </Tooltip>
-      ) : (
-        settingsBtn
+          <IconChevronRight size={18} />
+        </Group>
       )}
 
-      {collapsed && !isMobile ? (
-        <Tooltip
-          label={t("navLock", "Lock Vault")}
-          position="right"
-          transitionProps={{ duration: 150 }}
-        >
-          {lockBtn}
-        </Tooltip>
-      ) : (
-        lockBtn
-      )}
-    </Stack>
+      {/* Social icons / locking */}
+      <Group justify={isCollapsed ? "center" : "space-between"} gap="xs">
+        {isCollapsed ? (
+          <Tooltip label={t("lockApp")} position="right" withArrow>
+            <ActionIcon
+              variant="light"
+              color="red"
+              size="md"
+              onClick={onLock}
+              radius="md"
+            >
+              <IconLock size={16} />
+            </ActionIcon>
+          </Tooltip>
+        ) : (
+          <>
+            <Group gap="xs">
+              <Tooltip label={t("githubLabel")}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="md"
+                  onClick={() =>
+                    handleOpenUrl(
+                      "https://github.com/haiphamngoc-dev/secure-vault-manager"
+                    )
+                  }
+                  radius="md"
+                >
+                  <IconBrandGithub size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label={t("websiteLabel")}>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="md"
+                  onClick={() =>
+                    handleOpenUrl(
+                      "https://github.com/haiphamngoc-dev/secure-vault-manager"
+                    )
+                  }
+                  radius="md"
+                >
+                  <IconWorld size={16} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              leftSection={<IconLock size={12} />}
+              onClick={onLock}
+              radius="md"
+            >
+              {t("lockApp")}
+            </Button>
+          </>
+        )}
+      </Group>
+    </Box>
   );
 }
 

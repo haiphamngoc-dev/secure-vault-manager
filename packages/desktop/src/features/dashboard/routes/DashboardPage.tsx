@@ -1,13 +1,33 @@
 import React, { useState } from "react";
 import { Box, Title, Text, Stack } from "@mantine/core";
 import { Sidebar } from "../components/Sidebar";
+import { useVault } from "@/app/providers/VaultProvider";
 import classes from "./DashboardPage.module.css";
 
 export function DashboardPage() {
-  const [activeSection, setActiveSection] = useState("all");
+  const { lock } = useVault();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<"vault" | "settings">("vault");
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [, setSelectedItemId] = useState<string | null>(null);
+
+  const onOpenAdd = () => {
+    console.log("Open add new item modal");
+  };
 
   const renderContent = () => {
-    switch (activeSection) {
+    if (activeTab === "settings") {
+      return (
+        <Stack gap="xs">
+          <Title order={2}>Settings & Sync</Title>
+          <Text c="dimmed">
+            Configure auto-lock intervals, language, and proxy settings.
+          </Text>
+        </Stack>
+      );
+    }
+
+    switch (activeCategory) {
       case "all":
         return (
           <Stack gap="xs">
@@ -17,33 +37,33 @@ export function DashboardPage() {
             </Text>
           </Stack>
         );
-      case "logins":
+      case "Login":
         return (
           <Stack gap="xs">
             <Title order={2}>Logins</Title>
             <Text c="dimmed">Your encrypted login credentials.</Text>
           </Stack>
         );
-      case "cards":
+      case "Card":
         return (
           <Stack gap="xs">
             <Title order={2}>Payment Cards</Title>
             <Text c="dimmed">Secure credit and debit card information.</Text>
           </Stack>
         );
-      case "notes":
+      case "Note":
         return (
           <Stack gap="xs">
             <Title order={2}>Secure Notes</Title>
             <Text c="dimmed">Encrypted personal notes and keys.</Text>
           </Stack>
         );
-      case "settings":
+      case "Database":
         return (
           <Stack gap="xs">
-            <Title order={2}>Settings</Title>
+            <Title order={2}>Databases</Title>
             <Text c="dimmed">
-              Configure auto-lock intervals, language, and proxy settings.
+              Encrypted database keys and connection settings.
             </Text>
           </Stack>
         );
@@ -55,8 +75,15 @@ export function DashboardPage() {
   return (
     <Box className={classes.dashboardContainer}>
       <Sidebar
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+        setSelectedItemId={setSelectedItemId}
+        onOpenAdd={onOpenAdd}
+        onLock={lock}
       />
       <Box className={classes.mainContent}>{renderContent()}</Box>
     </Box>

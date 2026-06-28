@@ -1,55 +1,64 @@
-import React from "react";
-import { Group, Text, ActionIcon } from "@mantine/core";
-import {
-  IconShieldLock,
-  IconChevronLeft,
-  IconChevronRight,
-} from "@tabler/icons-react";
+import { Box, Group, Avatar, Text, ActionIcon, Badge } from "@mantine/core";
+import { IconChevronLeft } from "@tabler/icons-react";
 import classes from "./SidebarHeader.module.css";
+import { useTranslation } from "react-i18next";
 
 interface SidebarHeaderProps {
-  collapsed: boolean;
+  isCollapsed: boolean;
   onToggleCollapse: () => void;
-  isMobile: boolean;
-  isTablet: boolean;
 }
 
 export function SidebarHeader({
-  collapsed,
+  isCollapsed,
   onToggleCollapse,
-  isMobile,
-  isTablet,
 }: Readonly<SidebarHeaderProps>) {
-  return (
-    <Group
-      justify={collapsed ? "center" : "space-between"}
-      className={classes.header}
-      wrap="nowrap"
-    >
-      {(!collapsed || isMobile) && (
-        <Group gap="xs" wrap="nowrap">
-          <IconShieldLock size={28} className={classes.logoIcon} />
-          <Text fw={800} size="md" className={classes.logoText}>
-            Secure Vault
-          </Text>
-        </Group>
-      )}
+  const { t } = useTranslation();
 
-      {!isMobile && !isTablet && (
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          onClick={onToggleCollapse}
-          className={classes.collapseBtn}
-        >
-          {collapsed ? (
-            <IconChevronRight size={18} />
-          ) : (
-            <IconChevronLeft size={18} />
+  return (
+    <Box p="md" className={classes.headerContainer}>
+      <Group justify={isCollapsed ? "center" : "space-between"} wrap="nowrap">
+        <Group gap="xs" wrap="nowrap" style={{ overflow: "hidden" }}>
+          <Avatar radius="md" color="indigo" style={{ fontWeight: 800 }}>
+            PW
+          </Avatar>
+          {!isCollapsed && (
+            <Box style={{ whiteSpace: "nowrap" }}>
+              <Group
+                gap="xs"
+                align="center"
+                wrap="nowrap"
+                style={{ marginBottom: "2px" }}
+              >
+                <Text size="sm" fw={700} className={classes.logoText}>
+                  {t("vaultTitle")}
+                </Text>
+                <Badge
+                  variant="outline"
+                  color="gray"
+                  size="xs"
+                  style={{ fontSize: "9px", height: "16px", padding: "0 4px" }}
+                >
+                  v1.0.0
+                </Badge>
+              </Group>
+              <Text size="xs" c="dimmed">
+                {t("offlineFirst")}
+              </Text>
+            </Box>
           )}
-        </ActionIcon>
-      )}
-    </Group>
+        </Group>
+        {!isCollapsed && (
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            onClick={onToggleCollapse}
+            radius="md"
+          >
+            <IconChevronLeft size={18} />
+          </ActionIcon>
+        )}
+      </Group>
+    </Box>
   );
 }
 

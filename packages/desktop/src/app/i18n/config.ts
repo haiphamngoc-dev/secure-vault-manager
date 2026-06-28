@@ -12,6 +12,8 @@ import onboardingEn from "@/features/onboarding/i18n/en.json";
 import onboardingVi from "@/features/onboarding/i18n/vi.json";
 import unlockEn from "@/features/unlock/i18n/en.json";
 import unlockVi from "@/features/unlock/i18n/vi.json";
+import dashboardEn from "@/features/dashboard/i18n/en.json";
+import dashboardVi from "@/features/dashboard/i18n/vi.json";
 import { invoke } from "@tauri-apps/api/core";
 
 /**
@@ -23,6 +25,7 @@ const resources = {
       ...sharedEn,
       ...onboardingEn,
       ...unlockEn,
+      ...dashboardEn,
     },
   },
   vi: {
@@ -30,6 +33,7 @@ const resources = {
       ...sharedVi,
       ...onboardingVi,
       ...unlockVi,
+      ...dashboardVi,
     },
   },
 };

@@ -1,0 +1,15 @@
+{
+  "newItemBtn": "New Item",
+  "vaultItems": "Vault Items",
+  "allSub": "All Items",
+  "logins": "Logins",
+  "notes": "Secure Notes",
+  "cards": "Payment Cards",
+  "databases": "Databases",
+  "settingsSync": "Settings & Sync",
+  "vaultTitle": "Secure Vault",
+  "offlineFirst": "Offline First",
+  "lockApp": "Lock App",
+  "githubLabel": "GitHub Repository",
+  "websiteLabel": "Developer Website"
+}

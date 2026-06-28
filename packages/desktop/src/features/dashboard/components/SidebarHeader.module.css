@@ -1,12 +1,6 @@
-.header {
-  height: 48px;
-  min-height: 48px;
+.headerContainer {
+  border-bottom: 1px solid var(--mantine-color-dark-6);
   width: 100%;
-}
-
-.logoIcon {
-  color: var(--mantine-color-indigo-4);
-  flex-shrink: 0;
 }
 
 .logoText {
@@ -20,13 +14,4 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  white-space: nowrap;
-}
-
-.collapseBtn {
-  transition: transform 0.2s ease;
-}
-
-.collapseBtn:hover {
-  background-color: var(--mantine-color-dark-6);
 }

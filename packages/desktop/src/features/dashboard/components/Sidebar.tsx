@@ -1,123 +1,228 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Stack,
+  Box,
   Tooltip,
-  UnstyledButton,
+  ActionIcon,
+  ScrollArea,
+  Stack,
+  NavLink,
+  Button,
+  Drawer,
   Group,
   Text,
-  Drawer,
-  ActionIcon,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
-  IconLock,
-  IconShieldLock,
+  IconShield,
+  IconDatabase,
+  IconKey,
+  IconFileText,
   IconCreditCard,
-  IconNote,
+  IconSettings,
+  IconPlus,
   IconMenu2,
 } from "@tabler/icons-react";
-import { useTranslation } from "react-i18next";
-import { useVault } from "@/app/providers/VaultProvider";
 import { SidebarHeader } from "./SidebarHeader";
 import { SidebarFooter } from "./SidebarFooter";
 import classes from "./Sidebar.module.css";
+import { useTranslation } from "react-i18next";
 
 interface SidebarProps {
-  activeSection: string;
-  onSectionChange: (section: string) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+  activeTab: "vault" | "settings";
+  setActiveTab: (tab: "vault" | "settings") => void;
+  activeCategory: string;
+  setActiveCategory: (category: string) => void;
+  setSelectedItemId: (id: string | null) => void;
+  onOpenAdd: () => void;
+  onLock: () => void;
 }
 
 export function Sidebar({
-  activeSection,
-  onSectionChange,
+  isCollapsed,
+  onToggleCollapse,
+  activeTab,
+  setActiveTab,
+  activeCategory,
+  setActiveCategory,
+  setSelectedItemId,
+  onOpenAdd,
+  onLock,
 }: Readonly<SidebarProps>) {
   const { t } = useTranslation();
-  const { lock } = useVault();
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
   const isMobile = useMediaQuery("(max-width: 767px)");
   const isTablet = useMediaQuery("(max-width: 991px) and (min-width: 768px)");
 
-  // Derive collapsed state based on manual toggle or tablet layout
-  const isCollapsed = collapsed || !!isTablet;
+  // Handle auto-collapse on tablet if not already collapsed
+  useEffect(() => {
+    if (isTablet && !isCollapsed) {
+      onToggleCollapse();
+    }
+  }, [isTablet, isCollapsed, onToggleCollapse]);
 
-  const navItems = [
-    { id: "all", label: t("navAll", "All Items"), icon: IconShieldLock },
-    { id: "logins", label: t("navLogins", "Logins"), icon: IconLock },
-    { id: "cards", label: t("navCards", "Cards"), icon: IconCreditCard },
-    { id: "notes", label: t("navNotes", "Secure Notes"), icon: IconNote },
-  ];
-
-  const handleNavClick = (id: string) => {
-    onSectionChange(id);
+  const handleOpenAdd = () => {
+    onOpenAdd();
     if (isMobile) {
       setMobileOpen(false);
     }
   };
 
-  const renderNavLinks = () => {
-    return navItems.map((item) => {
-      const Icon = item.icon;
-      const isActive = activeSection === item.id;
-
-      const buttonEl = (
-        <UnstyledButton
-          key={item.id}
-          className={`${classes.link} ${isActive ? classes.activeLink : ""}`}
-          onClick={() => handleNavClick(item.id)}
-        >
-          <Group gap="xs" wrap="nowrap">
-            <Icon size={20} className={classes.linkIcon} />
-            {(!isCollapsed || isMobile) && (
-              <Text size="sm" className={classes.linkLabel}>
-                {item.label}
-              </Text>
-            )}
-          </Group>
-        </UnstyledButton>
-      );
-
-      if (isCollapsed && !isMobile) {
-        return (
-          <Tooltip
-            key={item.id}
-            label={item.label}
-            position="right"
-            transitionProps={{ duration: 150 }}
-          >
-            {buttonEl}
-          </Tooltip>
-        );
-      }
-
-      return buttonEl;
-    });
+  const handleTabChange = (tab: "vault" | "settings") => {
+    setActiveTab(tab);
+    setSelectedItemId(null);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
   };
 
+  const handleCategoryChange = (category: string) => {
+    setActiveTab("vault");
+    setActiveCategory(category);
+    setSelectedItemId(null);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
+  };
+
+  // Determine actual collapsed state (forced false on mobile drawer)
+  const effectiveCollapsed = isMobile ? false : isCollapsed;
+
   const sidebarContent = (
-    <div
-      className={`${classes.sidebar} ${isCollapsed ? classes.collapsed : ""}`}
+    <Box
+      className={`${classes.sidebar} ${effectiveCollapsed ? classes.collapsed : ""}`}
     >
+      {/* Sidebar Header */}
       <SidebarHeader
-        collapsed={isCollapsed}
-        onToggleCollapse={() => setCollapsed(!collapsed)}
-        isMobile={!!isMobile}
-        isTablet={!!isTablet}
+        isCollapsed={effectiveCollapsed}
+        onToggleCollapse={onToggleCollapse}
       />
 
-      <Stack gap="xs" className={classes.linksContainer} mt="xl">
-        {renderNavLinks()}
-      </Stack>
+      {/* Sidebar Navigation */}
+      <ScrollArea style={{ flex: 1 }} p="xs">
+        <Stack gap="xs">
+          {/* Nút Thêm Mới Item */}
+          {effectiveCollapsed ? (
+            <Tooltip label={t("newItemBtn")} position="right" withArrow>
+              <ActionIcon
+                size="xl"
+                color="indigo"
+                radius="md"
+                onClick={handleOpenAdd}
+                style={{ alignSelf: "center", marginBottom: "8px" }}
+              >
+                <IconPlus size={22} />
+              </ActionIcon>
+            </Tooltip>
+          ) : (
+            <Button
+              leftSection={<IconPlus size={16} />}
+              onClick={handleOpenAdd}
+              radius="md"
+              color="indigo"
+              style={{ marginBottom: "8px" }}
+            >
+              {t("newItemBtn")}
+            </Button>
+          )}
 
+          {effectiveCollapsed ? (
+            <Tooltip label={t("vaultItems")} position="right" withArrow>
+              <ActionIcon
+                size="xl"
+                variant={activeTab === "vault" ? "light" : "subtle"}
+                color={activeTab === "vault" ? "indigo" : "gray"}
+                radius="md"
+                onClick={() => handleTabChange("vault")}
+                style={{ alignSelf: "center" }}
+              >
+                <IconShield size={22} />
+              </ActionIcon>
+            </Tooltip>
+          ) : (
+            <NavLink
+              label={t("vaultItems")}
+              leftSection={<IconShield size={18} />}
+              className={`${classes.sidebarNavlink} ${
+                activeTab === "vault" ? classes.sidebarNavlinkActive : ""
+              }`}
+              active={activeTab === "vault"}
+              onClick={() => handleTabChange("vault")}
+              defaultOpened
+            >
+              <NavLink
+                label={t("allSub")}
+                leftSection={<IconShield size={16} />}
+                active={activeTab === "vault" && activeCategory === "all"}
+                onClick={() => handleCategoryChange("all")}
+                className={classes.sidebarSubNavlink}
+              />
+              <NavLink
+                label={t("logins")}
+                leftSection={<IconKey size={16} />}
+                active={activeTab === "vault" && activeCategory === "Login"}
+                onClick={() => handleCategoryChange("Login")}
+                className={classes.sidebarSubNavlink}
+              />
+              <NavLink
+                label={t("notes")}
+                leftSection={<IconFileText size={16} />}
+                active={activeTab === "vault" && activeCategory === "Note"}
+                onClick={() => handleCategoryChange("Note")}
+                className={classes.sidebarSubNavlink}
+              />
+              <NavLink
+                label={t("cards")}
+                leftSection={<IconCreditCard size={16} />}
+                active={activeTab === "vault" && activeCategory === "Card"}
+                onClick={() => handleCategoryChange("Card")}
+                className={classes.sidebarSubNavlink}
+              />
+              <NavLink
+                label={t("databases")}
+                leftSection={<IconDatabase size={16} />}
+                active={activeTab === "vault" && activeCategory === "Database"}
+                onClick={() => handleCategoryChange("Database")}
+                className={classes.sidebarSubNavlink}
+              />
+            </NavLink>
+          )}
+
+          {effectiveCollapsed ? (
+            <Tooltip label={t("settingsSync")} position="right" withArrow>
+              <ActionIcon
+                size="xl"
+                variant={activeTab === "settings" ? "light" : "subtle"}
+                color={activeTab === "settings" ? "indigo" : "gray"}
+                radius="md"
+                onClick={() => handleTabChange("settings")}
+                style={{ alignSelf: "center" }}
+              >
+                <IconSettings size={22} />
+              </ActionIcon>
+            </Tooltip>
+          ) : (
+            <NavLink
+              label={t("settingsSync")}
+              leftSection={<IconSettings size={18} />}
+              className={`${classes.sidebarNavlink} ${
+                activeTab === "settings" ? classes.sidebarNavlinkActive : ""
+              }`}
+              active={activeTab === "settings"}
+              onClick={() => handleTabChange("settings")}
+            />
+          )}
+        </Stack>
+      </ScrollArea>
+
+      {/* Sidebar Footer */}
       <SidebarFooter
-        collapsed={isCollapsed}
-        activeSection={activeSection}
-        onSectionChange={handleNavClick}
-        onLock={lock}
-        isMobile={!!isMobile}
+        isCollapsed={effectiveCollapsed}
+        onToggleCollapse={onToggleCollapse}
+        onLock={onLock}
       />
-    </div>
+    </Box>
   );
 
   if (isMobile) {
@@ -132,7 +237,7 @@ export function Sidebar({
           >
             <IconMenu2 size={24} />
           </ActionIcon>
-          <Text fw={800} size="sm">
+          <Text fw={800} size="sm" className={classes.mobileTitle}>
             Secure Vault
           </Text>
           <div style={{ width: 24 }} /> {/* Spacer */}
