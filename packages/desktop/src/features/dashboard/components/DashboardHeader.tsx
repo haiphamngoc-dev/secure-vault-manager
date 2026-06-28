@@ -35,20 +35,31 @@ export function DashboardHeader({
   };
 
   return (
-    <Box className={classes.headerContainer} px="xl">
-      <Group justify="space-between" align="center" style={{ height: "100%" }}>
-        <Group gap="md" align="center">
+    <Box className={classes.headerContainer}>
+      <Group
+        justify="space-between"
+        align="center"
+        style={{ height: "100%" }}
+        wrap="nowrap"
+      >
+        <Group
+          gap="md"
+          align="center"
+          style={{ overflow: "hidden", flex: 1 }}
+          wrap="nowrap"
+        >
           {showMenuButton && (
             <ActionIcon
               variant="subtle"
               color="gray"
               onClick={onMenuClick}
               size="md"
+              style={{ flexShrink: 0 }}
             >
               <IconMenu2 size={22} />
             </ActionIcon>
           )}
-          <Stack gap={2}>
+          <Stack gap={2} style={{ overflow: "hidden", flex: 1 }}>
             <Title order={3} className={classes.title}>
               {title}
             </Title>
@@ -57,7 +68,7 @@ export function DashboardHeader({
             )}
           </Stack>
         </Group>
-        <Group gap="xs">
+        <Group gap="xs" style={{ flexShrink: 0 }}>
           <LanguageToggle />
           <Tooltip label={t("githubLabel")} position="left" withArrow>
             <ActionIcon

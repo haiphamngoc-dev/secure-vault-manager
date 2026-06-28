@@ -9,6 +9,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  padding-left: var(--mantine-spacing-xl);
+  padding-right: var(--mantine-spacing-xl);
 }
 
 .title {
@@ -18,15 +20,26 @@
   letter-spacing: -0.3px;
   color: var(--mantine-color-white);
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .description {
   font-size: 13px;
   color: var(--mantine-color-dark-2);
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 767px) {
+  .headerContainer {
+    padding-left: var(--mantine-spacing-md);
+    padding-right: var(--mantine-spacing-md);
+  }
+
   .description {
     display: none;
   }
