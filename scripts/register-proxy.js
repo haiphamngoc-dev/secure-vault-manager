@@ -10,8 +10,8 @@ const rootDir = path.resolve(__dirname, "..");
 // Get extension ID from arguments
 const extId = process.argv[2];
 if (!extId) {
-  console.error("Lỗi: Vui lòng cung cấp Extension ID.");
-  console.log("Sử dụng: pnpm run register-proxy <extension_id>");
+  console.error("Error: Please provide an Extension ID.");
+  console.log("Usage: pnpm run register-proxy <extension_id>");
   process.exit(1);
 }
 
@@ -37,7 +37,7 @@ function getTargetTriple() {
     return arch === "x64"
       ? "x86_64-unknown-linux-gnu"
       : "aarch64-unknown-linux-gnu";
-  throw new Error(`Platform không hỗ trợ: ${platform}`);
+  throw new Error(`Unsupported platform: ${platform}`);
 }
 
 const triple = getTargetTriple();
@@ -53,7 +53,7 @@ const binaryPath = path.join(
 
 if (!fs.existsSync(binaryPath)) {
   console.error(
-    `Lỗi: Không tìm thấy file proxy tại ${binaryPath}. Vui lòng chạy 'pnpm run build:proxy && pnpm run copy:sidecar' trước.`
+    `Error: Proxy binary not found at ${binaryPath}. Please run 'pnpm run build:proxy && pnpm run copy:sidecar' first.`
   );
   process.exit(1);
 }
@@ -91,14 +91,14 @@ function register() {
     fs.mkdirSync(chromeDir, { recursive: true });
     fs.writeFileSync(path.join(chromeDir, hostName), manifestJson);
     console.log(
-      `Đã đăng ký Chrome Native Messaging Host tại: ${path.join(chromeDir, hostName)}`
+      `Registered Chrome Native Messaging Host at: ${path.join(chromeDir, hostName)}`
     );
 
     // Register for Chromium
     fs.mkdirSync(chromiumDir, { recursive: true });
     fs.writeFileSync(path.join(chromiumDir, hostName), manifestJson);
     console.log(
-      `Đã đăng ký Chromium Native Messaging Host tại: ${path.join(chromiumDir, hostName)}`
+      `Registered Chromium Native Messaging Host at: ${path.join(chromiumDir, hostName)}`
     );
   } else if (platform === "darwin") {
     const chromeDir = path.join(
@@ -112,7 +112,7 @@ function register() {
     fs.mkdirSync(chromeDir, { recursive: true });
     fs.writeFileSync(path.join(chromeDir, hostName), manifestJson);
     console.log(
-      `Đã đăng ký macOS Chrome Native Messaging Host tại: ${path.join(chromeDir, hostName)}`
+      `Registered macOS Chrome Native Messaging Host at: ${path.join(chromeDir, hostName)}`
     );
   } else if (platform === "win32") {
     // On Windows, save the JSON in the sidecar folder
@@ -125,21 +125,23 @@ function register() {
       hostName
     );
     fs.writeFileSync(jsonPath, manifestJson);
-    console.log(`Đã tạo tệp cấu hình JSON tại: ${jsonPath}`);
+    console.log(`Created JSON configuration file at: ${jsonPath}`);
 
     // Create Registry key trashing the JSON path
     const regKey = `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.haiphamngoc_dev.secure_vault_manager_proxy`;
     try {
       execSync(`reg add "${regKey}" /ve /t REG_SZ /d "${jsonPath}" /f`);
-      console.log(`Đã đăng ký Windows Registry key: ${regKey}`);
+      console.log(`Registered Windows Registry key: ${regKey}`);
     } catch (err) {
       console.error(
-        "Lỗi khi thêm Registry key. Vui lòng chạy lại script này với quyền Administrator:",
+        "Error adding Registry key. Please run this script with Administrator privileges:",
         err.message
       );
     }
   } else {
-    console.error(`Hệ điều hành ${platform} không được cấu hình tự động.`);
+    console.error(
+      `OS platform ${platform} is not supported for auto-registration.`
+    );
   }
 }
 

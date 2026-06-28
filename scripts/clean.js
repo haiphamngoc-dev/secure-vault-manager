@@ -13,14 +13,14 @@ const pathsToClean = [
   "packages/desktop/src-tauri/binaries",
 ];
 
-console.log("Đang dọn dẹp các thư mục build...");
+console.log("Cleaning build directories...");
 
 // Clean Cargo/Rust target
 try {
-  console.log("Đang chạy cargo clean...");
+  console.log("Running cargo clean...");
   execSync("cargo clean", { stdio: "inherit", cwd: rootDir });
 } catch (err) {
-  console.warn("Cảnh báo: Không thể chạy cargo clean:", err.message);
+  console.warn("Warning: Could not run cargo clean:", err.message);
 }
 
 // Clean JS/WASM build folders
@@ -29,11 +29,11 @@ for (const relPath of pathsToClean) {
   if (fs.existsSync(absPath)) {
     try {
       fs.rmSync(absPath, { recursive: true, force: true });
-      console.log(`Đã xóa: ${relPath}`);
+      console.log(`Deleted: ${relPath}`);
     } catch (err) {
-      console.error(`Lỗi khi xóa ${relPath}:`, err.message);
+      console.error(`Error deleting ${relPath}:`, err.message);
     }
   }
 }
 
-console.log("Dọn dẹp hoàn tất!");
+console.log("Cleanup complete!");
