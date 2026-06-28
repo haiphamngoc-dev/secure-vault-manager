@@ -13,7 +13,15 @@ const pathsToClean = [
   "packages/desktop/src-tauri/binaries",
 ];
 
-console.log("Cleaning build directories...");
+const nodeModulesPaths = [
+  "node_modules",
+  "packages/desktop/node_modules",
+  "packages/extension/node_modules",
+  "packages/shared/node_modules",
+  "packages/crypto-wasm/node_modules",
+];
+
+console.log("Cleaning build directories and dependency folders...");
 
 // Clean Cargo/Rust target
 try {
@@ -36,4 +44,17 @@ for (const relPath of pathsToClean) {
   }
 }
 
-console.log("Cleanup complete!");
+// Clean node_modules folders
+for (const relPath of nodeModulesPaths) {
+  const absPath = path.join(rootDir, relPath);
+  if (fs.existsSync(absPath)) {
+    try {
+      fs.rmSync(absPath, { recursive: true, force: true });
+      console.log(`Deleted dependencies folder: ${relPath}`);
+    } catch (err) {
+      console.error(`Error deleting ${relPath}:`, err.message);
+    }
+  }
+}
+
+console.log('Cleanup complete! Run "pnpm install" to reinstall dependencies.');
