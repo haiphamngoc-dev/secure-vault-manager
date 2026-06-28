@@ -7,10 +7,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 
 const pathsToClean = [
+  "dist",
   "packages/desktop/dist",
   "packages/extension/dist",
   "packages/crypto-wasm/pkg",
   "packages/desktop/src-tauri/binaries",
+  "packages/desktop/src-tauri/target",
 ];
 
 const nodeModulesPaths = [
