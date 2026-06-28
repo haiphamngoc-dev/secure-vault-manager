@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Tooltip,
@@ -54,12 +54,16 @@ export function Sidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
   const isTablet = useMediaQuery("(max-width: 991px) and (min-width: 768px)");
+  const wasTabletRef = useRef(false);
 
-  // Handle auto-collapse on tablet if not already collapsed
+  // Handle auto-collapse on tablet transition if not already collapsed
   useEffect(() => {
-    if (isTablet && !isCollapsed) {
-      onToggleCollapse();
+    if (isTablet && !wasTabletRef.current) {
+      if (!isCollapsed) {
+        onToggleCollapse();
+      }
     }
+    wasTabletRef.current = !!isTablet;
   }, [isTablet, isCollapsed, onToggleCollapse]);
 
   const handleOpenAdd = () => {
@@ -96,7 +100,9 @@ export function Sidebar({
       {/* Sidebar Header */}
       <SidebarHeader
         isCollapsed={effectiveCollapsed}
-        onToggleCollapse={onToggleCollapse}
+        onToggleCollapse={
+          isMobile ? () => setMobileOpen(false) : onToggleCollapse
+        }
       />
 
       {/* Sidebar Navigation */}
@@ -248,9 +254,13 @@ export function Sidebar({
           onClose={() => setMobileOpen(false)}
           size="260px"
           withCloseButton={false}
+          classNames={{
+            inner: classes.drawerInner,
+            content: classes.drawerContent,
+            overlay: classes.drawerOverlay,
+          }}
           styles={{
             body: { padding: 0, height: "100%" },
-            content: { background: "var(--mantine-color-dark-8)" },
           }}
         >
           {sidebarContent}

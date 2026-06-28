@@ -70,3 +70,18 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+.drawerInner {
+  top: 32px !important;
+  height: calc(100vh - 32px) !important;
+}
+
+.drawerContent {
+  height: 100% !important;
+  background-color: var(--mantine-color-dark-8) !important;
+}
+
+.drawerOverlay {
+  top: 32px !important;
+  height: calc(100vh - 32px) !important;
+}
