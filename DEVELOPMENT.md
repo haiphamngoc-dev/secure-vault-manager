@@ -81,14 +81,15 @@ pnpm run copy:sidecar
 
 Tất cả các lệnh điều phối dự án đều được chạy từ thư mục gốc:
 
-| Lệnh                            | Chức năng                                                                |
-| :------------------------------ | :----------------------------------------------------------------------- |
-| `pnpm dev:desktop`              | Khởi chạy ứng dụng Desktop (Tauri) trong chế độ phát triển (Live reload) |
-| `pnpm build:desktop`            | Build gói cài đặt sản phẩm cho ứng dụng Desktop (Tauri)                  |
-| `pnpm --filter extension dev`   | Khởi chạy Extension ở chế độ phát triển (Vite watch mode)                |
-| `pnpm --filter extension build` | Biên dịch Browser Extension ra thư mục `dist/`                           |
-| `pnpm lint`                     | Chạy công cụ ESLint kiểm tra lỗi cú pháp và định dạng trên toàn Monorepo |
-| `pnpm format`                   | Định dạng lại mã nguồn bằng Prettier trên toàn bộ dự án                  |
+| Lệnh                            | Chức năng                                                                  |
+| :------------------------------ | :------------------------------------------------------------------------- |
+| `pnpm dev:desktop`              | Khởi chạy ứng dụng Desktop (Tauri) trong chế độ phát triển (Live reload)   |
+| `pnpm build:desktop`            | Build gói cài đặt sản phẩm cho ứng dụng Desktop (Tauri)                    |
+| `pnpm --filter extension dev`   | Khởi chạy Extension ở chế độ phát triển (Vite watch mode)                  |
+| `pnpm --filter extension build` | Biên dịch Browser Extension ra thư mục `dist/`                             |
+| `pnpm lint`                     | Chạy công cụ ESLint kiểm tra lỗi cú pháp và định dạng trên toàn Monorepo   |
+| `pnpm format`                   | Định dạng lại mã nguồn bằng Prettier trên toàn bộ dự án                    |
+| `pnpm clean`                    | Dọn dẹp toàn bộ thư mục build tạm của Rust (target) và frontend (dist/pkg) |
 
 ---
 
