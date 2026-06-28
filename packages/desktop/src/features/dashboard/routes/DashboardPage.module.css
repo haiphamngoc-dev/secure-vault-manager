@@ -9,9 +9,55 @@
 .mainContent {
   flex: 1;
   height: 100%;
+  position: relative;
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--mantine-color-dark-8) 0%,
+    var(--mantine-color-dark-9) 100%
+  );
+  overflow: hidden;
+}
+
+/* Ambient glowing backgrounds behind dashboard content */
+.mainContent::before {
+  content: "";
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.12) 0%,
+    rgba(99, 102, 241, 0) 70%
+  );
+  top: -100px;
+  left: -100px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mainContent::after {
+  content: "";
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(
+    circle,
+    rgba(6, 182, 212, 0.12) 0%,
+    rgba(6, 182, 212, 0) 70%
+  );
+  bottom: -150px;
+  right: -150px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.scrollContainer {
+  height: 100%;
+  width: 100%;
   padding: var(--mantine-spacing-xl);
   overflow-y: auto;
-  background-color: var(--mantine-color-dark-9);
+  position: relative;
+  z-index: 2;
 }
 
 /* Mobile responsive padding due to floating mobile header */
@@ -21,7 +67,7 @@
     padding-top: 48px; /* Height of mobile header */
   }
 
-  .mainContent {
+  .scrollContainer {
     padding: var(--mantine-spacing-md);
   }
 }

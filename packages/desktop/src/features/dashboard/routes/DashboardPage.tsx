@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Box, Title, Text, Stack } from "@mantine/core";
 import { Sidebar } from "../components/Sidebar";
 import { useVault } from "@/app/providers/VaultProvider";
@@ -85,7 +85,9 @@ export function DashboardPage() {
         onOpenAdd={onOpenAdd}
         onLock={lock}
       />
-      <Box className={classes.mainContent}>{renderContent()}</Box>
+      <Box className={classes.mainContent}>
+        <Box className={classes.scrollContainer}>{renderContent()}</Box>
+      </Box>
     </Box>
   );
 }
