@@ -8,7 +8,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::TrayIconBuilder,
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Emitter, Manager,
 };
 
@@ -95,6 +95,24 @@ fn update_tray_menu(app: &tauri::AppHandle) {
     }
 }
 
+/// Toggles the visibility of the main window, updates state and refreshes the tray menu.
+fn toggle_window_visibility(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let state = app.state::<AppState>();
+        let mut is_visible_guard = state.is_visible.lock().unwrap();
+        if *is_visible_guard {
+            let _ = window.hide();
+            *is_visible_guard = false;
+        } else {
+            let _ = window.show();
+            let _ = window.set_focus();
+            *is_visible_guard = true;
+        }
+        drop(is_visible_guard);
+        update_tray_menu(app);
+    }
+}
+
 /// Command to change the system tray menu language.
 ///
 /// Updates the application state language preference and refreshes the tray menu.
@@ -166,28 +184,23 @@ pub fn run() {
             let _tray = TrayIconBuilder::with_id("main")
                 .icon(icon)
                 .show_menu_on_left_click(false)
-                .on_menu_event(|app, event| {
-                    if let Some(window) = app.get_webview_window("main") {
-                        match event.id.as_ref() {
-                            "toggle_visibility" => {
-                                let state = app.state::<AppState>();
-                                let mut is_visible_guard = state.is_visible.lock().unwrap();
-                                if *is_visible_guard {
-                                    let _ = window.hide();
-                                    *is_visible_guard = false;
-                                } else {
-                                    let _ = window.show();
-                                    let _ = window.set_focus();
-                                    *is_visible_guard = true;
-                                }
-                                drop(is_visible_guard);
-                                update_tray_menu(app);
-                            }
-                            "quit" => {
-                                app.exit(0);
-                            }
-                            _ => {}
-                        }
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "toggle_visibility" => {
+                        toggle_window_visibility(app);
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        toggle_window_visibility(tray.app_handle());
                     }
                 })
                 .build(app)?;
