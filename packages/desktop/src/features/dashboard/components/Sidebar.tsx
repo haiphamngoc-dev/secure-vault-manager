@@ -252,7 +252,7 @@ export function Sidebar({
         <Drawer
           opened={mobileOpen}
           onClose={() => setMobileOpen(false)}
-          size="260px"
+          size="270px"
           withCloseButton={false}
           classNames={{
             inner: classes.drawerInner,
