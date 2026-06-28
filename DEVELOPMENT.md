@@ -90,6 +90,7 @@ Tất cả các lệnh điều phối dự án đều được chạy từ thư 
 | `pnpm lint`                     | Chạy công cụ ESLint kiểm tra lỗi cú pháp và định dạng trên toàn Monorepo   |
 | `pnpm format`                   | Định dạng lại mã nguồn bằng Prettier trên toàn bộ dự án                    |
 | `pnpm clean`                    | Dọn dẹp toàn bộ thư mục build tạm của Rust (target) và frontend (dist/pkg) |
+| `pnpm nuke`                     | Xóa triệt để toàn bộ thư mục node_modules ở gốc và các package con         |
 
 ---
 

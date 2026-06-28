@@ -11,6 +11,7 @@
     "copy:sidecar": "node ./scripts/copy-sidecar.js",
     "register-proxy": "node ./scripts/register-proxy.js",
     "clean": "node ./scripts/clean.js",
+    "nuke": "node ./scripts/nuke.js",
     "build:wasm": "wasm-pack build packages/crypto-wasm --target bundler --out-dir pkg",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
