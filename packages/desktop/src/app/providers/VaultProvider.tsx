@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { LoadingOverlay, Box } from "@mantine/core";
@@ -22,7 +29,7 @@ export function VaultProvider({
 }>) {
   const [status, setStatus] = useState<VaultStatus>("loading");
 
-  const checkVaultStatus = async () => {
+  const checkVaultStatus = useCallback(async () => {
     try {
       const initialized = await invoke<boolean>("check_vault_initialized");
       if (!initialized) {
@@ -35,7 +42,7 @@ export function VaultProvider({
       console.error("Failed to check vault status:", err);
       setStatus("locked"); // Lock by default on failure for safety
     }
-  };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -72,20 +79,31 @@ export function VaultProvider({
     };
   }, []);
 
-  const unlock = async (password: string) => {
-    await invoke("unlock_vault", { password });
-    await checkVaultStatus();
-  };
+  const unlock = useCallback(
+    async (password: string) => {
+      await invoke("unlock_vault", { password });
+      await checkVaultStatus();
+    },
+    [checkVaultStatus]
+  );
 
-  const lock = async () => {
+  const lock = useCallback(async () => {
     await invoke("lock_vault");
     await checkVaultStatus();
-  };
+  }, [checkVaultStatus]);
 
-  const initialize = async (password: string) => {
-    await invoke("initialize_vault", { password });
-    await checkVaultStatus();
-  };
+  const initialize = useCallback(
+    async (password: string) => {
+      await invoke("initialize_vault", { password });
+      await checkVaultStatus();
+    },
+    [checkVaultStatus]
+  );
+
+  const value = useMemo(
+    () => ({ status, checkVaultStatus, unlock, lock, initialize }),
+    [status, checkVaultStatus, unlock, lock, initialize]
+  );
 
   if (status === "loading") {
     return (
@@ -100,11 +118,7 @@ export function VaultProvider({
   }
 
   return (
-    <VaultContext.Provider
-      value={{ status, checkVaultStatus, unlock, lock, initialize }}
-    >
-      {children}
-    </VaultContext.Provider>
+    <VaultContext.Provider value={value}>{children}</VaultContext.Provider>
   );
 }
 
