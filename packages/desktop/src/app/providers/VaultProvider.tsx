@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { LoadingOverlay, Box } from "@mantine/core";
-import { OnboardingPage } from "@/features/onboarding";
-import { UnlockPage } from "@/features/unlock";
 
 export type VaultStatus = "loading" | "uninitialized" | "locked" | "unlocked";
 
 interface VaultContextType {
   status: VaultStatus;
+  checkVaultStatus: () => Promise<void>;
   unlock: (password: string) => Promise<void>;
   lock: () => Promise<void>;
   initialize: (password: string) => Promise<void>;
@@ -58,8 +58,17 @@ export function VaultProvider({
       }
     };
     initCheck();
+
+    // Listen to native vault-locked event
+    const unlistenLocked = listen("vault-locked", () => {
+      if (active) {
+        setStatus("locked");
+      }
+    });
+
     return () => {
       active = false;
+      unlistenLocked.then((fn) => fn());
     };
   }, []);
 
@@ -90,16 +99,10 @@ export function VaultProvider({
     );
   }
 
-  if (status === "uninitialized") {
-    return <OnboardingPage onSuccess={checkVaultStatus} />;
-  }
-
-  if (status === "locked") {
-    return <UnlockPage onSuccess={checkVaultStatus} onUnlock={unlock} />;
-  }
-
   return (
-    <VaultContext.Provider value={{ status, unlock, lock, initialize }}>
+    <VaultContext.Provider
+      value={{ status, checkVaultStatus, unlock, lock, initialize }}
+    >
       {children}
     </VaultContext.Provider>
   );

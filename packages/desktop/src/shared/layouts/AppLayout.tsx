@@ -11,6 +11,9 @@ import { TitleBar } from "./components/TitleBar";
 import ResizeHandles from "./components/ResizeHandles";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useState } from "react";
+import { useVault } from "@/app/providers/VaultProvider";
+import { OnboardingPage } from "@/features/onboarding";
+import { UnlockPage } from "@/features/unlock";
 
 /**
  * Reference to the current Tauri window instance.
@@ -25,6 +28,7 @@ const appWindow = getCurrentWindow();
  */
 export function AppLayout() {
   const [isMaximized, setIsMaximized] = useState(false);
+  const { status, checkVaultStatus, unlock } = useVault();
 
   useEffect(() => {
     // Check if window is maximized initially
@@ -58,7 +62,13 @@ export function AppLayout() {
 
       {/* Route Outlet child view container */}
       <Box className={classes.content}>
-        <Outlet />
+        {status === "uninitialized" && (
+          <OnboardingPage onSuccess={checkVaultStatus} />
+        )}
+        {status === "locked" && (
+          <UnlockPage onSuccess={checkVaultStatus} onUnlock={unlock} />
+        )}
+        {status === "unlocked" && <Outlet />}
       </Box>
     </Box>
   );

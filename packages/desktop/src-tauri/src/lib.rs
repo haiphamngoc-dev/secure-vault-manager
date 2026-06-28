@@ -110,6 +110,11 @@ fn toggle_window_visibility(app: &tauri::AppHandle) {
         if *is_visible_guard {
             let _ = window.hide();
             *is_visible_guard = false;
+
+            // Lock vault and emit event on window hide
+            *state.vault_key.lock().unwrap() = None;
+            *state.vault_salt.lock().unwrap() = None;
+            let _ = window.emit("vault-locked", ());
         } else {
             let _ = window.show();
             let _ = window.set_focus();
@@ -226,6 +231,11 @@ pub fn run() {
 
                 let state = window.state::<AppState>();
                 *state.is_visible.lock().unwrap() = false;
+
+                // Lock vault and emit event on window close
+                *state.vault_key.lock().unwrap() = None;
+                *state.vault_salt.lock().unwrap() = None;
+                let _ = window.emit("vault-locked", ());
 
                 update_tray_menu(window.app_handle());
             }
