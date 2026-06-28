@@ -1,0 +1,207 @@
+.modalTitle {
+  font-family: "Outfit", "Inter", sans-serif;
+  font-weight: 700;
+  text-align: center;
+  color: var(--mantine-color-white);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.searchBox {
+  margin-bottom: var(--mantine-spacing-lg);
+  max-width: 500px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.primaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--mantine-spacing-md);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.secondaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--mantine-spacing-sm);
+  margin-top: var(--mantine-spacing-md);
+}
+
+@media (max-width: 767px) {
+  .primaryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .secondaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.typeCard {
+  border: 1px solid var(--mantine-color-dark-5);
+  background-color: rgba(30, 31, 33, 0.4);
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+}
+
+.typeCard:hover {
+  background-color: rgba(99, 102, 241, 0.08);
+  border-color: var(--mantine-color-indigo-5);
+  transform: translateY(-2px);
+}
+
+.typeCardPrimary {
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 110px;
+  justify-content: space-between;
+}
+
+.typeCardPrimary .typeName {
+  font-family: "Outfit", "Inter", sans-serif;
+  font-weight: 600;
+  font-size: var(--mantine-font-size-md);
+  color: var(--mantine-color-white);
+}
+
+.typeName {
+  font-weight: 500;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dark-0);
+}
+
+.iconWrapper {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--mantine-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconWrapperLarge {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--mantine-radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.dropdownIndicator {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background-color: var(--mantine-color-dark-6);
+  border: 1px solid var(--mantine-color-dark-4);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Category Specific Colors */
+.bgLogin {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+.bgNote {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+.bgCard {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+.bgIdentity {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+.bgPassword {
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+  color: white;
+}
+.bgDocument {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  color: white;
+}
+.bgDatabase {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%);
+  color: white;
+}
+.bgGeneric {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+}
+
+/* Form Styles */
+.formHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+  margin-bottom: var(--mantine-spacing-lg);
+  padding-bottom: var(--mantine-spacing-md);
+  border-bottom: 1px solid var(--mantine-color-dark-5);
+}
+
+.titleInput {
+  flex: 1;
+  font-family: "Outfit", "Inter", sans-serif;
+  font-size: var(--mantine-font-size-lg);
+  font-weight: 700;
+}
+
+.formSection {
+  background-color: rgba(25, 26, 28, 0.4);
+  border: 1px solid var(--mantine-color-dark-6);
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-md);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.customFieldRow {
+  display: flex;
+  gap: var(--mantine-spacing-sm);
+  align-items: flex-end;
+  margin-bottom: var(--mantine-spacing-sm);
+}
+
+.customFieldLabel {
+  width: 150px;
+}
+
+.customFieldValue {
+  flex: 1;
+}
+
+@media (max-width: 767px) {
+  .customFieldRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .customFieldLabel {
+    width: 100%;
+  }
+}
+
+.websiteRow {
+  display: flex;
+  gap: var(--mantine-spacing-sm);
+  align-items: flex-end;
+  margin-bottom: var(--mantine-spacing-sm);
+}
+
+.tagBadge {
+  text-transform: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}

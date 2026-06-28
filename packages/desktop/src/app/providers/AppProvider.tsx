@@ -8,6 +8,7 @@ import { theme } from "@/app/styles/theme";
 import "@/app/styles/global.css";
 import "@/app/i18n/config";
 import { VaultProvider } from "./VaultProvider";
+import { Notifications } from "@mantine/notifications";
 
 /**
  * Properties for the AppProvider component.
@@ -31,6 +32,7 @@ export function AppProvider({ children }: Readonly<AppProviderProps>) {
       defaultColorScheme="auto"
       deduplicateInlineStyles
     >
+      <Notifications position="top-right" zIndex={1000} />
       <VaultProvider>{children}</VaultProvider>
     </MantineProvider>
   );

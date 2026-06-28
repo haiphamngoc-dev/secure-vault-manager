@@ -10,6 +10,19 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { LoadingOverlay, Box } from "@mantine/core";
 
+export interface VaultItem {
+  id: string;
+  title: string;
+  category: string;
+  username?: string;
+  password?: string;
+  url?: string;
+  notes?: string;
+  updatedAt: number;
+  customFields?: { id: string; label: string; value: string; type: string }[];
+  tags?: string[];
+}
+
 export type VaultStatus = "loading" | "uninitialized" | "locked" | "unlocked";
 
 interface VaultContextType {
@@ -18,6 +31,9 @@ interface VaultContextType {
   unlock: (password: string) => Promise<void>;
   lock: () => Promise<void>;
   initialize: (password: string) => Promise<void>;
+  items: VaultItem[];
+  addItem: (item: Omit<VaultItem, "id" | "updatedAt">) => void;
+  deleteItem: (id: string) => void;
 }
 
 const VaultContext = createContext<VaultContextType | null>(null);
@@ -28,7 +44,24 @@ export function VaultProvider({
   children: React.ReactNode;
 }>) {
   const [status, setStatus] = useState<VaultStatus>("loading");
+  const [items, setItems] = useState<VaultItem[]>([]);
 
+  const addItem = useCallback(
+    (newItem: Omit<VaultItem, "id" | "updatedAt">) => {
+      const item: VaultItem = {
+        ...newItem,
+        id: crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).substring(2, 9),
+        updatedAt: Date.now(),
+      };
+      setItems((prev) => [item, ...prev]);
+    },
+    []
+  );
+  const deleteItem = useCallback((id: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
+  }, []);
   const checkVaultStatus = useCallback(async () => {
     try {
       const initialized = await invoke<boolean>("check_vault_initialized");
@@ -89,6 +122,7 @@ export function VaultProvider({
 
   const lock = useCallback(async () => {
     await invoke("lock_vault");
+    setItems([]);
     await checkVaultStatus();
   }, [checkVaultStatus]);
 
@@ -101,8 +135,26 @@ export function VaultProvider({
   );
 
   const value = useMemo(
-    () => ({ status, checkVaultStatus, unlock, lock, initialize }),
-    [status, checkVaultStatus, unlock, lock, initialize]
+    () => ({
+      status,
+      checkVaultStatus,
+      unlock,
+      lock,
+      initialize,
+      items,
+      addItem,
+      deleteItem,
+    }),
+    [
+      status,
+      checkVaultStatus,
+      unlock,
+      lock,
+      initialize,
+      items,
+      addItem,
+      deleteItem,
+    ]
   );
 
   if (status === "loading") {
