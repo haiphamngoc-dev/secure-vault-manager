@@ -36,7 +36,7 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
     if (pass.length >= 8) score += 30;
     if (pass.length >= 12) score += 10;
     if (/[A-Z]/.test(pass)) score += 20;
-    if (/[0-9]/.test(pass)) score += 20;
+    if (/\d/.test(pass)) score += 20;
     if (/[^A-Za-z0-9]/.test(pass)) score += 20;
 
     if (score < 40)
@@ -56,7 +56,7 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
 
   const strength = getPasswordStrength(password);
 
-  const handleInit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleInit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (password.length < 8) {
       setError(t("onboardingErrorMinLength"));
