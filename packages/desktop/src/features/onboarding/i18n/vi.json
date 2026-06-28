@@ -1,0 +1,16 @@
+{
+  "onboardingTitle": "Thiết lập Vault mới",
+  "onboardingDesc": "Mật khẩu Master được dùng để tạo khóa mã hóa dữ liệu. Không ai khác ngoài bạn biết mật khẩu này. Hãy lưu trữ cẩn thận!",
+  "onboardingMasterLabel": "Mật khẩu Master",
+  "onboardingMasterPlaceholder": "Nhập mật khẩu an toàn...",
+  "onboardingConfirmLabel": "Xác nhận mật khẩu",
+  "onboardingConfirmPlaceholder": "Nhập lại mật khẩu...",
+  "onboardingErrorMinLength": "Mật khẩu Master phải có ít nhất 8 ký tự!",
+  "onboardingErrorMismatch": "Mật khẩu xác nhận không khớp!",
+  "onboardingErrorTitle": "Lỗi thiết lập",
+  "onboardingSubmitBtn": "Tạo Vault & Bắt đầu",
+  "passwordStrength": "Độ mạnh mật khẩu",
+  "strengthWeak": "Yếu",
+  "strengthMedium": "Trung bình",
+  "strengthStrong": "Mạnh"
+}

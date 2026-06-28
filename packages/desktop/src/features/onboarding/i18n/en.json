@@ -1,0 +1,16 @@
+{
+  "onboardingTitle": "Set up New Vault",
+  "onboardingDesc": "The Master Password is used to derive encryption keys. No one but you knows this password. Please store it safely!",
+  "onboardingMasterLabel": "Master Password",
+  "onboardingMasterPlaceholder": "Enter a secure password...",
+  "onboardingConfirmLabel": "Confirm Password",
+  "onboardingConfirmPlaceholder": "Re-enter password...",
+  "onboardingErrorMinLength": "Master password must be at least 8 characters!",
+  "onboardingErrorMismatch": "Confirmation password does not match!",
+  "onboardingErrorTitle": "Setup Error",
+  "onboardingSubmitBtn": "Create Vault & Get Started",
+  "passwordStrength": "Password Strength",
+  "strengthWeak": "Weak",
+  "strengthMedium": "Medium",
+  "strengthStrong": "Strong"
+}
