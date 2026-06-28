@@ -13,6 +13,11 @@ Trước khi bắt đầu, hãy đảm bảo máy tính của bạn đã cài đ
 - **Rust Toolchain** (Bao gồm `rustc`, `cargo` - cài đặt qua [rustup.rs](https://rustup.rs))
 - **wasm-pack** (Công cụ biên dịch Rust sang WebAssembly - tải tại [rustwasm.github.io/wasm-pack](https://rustwasm.github.io/wasm-pack/installer/))
 - **Tauri Dependencies**: Tùy thuộc vào hệ điều hành của bạn, hãy cài đặt các thư viện hệ thống cần thiết theo [Tauri Cài đặt](https://tauri.app/start/prerequisites/).
+  - Đối với Linux (Ubuntu/Debian), hãy cài đặt thêm các thư viện GStreamer sau để tránh các lỗi WebView liên quan đến đồ họa và âm thanh (như thiếu `appsink`):
+
+    ```bash
+    sudo apt install gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
+    ```
 
 ---
 
@@ -91,7 +96,21 @@ Tất cả các lệnh điều phối dự án đều được chạy từ thư 
 
 Để Browser Extension có thể giao tiếp được với ứng dụng Desktop, trình duyệt cần biết vị trí của ứng dụng proxy trung gian thông qua một tệp cấu hình JSON đăng ký trên hệ điều hành.
 
-### Bước 1: Tạo tệp JSON cấu hình Proxy
+### Cách 1: Đăng ký tự động qua Script (Khuyến nghị)
+
+Sau khi nạp Extension và lấy được **Extension ID** trên trình duyệt (ví dụ: `gkdjgnbkoongjmehhdecofdhlcajgggj`), bạn chỉ cần chạy lệnh sau từ thư mục gốc của dự án:
+
+```bash
+pnpm run register-proxy <ID_EXTENSION_CỦA_BẠN>
+```
+
+_Tác dụng:_ Script sẽ tự động nhận diện hệ điều hành, tạo tệp cấu hình JSON với đường dẫn tuyệt đối chuẩn xác, và sao chép/đăng ký vào đúng thư mục cấu hình trình duyệt (hoặc Registry trên Windows).
+
+### Cách 2: Đăng ký thủ công (Dành cho kiểm tra thủ công)
+
+Nếu muốn tự cấu hình, bạn có thể thực hiện theo các bước sau:
+
+#### Bước 1: Tạo tệp JSON cấu hình Proxy
 
 Tạo một tệp cấu hình có tên `com.haiphamngoc_dev.secure_vault_manager_proxy.json` ở bất kỳ thư mục nào trên máy của bạn với nội dung:
 
@@ -111,7 +130,7 @@ Tạo một tệp cấu hình có tên `com.haiphamngoc_dev.secure_vault_manager
 > 2. Sửa `proxy-TARGET_TRIPLE` thành tên file proxy thực tế đã tạo ở Bước 3 thiết lập (ví dụ: `proxy-x86_64-unknown-linux-gnu` hoặc `proxy-x86_64-pc-windows-msvc.exe`).
 > 3. Thay `ID_EXTENSION_CỦA_BẠN` thành ID thực tế của Extension hiển thị trên trang `chrome://extensions` sau khi bạn nạp Extension từ thư mục `packages/extension/dist`.
 
-### Bước 2: Đăng ký tệp JSON cấu hình với trình duyệt
+#### Bước 2: Đăng ký tệp JSON cấu hình với trình duyệt
 
 Tùy thuộc vào hệ điều hành của bạn, hãy sao chép hoặc trỏ đường dẫn đăng ký đến tệp JSON vừa tạo:
 
