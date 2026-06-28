@@ -30,6 +30,9 @@
   font-size: var(--mantine-font-size-xs);
   font-weight: 600;
   color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-1));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .controls {

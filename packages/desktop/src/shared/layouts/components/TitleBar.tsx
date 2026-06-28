@@ -70,10 +70,17 @@ export function TitleBar({ title }: Readonly<TitleBarProps>) {
       justify="space-between"
       align="center"
       className={classes.titlebar}
+      wrap="nowrap"
       data-tauri-drag-region
     >
       {/* Brand logo and Title section on the left */}
-      <Group gap="xs" className={classes.logoSection} data-tauri-drag-region>
+      <Group
+        gap="xs"
+        className={classes.logoSection}
+        wrap="nowrap"
+        style={{ overflow: "hidden", flex: 1 }}
+        data-tauri-drag-region
+      >
         <Image
           src="/tauri.svg"
           className={classes.logo}
@@ -86,7 +93,12 @@ export function TitleBar({ title }: Readonly<TitleBarProps>) {
       </Group>
 
       {/* Action window buttons (Minimize, Maximize, Close) */}
-      <Group gap={0} className={classes.controls}>
+      <Group
+        gap={0}
+        className={classes.controls}
+        wrap="nowrap"
+        style={{ flexShrink: 0 }}
+      >
         <UnstyledButton
           className={classes.button}
           onClick={handleMinimize}
