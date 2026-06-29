@@ -11,10 +11,10 @@ import {
 import { IconBrandGithub, IconMenu2, IconSearch } from "@tabler/icons-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useTranslation } from "react-i18next";
-import classes from "./DashboardHeader.module.css";
+import classes from "./MainHeader.module.css";
 import { LanguageToggle } from "./LanguageToggle";
 
-interface DashboardHeaderProps {
+interface MainHeaderProps {
   title: string;
   description: string;
   showMenuButton?: boolean;
@@ -23,14 +23,14 @@ interface DashboardHeaderProps {
   onSearchChange?: (val: string) => void;
 }
 
-export function DashboardHeader({
+export function MainHeader({
   title,
   description,
   showMenuButton = false,
   onMenuClick,
   searchQuery = "",
   onSearchChange,
-}: Readonly<DashboardHeaderProps>) {
+}: Readonly<MainHeaderProps>) {
   const { t } = useTranslation();
 
   const handleOpenGithub = () => {
@@ -108,4 +108,4 @@ export function DashboardHeader({
   );
 }
 
-export default DashboardHeader;
+export default MainHeader;

@@ -5,8 +5,9 @@
  */
 
 import { AppLayout } from "@/shared/layouts/AppLayout";
+import { MainLayout } from "@/shared/layouts/MainLayout";
 import { createHashRouter } from "react-router-dom";
-import { DashboardPage } from "@/features/dashboard";
+import { DashboardPage, SettingsPage } from "@/features/dashboard";
 
 /**
  * Global application router instance.
@@ -18,8 +19,17 @@ export const router = createHashRouter([
     element: <AppLayout />,
     children: [
       {
-        index: true,
-        element: <DashboardPage />,
+        element: <MainLayout />,
+        children: [
+          {
+            index: true,
+            element: <DashboardPage />,
+          },
+          {
+            path: "settings",
+            element: <SettingsPage />,
+          },
+        ],
       },
     ],
   },

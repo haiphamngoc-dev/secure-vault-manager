@@ -18,40 +18,41 @@ import {
   IconKey,
   IconPlus,
 } from "@tabler/icons-react";
-import { Sidebar } from "../components/Sidebar";
-import { DashboardHeader } from "../components/DashboardHeader";
-import { AddItemModal, ITEM_TYPES } from "../components/AddItemModal";
+import { useSearchParams, useOutletContext } from "react-router-dom";
+import { ITEM_TYPES } from "../components/AddItemModal";
 import { ItemDrawer } from "../components/ItemDrawer";
 import { useVault, VaultItem } from "@/app/providers/VaultProvider";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery, useClipboard } from "@mantine/hooks";
+import { MainHeader } from "@/shared/layouts/components/MainHeader";
 import classes from "./DashboardPage.module.css";
 
 export function DashboardPage() {
-  const { lock, items, deleteItem } = useVault();
+  const { items, deleteItem } = useVault();
   const { t } = useTranslation();
   const isMobile = useMediaQuery("(max-width: 767px)");
   const clipboard = useClipboard();
 
+  const [searchParams] = useSearchParams();
+  const { openMobileSidebar, onOpenAdd } = useOutletContext<{
+    openMobileSidebar: () => void;
+    onOpenAdd: () => void;
+  }>();
+
+  const activeCategory = searchParams.get("category") || "all";
+
   // State controls
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"vault" | "settings">("vault");
-  const [activeCategory, setActiveCategory] = useState("all");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
 
-  const onOpenAdd = () => {
-    setIsAddModalOpen(true);
-  };
-
-  const handleSelectCategory = (cat: string) => {
-    setActiveCategory(cat);
-    setCurrentPage(1);
-  };
+  // Sync category changes and clear selection during render
+  const [prevCategory, setPrevCategory] = useState(activeCategory);
+  if (activeCategory !== prevCategory) {
+    setPrevCategory(activeCategory);
+    setSelectedItemId(null);
+  }
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
@@ -59,9 +60,6 @@ export function DashboardPage() {
   };
 
   const getHeaderTitle = () => {
-    if (activeTab === "settings") {
-      return t("settingsSync");
-    }
     switch (activeCategory) {
       case "all":
         return t("allSub");
@@ -79,9 +77,6 @@ export function DashboardPage() {
   };
 
   const getHeaderDescription = () => {
-    if (activeTab === "settings") {
-      return t("settingsSyncDesc");
-    }
     switch (activeCategory) {
       case "all":
         return t("allSubDesc");
@@ -98,12 +93,8 @@ export function DashboardPage() {
     }
   };
 
-  // Filter items matching active tab, category, and search query
+  // Filter items matching category and search query
   const filteredItems = items.filter((item) => {
-    if (activeTab === "settings") {
-      return false;
-    }
-
     // Category check
     let categoryMatch = false;
     if (activeCategory === "all") {
@@ -301,16 +292,6 @@ export function DashboardPage() {
   };
 
   const renderContent = () => {
-    if (activeTab === "settings") {
-      return (
-        <Stack gap="xs" p="md">
-          <Text c="dimmed">
-            Configure auto-lock intervals, language, and proxy settings.
-          </Text>
-        </Stack>
-      );
-    }
-
     if (filteredItems.length === 0) {
       // Premium Empty State
       return (
@@ -442,31 +423,16 @@ export function DashboardPage() {
   const selectedItem = items.find((item) => item.id === selectedItemId);
 
   return (
-    <Box className={classes.dashboardContainer}>
-      <Sidebar
-        isCollapsed={isCollapsed}
-        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        activeCategory={activeCategory}
-        setActiveCategory={handleSelectCategory}
-        setSelectedItemId={setSelectedItemId}
-        onOpenAdd={onOpenAdd}
-        onLock={lock}
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
+    <>
+      <MainHeader
+        title={getHeaderTitle()}
+        description={getHeaderDescription()}
+        showMenuButton={isMobile}
+        onMenuClick={openMobileSidebar}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
       />
-      <Box className={classes.mainContent}>
-        <DashboardHeader
-          title={getHeaderTitle()}
-          description={getHeaderDescription()}
-          showMenuButton={isMobile}
-          onMenuClick={() => setMobileOpen(true)}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-        />
-        <Box className={classes.scrollContainer}>{renderContent()}</Box>
-      </Box>
+      <Box className={classes.scrollContainer}>{renderContent()}</Box>
 
       {/* Item Details and Edit Drawer */}
       {selectedItem && (
@@ -482,12 +448,6 @@ export function DashboardPage() {
           />
         </>
       )}
-
-      {/* Item Creator Modal */}
-      <AddItemModal
-        opened={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-      />
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -540,7 +500,7 @@ export function DashboardPage() {
           </Group>
         </Stack>
       </Modal>
-    </Box>
+    </>
   );
 }
 

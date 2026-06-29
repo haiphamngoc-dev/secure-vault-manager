@@ -1,2 +1,2 @@
 export * from "./routes/DashboardPage";
-export * from "./components/Sidebar";
+export * from "./routes/SettingsPage";

@@ -19,6 +19,7 @@ import {
   IconSettings,
   IconPlus,
 } from "@tabler/icons-react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { SidebarHeader } from "./SidebarHeader";
 import { SidebarFooter } from "./SidebarFooter";
 import classes from "./Sidebar.module.css";
@@ -27,11 +28,6 @@ import { useTranslation } from "react-i18next";
 interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  activeTab: "vault" | "settings";
-  setActiveTab: (tab: "vault" | "settings") => void;
-  activeCategory: string;
-  setActiveCategory: (category: string) => void;
-  setSelectedItemId: (id: string | null) => void;
   onOpenAdd: () => void;
   onLock: () => void;
   mobileOpen: boolean;
@@ -41,11 +37,6 @@ interface SidebarProps {
 export function Sidebar({
   isCollapsed,
   onToggleCollapse,
-  activeTab,
-  setActiveTab,
-  activeCategory,
-  setActiveCategory,
-  setSelectedItemId,
   onOpenAdd,
   onLock,
   mobileOpen,
@@ -55,6 +46,13 @@ export function Sidebar({
   const isMobile = useMediaQuery("(max-width: 767px)");
   const isTablet = useMediaQuery("(max-width: 991px) and (min-width: 768px)");
   const wasTabletRef = useRef(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  const activeTab = location.pathname === "/settings" ? "settings" : "vault";
+  const activeCategory = searchParams.get("category") || "all";
 
   // Handle auto-collapse on tablet transition if not already collapsed
   useEffect(() => {
@@ -74,17 +72,18 @@ export function Sidebar({
   };
 
   const handleTabChange = (tab: "vault" | "settings") => {
-    setActiveTab(tab);
-    setSelectedItemId(null);
+    if (tab === "settings") {
+      navigate("/settings");
+    } else {
+      navigate("/");
+    }
     if (isMobile) {
       onMobileClose();
     }
   };
 
   const handleCategoryChange = (category: string) => {
-    setActiveTab("vault");
-    setActiveCategory(category);
-    setSelectedItemId(null);
+    navigate(`/?category=${category}`);
     if (isMobile) {
       onMobileClose();
     }
