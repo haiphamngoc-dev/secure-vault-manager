@@ -82,7 +82,7 @@ export function TitleBar({ title }: Readonly<TitleBarProps>) {
         data-tauri-drag-region
       >
         <Image
-          src="/tauri.svg"
+          src="/logo.svg"
           className={classes.logo}
           alt="logo"
           data-tauri-drag-region
