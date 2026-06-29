@@ -36,6 +36,7 @@ import {
   IconCertificate,
   IconWifi,
   IconChevronLeft,
+  IconChevronUp,
   IconX,
   IconTrash,
   IconPlus,
@@ -49,20 +50,13 @@ import { useVault } from "@/app/providers/VaultProvider";
 import classes from "./AddItemModal.module.css";
 
 // Interface definitions
-interface CustomField {
-  id: string;
-  label: string;
-  value: string;
-  type: "text" | "password" | "date" | "url" | "email" | "phone";
-}
-
 interface AddItemModalProps {
   opened: boolean;
   onClose: () => void;
 }
 
 // 22 Predefined Item Type Templates
-const ITEM_TYPES = [
+export const ITEM_TYPES = [
   {
     id: "Login",
     icon: IconKey,
@@ -124,7 +118,7 @@ const ITEM_TYPES = [
   {
     id: "SSH Key",
     icon: IconTerminal,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgSsh,
     isPrimary: false,
     fields: [
       { name: "passphrase", labelKey: "Passphrase", type: "password" },
@@ -135,7 +129,7 @@ const ITEM_TYPES = [
   {
     id: "API Credentials",
     icon: IconCode,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgApi,
     isPrimary: false,
     fields: [
       { name: "apiKey", labelKey: "API Key", type: "text" },
@@ -146,7 +140,7 @@ const ITEM_TYPES = [
   {
     id: "Bank Account",
     icon: IconBuildingBank,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgBank,
     isPrimary: false,
     fields: [
       { name: "bankName", labelKey: "Bank Name", type: "text" },
@@ -158,7 +152,7 @@ const ITEM_TYPES = [
   {
     id: "Crypto Wallet",
     icon: IconWallet,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgCrypto,
     isPrimary: false,
     fields: [
       { name: "walletAddress", labelKey: "Wallet Address", type: "text" },
@@ -190,7 +184,7 @@ const ITEM_TYPES = [
   {
     id: "Driver License",
     icon: IconId,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgLicense,
     isPrimary: false,
     fields: [
       { name: "licenseNumber", labelKey: "License Number", type: "text" },
@@ -201,7 +195,7 @@ const ITEM_TYPES = [
   {
     id: "Email",
     icon: IconMail,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgEmail,
     isPrimary: false,
     fields: [
       { name: "emailAddress", labelKey: "Email Address", type: "text" },
@@ -213,7 +207,7 @@ const ITEM_TYPES = [
   {
     id: "Medical Record",
     icon: IconHeart,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgMedical,
     isPrimary: false,
     fields: [
       { name: "patientName", labelKey: "Patient Name", type: "text" },
@@ -225,7 +219,7 @@ const ITEM_TYPES = [
   {
     id: "Membership",
     icon: IconAward,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgMembership,
     isPrimary: false,
     fields: [
       { name: "organization", labelKey: "Organization Name", type: "text" },
@@ -236,7 +230,7 @@ const ITEM_TYPES = [
   {
     id: "Outdoor License",
     icon: IconMap,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgOutdoor,
     isPrimary: false,
     fields: [
       { name: "licenseType", labelKey: "License Type", type: "text" },
@@ -247,7 +241,7 @@ const ITEM_TYPES = [
   {
     id: "Passport",
     icon: IconEPassport,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgPassport,
     isPrimary: false,
     fields: [
       { name: "passportNumber", labelKey: "Passport Number", type: "text" },
@@ -259,7 +253,7 @@ const ITEM_TYPES = [
   {
     id: "Rewards",
     icon: IconGift,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgRewards,
     isPrimary: false,
     fields: [
       { name: "program", labelKey: "Program Name", type: "text" },
@@ -270,7 +264,7 @@ const ITEM_TYPES = [
   {
     id: "Server",
     icon: IconServer,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgServer,
     isPrimary: false,
     fields: [
       { name: "ipAddress", labelKey: "IP Address", type: "text" },
@@ -283,7 +277,7 @@ const ITEM_TYPES = [
   {
     id: "Social Security Number",
     icon: IconFingerprint,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgSsn,
     isPrimary: false,
     fields: [
       { name: "fullName", labelKey: "Full Name", type: "text" },
@@ -294,7 +288,7 @@ const ITEM_TYPES = [
   {
     id: "Software License",
     icon: IconCertificate,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgSoftware,
     isPrimary: false,
     fields: [
       { name: "licenseKey", labelKey: "License Key", type: "textarea" },
@@ -305,7 +299,7 @@ const ITEM_TYPES = [
   {
     id: "Wireless Router",
     icon: IconWifi,
-    bgClass: classes.bgGeneric,
+    bgClass: classes.bgWifi,
     isPrimary: false,
     fields: [
       { name: "ssid", labelKey: "SSID/Network Name", type: "text" },
@@ -327,9 +321,15 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
 
   // Form states
   const [title, setTitle] = useState("");
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  interface FormField {
+    id: string;
+    label: string;
+    value: string;
+    type: string;
+    isCustom: boolean;
+  }
+  const [formFields, setFormFields] = useState<FormField[]>([]);
   const [websites, setWebsites] = useState<string[]>([""]);
-  const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -341,9 +341,8 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     setShowMore(false);
     setSelectedType(null);
     setTitle("");
-    setFieldValues({});
+    setFormFields([]);
     setWebsites([""]);
-    setCustomFields([]);
     setNotes("");
     setTags([]);
     setTagInput("");
@@ -357,6 +356,19 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
   const handleSelectType = (typeId: string) => {
     setSelectedType(typeId);
     setTitle("");
+    const typeObj = ITEM_TYPES.find((t) => t.id === typeId);
+    if (typeObj) {
+      const initialFields: FormField[] = typeObj.fields.map((f) => ({
+        id: f.name,
+        label: t(f.labelKey, f.labelKey),
+        value: "",
+        type: f.type,
+        isCustom: false,
+      }));
+      setFormFields(initialFields);
+    } else {
+      setFormFields([]);
+    }
   };
 
   // Add website input
@@ -374,35 +386,50 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     setWebsites(websites.filter((_, idx) => idx !== index));
   };
 
+  const handleFieldValueChange = (id: string, val: string) => {
+    setFormFields((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, value: val } : f))
+    );
+  };
+
+  const handleFieldLabelChange = (id: string, label: string) => {
+    setFormFields((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, label } : f))
+    );
+  };
+
   // Custom fields
   const handleAddCustomField = (
     type: "text" | "password" | "date" | "url" | "email" | "phone"
   ) => {
-    const newField: CustomField = {
+    const newField: FormField = {
       id: crypto.randomUUID
         ? crypto.randomUUID()
         : Math.random().toString(36).substring(2, 9),
       label: "",
       value: "",
       type,
+      isCustom: true,
     };
-    setCustomFields([...customFields, newField]);
+    setFormFields((prev) => [...prev, newField]);
   };
 
-  const handleCustomFieldChange = (
-    id: string,
-    key: "label" | "value",
-    val: string
-  ) => {
-    setCustomFields(
-      customFields.map((field) =>
-        field.id === id ? { ...field, [key]: val } : field
-      )
-    );
+  const handleRemoveField = (id: string) => {
+    setFormFields((prev) => prev.filter((f) => f.id !== id));
   };
 
-  const handleRemoveCustomField = (id: string) => {
-    setCustomFields(customFields.filter((field) => field.id !== id));
+  const handleMoveField = (index: number, direction: "up" | "down") => {
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === formFields.length - 1) return;
+
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    setFormFields((prev) => {
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[targetIndex];
+      updated[targetIndex] = temp;
+      return updated;
+    });
   };
 
   // Tags management
@@ -426,11 +453,59 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
       return;
     }
 
-    // Capture standard form fields mapping
-    const username = fieldValues.username || "";
-    const password = fieldValues.password || "";
-    const url =
-      selectedType === "Login" ? websites[0] : fieldValues.server || "";
+    const findFieldVal = (id: string) =>
+      formFields.find((f) => f.id === id)?.value || "";
+
+    // Extract first-class fields if they are in formFields
+    const username = findFieldVal("username") || findFieldVal("adminUser");
+
+    let password = findFieldVal("password");
+    if (!password) password = findFieldVal("passphrase");
+    if (!password) password = findFieldVal("wifiPassword");
+    if (!password) password = findFieldVal("adminPassword");
+    if (!password) password = findFieldVal("apiSecret");
+    if (!password) password = findFieldVal("cvv");
+    if (!password) password = findFieldVal("pin");
+
+    let url = "";
+    if (selectedType === "Login") {
+      url = websites[0];
+    } else {
+      url =
+        findFieldVal("server") ||
+        findFieldVal("endpoint") ||
+        findFieldVal("ipAddress");
+    }
+
+    // Now, any field in formFields that is NOT mapped to first-class fields (username, password, url)
+    // should be saved in customFields!
+    // AND it should preserve the order in which they appear in the form!
+    const customFieldsToSave = formFields
+      .filter((field) => {
+        const isUsername = field.id === "username" || field.id === "adminUser";
+        const isPassword = [
+          "password",
+          "passphrase",
+          "wifiPassword",
+          "adminPassword",
+          "apiSecret",
+          "cvv",
+          "pin",
+        ].includes(field.id);
+        const isUrl =
+          (selectedType === "Login" && field.id === "url") ||
+          field.id === "server" ||
+          field.id === "endpoint" ||
+          field.id === "ipAddress";
+
+        return !isUsername && !isPassword && !isUrl;
+      })
+      .map((field) => ({
+        id: field.id,
+        label: field.label || "Field name",
+        value: field.value,
+        type: field.type === "password" ? "password" : "text",
+      }));
 
     addItem({
       title,
@@ -439,7 +514,8 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
       password: password || undefined,
       url: url || undefined,
       notes: notes || undefined,
-      customFields: customFields.length > 0 ? customFields : undefined,
+      customFields:
+        customFieldsToSave.length > 0 ? customFieldsToSave : undefined,
       tags: tags.length > 0 ? tags : undefined,
     });
 
@@ -458,6 +534,28 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     return localizedName.toLowerCase().includes(search.toLowerCase());
   });
 
+  const renderFieldInput = (field: FormField) => {
+    const commonProps = {
+      placeholder: field.isCustom ? "Value" : field.label,
+      value: field.value,
+      onChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      ) => handleFieldValueChange(field.id, e.currentTarget.value),
+      radius: "md" as const,
+      size: "sm" as const,
+    };
+
+    if (field.type === "password") {
+      return <PasswordInput {...commonProps} />;
+    }
+
+    if (field.type === "textarea") {
+      return <Textarea {...commonProps} rows={3} />;
+    }
+
+    return <TextInput {...commonProps} type={field.type} />;
+  };
+
   return (
     <Modal
       opened={opened}
@@ -470,6 +568,14 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
         backgroundOpacity: 0.5,
       }}
       styles={{
+        overlay: {
+          top: 32,
+          height: "calc(100vh - 32px)",
+        },
+        inner: {
+          top: 32,
+          height: "calc(100vh - 32px)",
+        },
         content: {
           backgroundColor: "rgba(26, 27, 30, 0.95)",
           border: "1px solid var(--mantine-color-dark-4)",
@@ -499,7 +605,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
               onChange={(e) => setSearch(e.currentTarget.value)}
               leftSection={<IconSearch size={18} />}
               radius="md"
-              size="md"
+              size="sm"
             />
           </Box>
 
@@ -601,7 +707,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
             >
               <IconChevronLeft size={20} />
             </ActionIcon>
-            <Title order={3} className={classes.modalTitle}>
+            <Title order={4} className={classes.modalTitle}>
               {t("newItemTitle")}
             </Title>
             <ActionIcon variant="subtle" color="gray" onClick={handleClose}>
@@ -615,9 +721,6 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
               className={`${classes.iconWrapperLarge} ${activeType?.bgClass}`}
             >
               {activeType && React.createElement(activeType.icon, { size: 30 })}
-              <div className={classes.dropdownIndicator}>
-                <IconChevronDown size={10} color="gray" />
-              </div>
             </div>
             <TextInput
               placeholder={t("enterTitle")}
@@ -625,58 +728,82 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
               onChange={(e) => setTitle(e.currentTarget.value)}
               className={classes.titleInput}
               radius="md"
-              size="md"
+              size="sm"
               required
             />
           </Box>
 
-          {/* Dynamic template inputs */}
-          {activeType && activeType.fields.length > 0 && (
+          {/* Dynamic template and custom inputs */}
+          {formFields.length > 0 && (
             <Box className={classes.formSection}>
-              {activeType.fields.map((field) => (
-                <Box key={field.name} mb="md">
-                  {field.type === "password" ? (
-                    <PasswordInput
-                      label={t(field.labelKey)}
-                      placeholder={t(field.labelKey)}
-                      value={fieldValues[field.name] || ""}
-                      onChange={(e) =>
-                        setFieldValues({
-                          ...fieldValues,
-                          [field.name]: e.currentTarget.value,
-                        })
-                      }
-                      radius="md"
-                    />
-                  ) : field.type === "textarea" ? (
-                    <Textarea
-                      label={t(field.labelKey)}
-                      placeholder={t(field.labelKey)}
-                      value={fieldValues[field.name] || ""}
-                      onChange={(e) =>
-                        setFieldValues({
-                          ...fieldValues,
-                          [field.name]: e.currentTarget.value,
-                        })
-                      }
-                      radius="md"
-                      rows={3}
-                    />
-                  ) : (
-                    <TextInput
-                      label={t(field.labelKey)}
-                      placeholder={t(field.labelKey)}
-                      type={field.type}
-                      value={fieldValues[field.name] || ""}
-                      onChange={(e) =>
-                        setFieldValues({
-                          ...fieldValues,
-                          [field.name]: e.currentTarget.value,
-                        })
-                      }
-                      radius="md"
-                    />
-                  )}
+              {formFields.map((field, idx) => (
+                <Box key={field.id} className={classes.customFieldBox} mb="md">
+                  {/* Field Header / Label row */}
+                  <Group justify="space-between" align="center" mb={4}>
+                    {field.isCustom ? (
+                      <TextInput
+                        variant="unstyled"
+                        placeholder="Field name"
+                        value={field.label}
+                        onChange={(e) =>
+                          handleFieldLabelChange(
+                            field.id,
+                            e.currentTarget.value
+                          )
+                        }
+                        radius="md"
+                        size="sm"
+                        style={{ flex: 1 }}
+                        styles={{
+                          input: {
+                            fontWeight: 600,
+                            color: "var(--mantine-color-white)",
+                            fontSize: "var(--mantine-font-size-sm)",
+                            padding: 0,
+                            height: "auto",
+                            minHeight: 0,
+                          },
+                        }}
+                      />
+                    ) : (
+                      <Text size="sm" fw={600} c="white">
+                        {field.label}
+                      </Text>
+                    )}
+
+                    {/* Move and delete controls */}
+                    <Group gap={4}>
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="sm"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveField(idx, "up")}
+                      >
+                        <IconChevronUp size={14} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="sm"
+                        disabled={idx === formFields.length - 1}
+                        onClick={() => handleMoveField(idx, "down")}
+                      >
+                        <IconChevronDown size={14} />
+                      </ActionIcon>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        size="sm"
+                        onClick={() => handleRemoveField(field.id)}
+                      >
+                        <IconTrash size={14} />
+                      </ActionIcon>
+                    </Group>
+                  </Group>
+
+                  {/* Input value row */}
+                  {renderFieldInput(field)}
                 </Box>
               ))}
             </Box>
@@ -698,6 +825,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
                     }
                     leftSection={<IconGlobe size={16} />}
                     radius="md"
+                    size="sm"
                     style={{ flex: 1 }}
                   />
                   {websites.length > 1 && (
@@ -722,67 +850,6 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
               >
                 {t("addWebsiteBtn")}
               </Button>
-            </Box>
-          )}
-
-          {/* Dynamic custom fields section */}
-          {customFields.length > 0 && (
-            <Box className={classes.formSection}>
-              {customFields.map((field) => (
-                <Box key={field.id} className={classes.customFieldRow}>
-                  <TextInput
-                    placeholder="Field name"
-                    value={field.label}
-                    onChange={(e) =>
-                      handleCustomFieldChange(
-                        field.id,
-                        "label",
-                        e.currentTarget.value
-                      )
-                    }
-                    radius="md"
-                    className={classes.customFieldLabel}
-                  />
-                  {field.type === "password" ? (
-                    <PasswordInput
-                      placeholder="Password"
-                      value={field.value}
-                      onChange={(e) =>
-                        handleCustomFieldChange(
-                          field.id,
-                          "value",
-                          e.currentTarget.value
-                        )
-                      }
-                      radius="md"
-                      className={classes.customFieldValue}
-                    />
-                  ) : (
-                    <TextInput
-                      placeholder="Value"
-                      type={field.type}
-                      value={field.value}
-                      onChange={(e) =>
-                        handleCustomFieldChange(
-                          field.id,
-                          "value",
-                          e.currentTarget.value
-                        )
-                      }
-                      radius="md"
-                      className={classes.customFieldValue}
-                    />
-                  )}
-                  <ActionIcon
-                    variant="subtle"
-                    color="red"
-                    onClick={() => handleRemoveCustomField(field.id)}
-                    mb={4}
-                  >
-                    <IconTrash size={16} />
-                  </ActionIcon>
-                </Box>
-              ))}
             </Box>
           )}
 
@@ -831,21 +898,10 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
               value={notes}
               onChange={(e) => setNotes(e.currentTarget.value)}
               radius="md"
+              size="sm"
               rows={4}
             />
           </Box>
-
-          {/* Location Mock Button */}
-          <Group mb="md">
-            <Button
-              variant="subtle"
-              color="indigo"
-              size="xs"
-              leftSection={<IconPlus size={14} />}
-            >
-              {t("addLocation")}
-            </Button>
-          </Group>
 
           {/* Tags management */}
           <Box className={classes.formSection}>

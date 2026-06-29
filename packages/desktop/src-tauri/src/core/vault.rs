@@ -1,5 +1,15 @@
 use serde::{Deserialize, Serialize};
 
+/// Represents a custom field associated with a vault item.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct CustomField {
+    pub id: String,
+    pub label: String,
+    pub value: String,
+    pub r#type: String,
+}
+
 /// Represents a single credential item stored in the secure vault.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -20,6 +30,10 @@ pub struct VaultItem {
     pub category: Option<String>,
     /// Last modification timestamp.
     pub updated_at: u64,
+    /// Custom metadata fields.
+    pub custom_fields: Option<Vec<CustomField>>,
+    /// Multi-tag groups.
+    pub tags: Option<Vec<String>>,
 }
 
 /// Represents the complete structure of the decrypted vault database file.

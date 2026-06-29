@@ -34,6 +34,10 @@ interface VaultContextType {
   items: VaultItem[];
   addItem: (item: Omit<VaultItem, "id" | "updatedAt">) => void;
   deleteItem: (id: string) => void;
+  updateItem: (
+    id: string,
+    updatedFields: Partial<Omit<VaultItem, "id" | "updatedAt">>
+  ) => void;
 }
 
 const VaultContext = createContext<VaultContextType | null>(null);
@@ -59,9 +63,26 @@ export function VaultProvider({
     },
     []
   );
+
   const deleteItem = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }, []);
+
+  const updateItem = useCallback(
+    (
+      id: string,
+      updatedFields: Partial<Omit<VaultItem, "id" | "updatedAt">>
+    ) => {
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? { ...item, ...updatedFields, updatedAt: Date.now() }
+            : item
+        )
+      );
+    },
+    []
+  );
   const checkVaultStatus = useCallback(async () => {
     try {
       const initialized = await invoke<boolean>("check_vault_initialized");
@@ -90,6 +111,10 @@ export function VaultProvider({
         const unlocked = await invoke<boolean>("check_is_unlocked");
         if (!active) return;
         setStatus(unlocked ? "unlocked" : "locked");
+        if (unlocked) {
+          const loaded: VaultItem[] = await invoke("load_items");
+          if (active) setItems(loaded);
+        }
       } catch (err) {
         console.error("Failed to check vault status on mount:", err);
         if (active) {
@@ -103,6 +128,7 @@ export function VaultProvider({
     const unlistenLocked = listen("vault-locked", () => {
       if (active) {
         setStatus("locked");
+        setItems([]);
       }
     });
 
@@ -116,6 +142,8 @@ export function VaultProvider({
     async (password: string) => {
       await invoke("unlock_vault", { password });
       await checkVaultStatus();
+      const loaded: VaultItem[] = await invoke("load_items");
+      setItems(loaded);
     },
     [checkVaultStatus]
   );
@@ -130,9 +158,23 @@ export function VaultProvider({
     async (password: string) => {
       await invoke("initialize_vault", { password });
       await checkVaultStatus();
+      setItems([]);
     },
     [checkVaultStatus]
   );
+
+  // Auto-save vault items when they change
+  useEffect(() => {
+    if (status !== "unlocked") return;
+    const save = async () => {
+      try {
+        await invoke("save_items", { items });
+      } catch (err) {
+        console.error("Failed to save items:", err);
+      }
+    };
+    save();
+  }, [items, status]);
 
   const value = useMemo(
     () => ({
@@ -144,6 +186,7 @@ export function VaultProvider({
       items,
       addItem,
       deleteItem,
+      updateItem,
     }),
     [
       status,
@@ -154,6 +197,7 @@ export function VaultProvider({
       items,
       addItem,
       deleteItem,
+      updateItem,
     ]
   );
 

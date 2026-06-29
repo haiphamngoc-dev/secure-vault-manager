@@ -6,8 +6,9 @@ import {
   Tooltip,
   Stack,
   Text,
+  TextInput,
 } from "@mantine/core";
-import { IconBrandGithub, IconMenu2 } from "@tabler/icons-react";
+import { IconBrandGithub, IconMenu2, IconSearch } from "@tabler/icons-react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useTranslation } from "react-i18next";
 import classes from "./DashboardHeader.module.css";
@@ -18,6 +19,8 @@ interface DashboardHeaderProps {
   description: string;
   showMenuButton?: boolean;
   onMenuClick?: () => void;
+  searchQuery?: string;
+  onSearchChange?: (val: string) => void;
 }
 
 export function DashboardHeader({
@@ -25,6 +28,8 @@ export function DashboardHeader({
   description,
   showMenuButton = false,
   onMenuClick,
+  searchQuery = "",
+  onSearchChange,
 }: Readonly<DashboardHeaderProps>) {
   const { t } = useTranslation();
 
@@ -68,6 +73,22 @@ export function DashboardHeader({
             )}
           </Stack>
         </Group>
+
+        {onSearchChange && (
+          <Box
+            style={{ flex: "0 1 400px", margin: "0 var(--mantine-spacing-md)" }}
+          >
+            <TextInput
+              placeholder={t("searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.currentTarget.value)}
+              leftSection={<IconSearch size={16} />}
+              radius="md"
+              size="sm"
+            />
+          </Box>
+        )}
+
         <Group gap="xs" style={{ flexShrink: 0 }}>
           <LanguageToggle />
           <Tooltip label={t("githubLabel")} position="left" withArrow>

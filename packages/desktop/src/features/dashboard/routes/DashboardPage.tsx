@@ -6,27 +6,23 @@ import {
   Text,
   Badge,
   ActionIcon,
-  Tooltip,
   Stack,
-  Code,
   Button,
+  Pagination,
+  Modal,
 } from "@mantine/core";
 import {
   IconCopy,
-  IconEye,
-  IconEyeOff,
   IconTrash,
   IconShield,
   IconKey,
-  IconFileText,
-  IconCreditCard,
-  IconDatabase,
   IconPlus,
 } from "@tabler/icons-react";
 import { Sidebar } from "../components/Sidebar";
 import { DashboardHeader } from "../components/DashboardHeader";
-import { AddItemModal } from "../components/AddItemModal";
-import { useVault } from "@/app/providers/VaultProvider";
+import { AddItemModal, ITEM_TYPES } from "../components/AddItemModal";
+import { ItemDrawer } from "../components/ItemDrawer";
+import { useVault, VaultItem } from "@/app/providers/VaultProvider";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery, useClipboard } from "@mantine/hooks";
 import classes from "./DashboardPage.module.css";
@@ -43,15 +39,23 @@ export function DashboardPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"vault" | "settings">("vault");
   const [activeCategory, setActiveCategory] = useState("all");
-  const [, setSelectedItemId] = useState<string | null>(null);
-
-  // Password reveal trackers
-  const [revealPasswords, setRevealPasswords] = useState<
-    Record<string, boolean>
-  >({});
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
 
   const onOpenAdd = () => {
     setIsAddModalOpen(true);
+  };
+
+  const handleSelectCategory = (cat: string) => {
+    setActiveCategory(cat);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
   };
 
   const getHeaderTitle = () => {
@@ -94,49 +98,206 @@ export function DashboardPage() {
     }
   };
 
-  const togglePasswordReveal = (id: string) => {
-    setRevealPasswords((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
-  // Filter items matching active tab and category
+  // Filter items matching active tab, category, and search query
   const filteredItems = items.filter((item) => {
     if (activeTab === "settings") {
       return false;
     }
+
+    // Category check
+    let categoryMatch = false;
     if (activeCategory === "all") {
-      return true;
+      categoryMatch = true;
+    } else if (activeCategory === "Login" && item.category === "Login") {
+      categoryMatch = true;
+    } else if (activeCategory === "Card" && item.category === "Credit Card") {
+      categoryMatch = true;
+    } else if (activeCategory === "Note" && item.category === "Secure Note") {
+      categoryMatch = true;
+    } else if (activeCategory === "Database" && item.category === "Database") {
+      categoryMatch = true;
     }
-    if (activeCategory === "Login" && item.category === "Login") {
-      return true;
-    }
-    if (activeCategory === "Card" && item.category === "Credit Card") {
-      return true;
-    }
-    if (activeCategory === "Note" && item.category === "Secure Note") {
-      return true;
-    }
-    if (activeCategory === "Database" && item.category === "Database") {
-      return true;
-    }
-    return false;
+
+    if (!categoryMatch) return false;
+
+    // Search query check
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase().trim();
+
+    const fieldsMatch =
+      item.title.toLowerCase().includes(query) ||
+      item.category.toLowerCase().includes(query) ||
+      (item.username && item.username.toLowerCase().includes(query)) ||
+      (item.url && item.url.toLowerCase().includes(query)) ||
+      (item.notes && item.notes.toLowerCase().includes(query));
+
+    const customFieldsMatch = item.customFields?.some(
+      (cf) =>
+        cf.label.toLowerCase().includes(query) ||
+        cf.value.toLowerCase().includes(query)
+    );
+
+    return fieldsMatch || customFieldsMatch;
   });
 
   const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "Login":
-        return <IconKey size={16} />;
-      case "Credit Card":
-        return <IconCreditCard size={16} />;
-      case "Secure Note":
-        return <IconFileText size={16} />;
-      case "Database":
-        return <IconDatabase size={16} />;
-      default:
-        return <IconKey size={16} />;
+    const type = ITEM_TYPES.find((t) => t.id === category);
+    const IconComponent = type?.icon || IconKey;
+    return <IconComponent size={18} />;
+  };
+
+  const renderCardFields = (item: VaultItem) => {
+    const fields: {
+      label: string;
+      value: string;
+      isMasked: boolean;
+      rawValue: string;
+    }[] = [];
+
+    if (item.username) {
+      fields.push({
+        label: t("usernameLabel", "Username"),
+        value: item.username,
+        isMasked: false,
+        rawValue: item.username,
+      });
     }
+
+    if (item.password) {
+      fields.push({
+        label: t("passwordLabel", "Password"),
+        value: "••••••••",
+        isMasked: true,
+        rawValue: item.password,
+      });
+    }
+
+    if (item.url) {
+      fields.push({
+        label: "URL",
+        value: item.url,
+        isMasked: false,
+        rawValue: item.url,
+      });
+    }
+
+    // Capture specific custom template fields for summary cards
+    if (item.customFields) {
+      item.customFields.forEach((cf) => {
+        const labelLower = cf.label.toLowerCase();
+        const idLower = cf.id.toLowerCase();
+
+        const isSensitive =
+          cf.type === "password" ||
+          idLower.includes("password") ||
+          idLower.includes("secret") ||
+          idLower.includes("cvv") ||
+          idLower.includes("pin") ||
+          idLower.includes("passphrase") ||
+          labelLower.includes("mật khẩu") ||
+          labelLower.includes("pin") ||
+          labelLower.includes("cvv");
+
+        const isCardNumber =
+          idLower.includes("cardnumber") ||
+          labelLower.includes("card number") ||
+          labelLower.includes("số thẻ");
+
+        if (isSensitive) {
+          fields.push({
+            label: cf.label,
+            value: "••••••••",
+            isMasked: true,
+            rawValue: cf.value,
+          });
+        } else if (isCardNumber) {
+          const clean = cf.value.replace(/\s+/g, "");
+          const maskedValue =
+            clean.length >= 4
+              ? `•••• •••• •••• ${clean.slice(-4)}`
+              : "••••••••";
+          fields.push({
+            label: cf.label,
+            value: maskedValue,
+            isMasked: true,
+            rawValue: cf.value,
+          });
+        } else if (
+          [
+            "cardholder",
+            "hostname",
+            "bankname",
+            "fullname",
+            "emailaddress",
+            "ipaddress",
+          ].some((k) => idLower.includes(k))
+        ) {
+          fields.push({
+            label: cf.label,
+            value: cf.value,
+            isMasked: false,
+            rawValue: cf.value,
+          });
+        }
+      });
+    }
+
+    const visibleFields = fields.slice(0, 3);
+
+    return (
+      <Stack gap={4} mt="xs">
+        {visibleFields.map((f, index) => (
+          <Group
+            key={index}
+            justify="space-between"
+            align="center"
+            wrap="nowrap"
+          >
+            <Text
+              size="xs"
+              c="dimmed"
+              style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              {f.label}:
+            </Text>
+            <Group
+              gap="xs"
+              style={{ flex: 1, minWidth: 0, justifyContent: "flex-end" }}
+            >
+              <Text
+                size="xs"
+                c="white"
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  fontFamily: "var(--mantine-font-family-monospace)",
+                }}
+              >
+                {f.value}
+              </Text>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="sm"
+                style={{ flexShrink: 0 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clipboard.copy(f.rawValue);
+                }}
+              >
+                <IconCopy size={12} />
+              </ActionIcon>
+            </Group>
+          </Group>
+        ))}
+      </Stack>
+    );
   };
 
   const renderContent = () => {
@@ -159,6 +320,7 @@ export function DashboardPage() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            flex: 1,
             minHeight: "350px",
             textAlign: "center",
           }}
@@ -170,11 +332,10 @@ export function DashboardPage() {
             style={{ marginBottom: "16px", opacity: 0.8 }}
           />
           <Text fw={700} size="lg" c="white" mb={4}>
-            No secure items found
+            {t("noItemsFound")}
           </Text>
           <Text size="sm" c="dimmed" mb="lg" style={{ maxWidth: 350 }}>
-            There are no items created under this category. Click the add button
-            to get started.
+            {t("noItemsDesc")}
           </Text>
           <Button
             leftSection={<IconPlus size={16} />}
@@ -182,194 +343,103 @@ export function DashboardPage() {
             radius="md"
             onClick={onOpenAdd}
           >
-            Create Item
+            {t("createItem")}
           </Button>
         </Box>
       );
     }
 
+    const itemsPerPage = 9;
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+    const paginatedItems = filteredItems.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+
     return (
-      <Stack gap="md" p="xs">
-        {filteredItems.map((item) => (
-          <Card
-            key={item.id}
-            withBorder
-            radius="md"
-            style={{
-              backgroundColor: "rgba(30, 31, 33, 0.4)",
-              borderColor: "var(--mantine-color-dark-5)",
-              color: "white",
-            }}
-          >
-            <Group justify="space-between" mb="xs">
-              <Group gap="xs">
-                {getCategoryIcon(item.category)}
-                <Text fw={700} size="md">
-                  {item.title}
-                </Text>
-                <Badge size="xs" variant="light" color="indigo">
-                  {item.category}
-                </Badge>
-              </Group>
-              <ActionIcon
-                variant="subtle"
-                color="red"
-                size="sm"
-                onClick={() => deleteItem(item.id)}
+      <Box
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100%",
+          justifyContent: "space-between",
+        }}
+      >
+        <Box className={classes.itemsGrid}>
+          {paginatedItems.map((item) => (
+            <Card
+              key={item.id}
+              withBorder
+              radius="md"
+              className={classes.itemCard}
+              onClick={() => setSelectedItemId(item.id)}
+            >
+              <Group
+                justify="space-between"
+                align="center"
+                mb="xs"
+                wrap="nowrap"
               >
-                <IconTrash size={16} />
-              </ActionIcon>
-            </Group>
-
-            <Stack gap="xs" mt="xs">
-              {item.username && (
-                <Group gap="xs" wrap="nowrap">
-                  <Text size="xs" c="dimmed" w={100} style={{ flexShrink: 0 }}>
-                    Username:
-                  </Text>
-                  <Text size="sm" style={{ flex: 1 }}>
-                    {item.username}
-                  </Text>
-                  <Tooltip label="Copy Username" withArrow>
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      size="sm"
-                      onClick={() => clipboard.copy(item.username)}
-                    >
-                      <IconCopy size={14} />
-                    </ActionIcon>
-                  </Tooltip>
-                </Group>
-              )}
-
-              {item.password && (
-                <Group gap="xs" wrap="nowrap">
-                  <Text size="xs" c="dimmed" w={100} style={{ flexShrink: 0 }}>
-                    Password:
-                  </Text>
-                  <Text size="sm" style={{ flex: 1 }}>
-                    {revealPasswords[item.id] ? item.password : "••••••••"}
-                  </Text>
-                  <Group gap="xs" style={{ flexShrink: 0 }}>
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      size="sm"
-                      onClick={() => togglePasswordReveal(item.id)}
-                    >
-                      {revealPasswords[item.id] ? (
-                        <IconEyeOff size={14} />
-                      ) : (
-                        <IconEye size={14} />
-                      )}
-                    </ActionIcon>
-                    <Tooltip label="Copy Password" withArrow>
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        size="sm"
-                        onClick={() => clipboard.copy(item.password)}
-                      >
-                        <IconCopy size={14} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Group>
-                </Group>
-              )}
-
-              {item.url && (
-                <Group gap="xs" wrap="nowrap">
-                  <Text size="xs" c="dimmed" w={100} style={{ flexShrink: 0 }}>
-                    Url/Host:
-                  </Text>
+                <Group
+                  gap="xs"
+                  style={{ overflow: "hidden", flex: 1 }}
+                  wrap="nowrap"
+                >
+                  <div className={classes.cardIconWrapper}>
+                    {getCategoryIcon(item.category)}
+                  </div>
                   <Text
+                    fw={700}
                     size="sm"
-                    c="indigo.4"
                     style={{
-                      flex: 1,
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                    }}
-                    onClick={() => window.open(item.url, "_blank")}
-                  >
-                    {item.url}
-                  </Text>
-                </Group>
-              )}
-
-              {/* Dynamic custom fields */}
-              {item.customFields?.map((field) => (
-                <Group key={field.id} gap="xs" wrap="nowrap">
-                  <Text size="xs" c="dimmed" w={100} style={{ flexShrink: 0 }}>
-                    {field.label || "Custom field"}:
-                  </Text>
-                  <Text size="sm" style={{ flex: 1 }}>
-                    {field.type === "password" && !revealPasswords[field.id]
-                      ? "••••••••"
-                      : field.value}
-                  </Text>
-                  <Group gap="xs" style={{ flexShrink: 0 }}>
-                    {field.type === "password" && (
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        size="sm"
-                        onClick={() => togglePasswordReveal(field.id)}
-                      >
-                        {revealPasswords[field.id] ? (
-                          <IconEyeOff size={14} />
-                        ) : (
-                          <IconEye size={14} />
-                        )}
-                      </ActionIcon>
-                    )}
-                    <Tooltip label="Copy Value" withArrow>
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        size="sm"
-                        onClick={() => clipboard.copy(field.value)}
-                      >
-                        <IconCopy size={14} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Group>
-                </Group>
-              ))}
-
-              {item.notes && (
-                <Box mt="xs">
-                  <Text size="xs" c="dimmed" mb={4}>
-                    Notes:
-                  </Text>
-                  <Code
-                    block
-                    style={{
-                      backgroundColor: "rgba(20, 21, 23, 0.4)",
-                      color: "var(--mantine-color-dark-2)",
+                      color: "white",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    {item.notes}
-                  </Code>
-                </Box>
-              )}
-
-              {item.tags && (
-                <Group gap="xs" mt="xs">
-                  {item.tags.map((tag) => (
-                    <Badge key={tag} size="xs" variant="outline" color="indigo">
-                      {tag}
-                    </Badge>
-                  ))}
+                    {item.title}
+                  </Text>
                 </Group>
-              )}
-            </Stack>
-          </Card>
-        ))}
-      </Stack>
+                <ActionIcon
+                  variant="subtle"
+                  color="red"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setItemToDeleteId(item.id);
+                  }}
+                >
+                  <IconTrash size={14} />
+                </ActionIcon>
+              </Group>
+
+              <Badge size="xs" variant="light" color="indigo" mb="xs">
+                {t(`types.${item.category}`, item.category)}
+              </Badge>
+
+              {renderCardFields(item)}
+            </Card>
+          ))}
+        </Box>
+
+        {totalPages > 1 && (
+          <Group justify="center" mt="xl" pb="md">
+            <Pagination
+              total={totalPages}
+              value={currentPage}
+              onChange={setCurrentPage}
+              color="indigo"
+              radius="md"
+              size="sm"
+            />
+          </Group>
+        )}
+      </Box>
     );
   };
+
+  const selectedItem = items.find((item) => item.id === selectedItemId);
 
   return (
     <Box className={classes.dashboardContainer}>
@@ -379,7 +449,7 @@ export function DashboardPage() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
+        setActiveCategory={handleSelectCategory}
         setSelectedItemId={setSelectedItemId}
         onOpenAdd={onOpenAdd}
         onLock={lock}
@@ -392,15 +462,83 @@ export function DashboardPage() {
           description={getHeaderDescription()}
           showMenuButton={isMobile}
           onMenuClick={() => setMobileOpen(true)}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
         />
         <Box className={classes.scrollContainer}>{renderContent()}</Box>
       </Box>
+
+      {/* Item Details and Edit Drawer */}
+      {selectedItem && (
+        <>
+          <Box
+            className={classes.drawerOverlay}
+            onClick={() => setSelectedItemId(null)}
+          />
+          <ItemDrawer
+            item={selectedItem}
+            onClose={() => setSelectedItemId(null)}
+          />
+        </>
+      )}
 
       {/* Item Creator Modal */}
       <AddItemModal
         opened={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        opened={itemToDeleteId !== null}
+        onClose={() => setItemToDeleteId(null)}
+        title={t("confirmDeleteTitle", "Xác nhận xóa")}
+        centered
+        radius="md"
+        size="sm"
+        styles={{
+          content: {
+            backgroundColor: "rgba(26, 27, 30, 0.98)",
+            border: "1px solid var(--mantine-color-dark-4)",
+            color: "white",
+          },
+        }}
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            {t(
+              "confirmDeleteDesc",
+              "Bạn có chắc chắn muốn xóa mục này? Hành động này không thể hoàn tác."
+            )}
+          </Text>
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              radius="md"
+              size="xs"
+              onClick={() => setItemToDeleteId(null)}
+            >
+              {t("cancelBtn")}
+            </Button>
+            <Button
+              color="red"
+              radius="md"
+              size="xs"
+              onClick={() => {
+                if (itemToDeleteId) {
+                  deleteItem(itemToDeleteId);
+                  if (selectedItemId === itemToDeleteId) {
+                    setSelectedItemId(null);
+                  }
+                  setItemToDeleteId(null);
+                }
+              }}
+            >
+              {t("delete", "Xóa")}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Box>
   );
 }

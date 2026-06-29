@@ -36,6 +36,9 @@
   "passwordLabel": "Mật khẩu",
   "addWebsiteBtn": "Thêm trang web khác",
   "successCreate": "Đã tạo mục thành công!",
+  "noItemsFound": "Không tìm thấy mục bảo mật nào",
+  "noItemsDesc": "Chưa có mục nào được tạo trong danh mục này. Hãy nhấn nút thêm để bắt đầu.",
+  "createItem": "Tạo mục mới",
   "types": {
     "Login": "Tài khoản đăng nhập",
     "Secure Note": "Ghi chú bảo mật",

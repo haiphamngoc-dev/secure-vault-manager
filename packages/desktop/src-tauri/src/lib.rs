@@ -249,6 +249,8 @@ pub fn run() {
             commands::vault::initialize_vault,
             commands::vault::unlock_vault,
             commands::vault::lock_vault,
+            commands::vault::load_items,
+            commands::vault::save_items,
             commands::pairing::start_pairing,
         ])
         .run(tauri::generate_context!())

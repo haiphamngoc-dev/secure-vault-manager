@@ -1,6 +1,10 @@
 use tauri::State;
 
-use crate::core::storage::{initialize_new_vault, unlock_and_load_vault, vault_exists};
+use crate::core::storage::{
+    initialize_new_vault, load_vault_with_key, save_existing_vault, unlock_and_load_vault,
+    vault_exists,
+};
+use crate::core::vault::{Vault, VaultItem};
 use crate::AppState;
 
 /// Command to check if the vault database has been initialized on the system.
@@ -49,5 +53,40 @@ pub fn unlock_vault(
 pub fn lock_vault(state: State<'_, AppState>) -> Result<(), String> {
     *state.vault_key.lock().unwrap() = None;
     *state.vault_salt.lock().unwrap() = None;
+    Ok(())
+}
+
+/// Command to load all items from the decrypted vault database.
+#[tauri::command]
+pub fn load_items(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<Vec<VaultItem>, String> {
+    let key_guard = state.vault_key.lock().unwrap();
+    let key = key_guard.as_ref().ok_or("Vault is locked.")?;
+
+    let vault = load_vault_with_key(&app, key)?;
+    Ok(vault.items)
+}
+
+/// Command to encrypt and save the vault items.
+#[tauri::command]
+pub fn save_items(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    items: Vec<VaultItem>,
+) -> Result<(), String> {
+    let key_guard = state.vault_key.lock().unwrap();
+    let key = key_guard.as_ref().ok_or("Vault is locked.")?;
+
+    let salt_guard = state.vault_salt.lock().unwrap();
+    let salt = salt_guard.as_ref().ok_or("Vault is locked.")?;
+
+    let vault = Vault {
+        version: 1,
+        items,
+    };
+
+    save_existing_vault(&app, key, salt, &vault)?;
     Ok(())
 }

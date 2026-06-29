@@ -36,6 +36,9 @@
   "passwordLabel": "Password",
   "addWebsiteBtn": "Add another website",
   "successCreate": "Item created successfully!",
+  "noItemsFound": "No secure items found",
+  "noItemsDesc": "There are no items created under this category. Click the add button to get started.",
+  "createItem": "Create Item",
   "types": {
     "Login": "Login",
     "Secure Note": "Secure Note",

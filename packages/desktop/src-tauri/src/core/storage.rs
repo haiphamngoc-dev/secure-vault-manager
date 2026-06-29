@@ -160,3 +160,35 @@ pub fn save_existing_vault(
 
     Ok(())
 }
+
+/// Loads and decrypts the vault database using the in-memory derived key.
+pub fn load_vault_with_key(
+    app: &tauri::AppHandle,
+    key: &[u8; 32],
+) -> Result<Vault, String> {
+    let path = get_vault_path(app)?;
+    if !path.exists() {
+        return Err("Vault database does not exist.".to_string());
+    }
+
+    let mut file = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    if buffer.len() < SALT_SIZE + NONCE_SIZE {
+        return Err("Vault database is corrupted or incomplete.".to_string());
+    }
+
+    let mut nonce = [0u8; NONCE_SIZE];
+    nonce.copy_from_slice(&buffer[SALT_SIZE..SALT_SIZE + NONCE_SIZE]);
+
+    let ciphertext = &buffer[SALT_SIZE + NONCE_SIZE..];
+
+    let plaintext = decrypt(key, ciphertext, &nonce)?;
+
+    let vault: Vault = serde_json::from_slice(&plaintext)
+        .map_err(|e| format!("Failed to parse decrypted database: {}", e))?;
+
+    Ok(vault)
+}
