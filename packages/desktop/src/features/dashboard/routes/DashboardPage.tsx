@@ -476,6 +476,7 @@ export function DashboardPage() {
             onClick={() => setSelectedItemId(null)}
           />
           <ItemDrawer
+            key={selectedItem.id}
             item={selectedItem}
             onClose={() => setSelectedItemId(null)}
           />

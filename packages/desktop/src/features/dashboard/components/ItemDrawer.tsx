@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Group,
@@ -52,43 +52,9 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
   const { updateItem, deleteItem } = useVault();
   const clipboard = useClipboard();
 
-  // Mode state
-  const [isEditing, setIsEditing] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // View state: track which password fields are revealed
-  const [revealedFields, setRevealedFields] = useState<Record<string, boolean>>(
-    {}
-  );
-
-  // Form states (used in Edit mode)
-  const [title, setTitle] = useState(item.title);
-  const [formFields, setFormFields] = useState<FormField[]>([]);
-  const [websites, setWebsites] = useState<string[]>([""]);
-  const [notes, setNotes] = useState(item.notes || "");
-  const [tags, setTags] = useState<string[]>(item.tags || []);
-  const [tagInput, setTagInput] = useState("");
-
-  const activeType = ITEM_TYPES.find((type) => type.id === item.category);
-
-  // Initialize form fields from the item when it changes or editing is toggled
-  useEffect(() => {
-    setTitle(item.title);
-    setNotes(item.notes || "");
-    setTags(item.tags || []);
-    setTagInput("");
-
-    // Initialize websites for Login type
-    if (item.category === "Login") {
-      setWebsites(item.url ? [item.url] : [""]);
-    } else {
-      setWebsites([""]);
-    }
-
-    // Parse item fields
+  const getInitialFormFields = (): FormField[] => {
     const parsedFields: FormField[] = [];
 
-    // Add first class fields if present
     if (item.username !== undefined) {
       parsedFields.push({
         id: "username",
@@ -123,7 +89,6 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
       });
     }
 
-    // Add custom fields
     if (item.customFields) {
       item.customFields.forEach((cf) => {
         const template = ITEM_TYPES.find((t) => t.id === item.category);
@@ -138,8 +103,41 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
       });
     }
 
-    setFormFields(parsedFields);
-  }, [item, isEditing, t]);
+    return parsedFields;
+  };
+
+  // Mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // View state: track which password fields are revealed
+  const [revealedFields, setRevealedFields] = useState<Record<string, boolean>>(
+    {}
+  );
+
+  // Form states (used in Edit mode)
+  const [title, setTitle] = useState(item.title);
+  const [formFields, setFormFields] = useState<FormField[]>(() =>
+    getInitialFormFields()
+  );
+  const [websites, setWebsites] = useState<string[]>(() =>
+    item.category === "Login" && item.url ? [item.url] : [""]
+  );
+  const [notes, setNotes] = useState(item.notes || "");
+  const [tags, setTags] = useState<string[]>(item.tags || []);
+  const [tagInput, setTagInput] = useState("");
+
+  const activeType = ITEM_TYPES.find((type) => type.id === item.category);
+
+  // Reset form fields back to the current item's values
+  const resetForm = () => {
+    setTitle(item.title);
+    setNotes(item.notes || "");
+    setTags(item.tags || []);
+    setTagInput("");
+    setWebsites(item.category === "Login" && item.url ? [item.url] : [""]);
+    setFormFields(getInitialFormFields());
+  };
 
   // View mode eye toggle helper
   const toggleReveal = (fieldId: string) => {
@@ -240,15 +238,12 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
     if (!password) password = findFieldVal("cvv");
     if (!password) password = findFieldVal("pin");
 
-    let url = "";
-    if (item.category === "Login") {
-      url = websites[0];
-    } else {
-      url =
-        findFieldVal("server") ||
-        findFieldVal("endpoint") ||
-        findFieldVal("ipAddress");
-    }
+    const url =
+      item.category === "Login"
+        ? websites[0]
+        : findFieldVal("server") ||
+          findFieldVal("endpoint") ||
+          findFieldVal("ipAddress");
 
     const customFieldsToSave = formFields
       .filter((field) => {
@@ -678,7 +673,10 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
               variant="default"
               size="xs"
               radius="md"
-              onClick={() => setIsEditing(false)}
+              onClick={() => {
+                setIsEditing(false);
+                resetForm();
+              }}
             >
               {t("cancelBtn")}
             </Button>
@@ -709,7 +707,10 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
               size="xs"
               radius="md"
               leftSection={<IconEdit size={14} />}
-              onClick={() => setIsEditing(true)}
+              onClick={() => {
+                resetForm();
+                setIsEditing(true);
+              }}
             >
               {t("edit", "Chỉnh sửa")}
             </Button>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 512 512"
+     width="512"
+     height="512">
+
+    <defs>
+        <radialGradient id="bgGrad"
+                        cx="50%"
+                        cy="35%"
+                        r="80%">
+            <stop offset="0%" stop-color="#182B56"/>
+            <stop offset="100%" stop-color="#09111F"/>
+        </radialGradient>
+
+        <linearGradient id="accent"
+                        x1="0%"
+                        y1="100%"
+                        x2="100%"
+                        y2="0%">
+            <stop offset="0%" stop-color="#00B4D8"/>
+            <stop offset="55%" stop-color="#00F5D4"/>
+            <stop offset="100%" stop-color="#97EFE9"/>
+        </linearGradient>
+
+        <linearGradient id="glass"
+                        x1="0%"
+                        y1="0%"
+                        x2="100%"
+                        y2="100%">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.12"/>
+            <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.03"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0.28"/>
+        </linearGradient>
+
+        <filter id="shadow"
+                x="-20%"
+                y="-20%"
+                width="140%"
+                height="140%">
+            <feDropShadow dx="0"
+                          dy="14"
+                          stdDeviation="18"
+                          flood-color="#000"
+                          flood-opacity="0.55"/>
+        </filter>
+
+        <filter id="glow"
+                x="-40%"
+                y="-40%"
+                width="180%"
+                height="180%">
+            <feGaussianBlur stdDeviation="6"
+                            result="blur"/>
+            <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+
+    <rect width="512"
+          height="512"
+          rx="112"
+          fill="url(#bgGrad)"/>
+
+    <g filter="url(#shadow)">
+
+        <path
+            d="
+            M256 64
+            C348 64 404 96 418 146
+            C418 280 362 387 256 448
+            C150 387 94 280 94 146
+            C108 96 164 64 256 64Z"
+            fill="#101C36"
+            stroke="url(#accent)"
+            stroke-width="3"/>
+
+        <path
+            d="
+            M256 64
+            C164 64 108 96 94 146
+            C94 280 150 387 256 448Z"
+            fill="url(#glass)"/>
+
+        <path
+            d="
+            M256 118
+            C316 118 352 138 362 170
+            C362 260 326 332 256 382
+            C186 332 150 260 150 170
+            C160 138 196 118 256 118Z"
+            fill="none"
+            stroke="url(#accent)"
+            stroke-width="2"
+            opacity=".30"/>
+
+        <path d="M180 185H332" stroke="#00F5D4" stroke-width="2" opacity=".18"/>
+        <path d="M170 220H342" stroke="#00F5D4" stroke-width="2" opacity=".12"/>
+        <path d="M192 345H320" stroke="#00F5D4" stroke-width="2" opacity=".10"/>
+
+        <g transform="translate(256 250)" filter="url(#glow)">
+
+            <path
+                d="
+                M-34 -6
+                V-42
+                C-34 -74 -16 -96 0 -96
+                C16 -96 34 -74 34 -42
+                V-6"
+                fill="none"
+                stroke="url(#accent)"
+                stroke-width="11"
+                stroke-linecap="round"/>
+
+            <rect
+                x="-52"
+                y="-6"
+                width="104"
+                height="96"
+                rx="22"
+                fill="#13274D"
+                stroke="url(#accent)"
+                stroke-width="4"/>
+
+            <circle cx="0" cy="42" r="22" fill="none" stroke="#00F5D4" stroke-width="2" stroke-dasharray="4 3"/>
+            <circle cx="0" cy="42" r="14" fill="none" stroke="#97EFE9" stroke-width="1.5"/>
+            
+            <rect x="-5" y="37" width="10" height="10" rx="2" fill="#97EFE9"/>
+            
+            <path d="M-32 20h15" stroke="#00F5D4" stroke-width="2" stroke-linecap="round"/>
+            <path d="M17 20h15" stroke="#00F5D4" stroke-width="2" stroke-linecap="round"/>
+            <path d="M0 12v10" stroke="#00F5D4" stroke-width="2" stroke-linecap="round"/>
+            <path d="M0 64v12" stroke="#00F5D4" stroke-width="2" stroke-linecap="round"/>
+        </g>
+
+        <circle cx="180" cy="185" r="3.5" fill="#00F5D4"/>
+        <circle cx="332" cy="185" r="3.5" fill="#00F5D4"/>
+        <circle cx="170" cy="220" r="3" fill="#00F5D4"/>
+        <circle cx="342" cy="220" r="3" fill="#00F5D4"/>
+        
+        <path d="M180 185V220" stroke="#00F5D4" stroke-width="1.5" opacity="0.4"/>
+        <path d="M332 185V220" stroke="#00F5D4" stroke-width="1.5" opacity="0.4"/>
+
+        <circle cx="256" cy="104" r="4" fill="#FFFFFF" opacity=".35"/>
+        <circle cx="256" cy="400" r="4" fill="#FFFFFF" opacity=".35"/>
+    </g>
+</svg>

@@ -467,15 +467,12 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     if (!password) password = findFieldVal("cvv");
     if (!password) password = findFieldVal("pin");
 
-    let url = "";
-    if (selectedType === "Login") {
-      url = websites[0];
-    } else {
-      url =
-        findFieldVal("server") ||
-        findFieldVal("endpoint") ||
-        findFieldVal("ipAddress");
-    }
+    const url =
+      selectedType === "Login"
+        ? websites[0]
+        : findFieldVal("server") ||
+          findFieldVal("endpoint") ||
+          findFieldVal("ipAddress");
 
     // Now, any field in formFields that is NOT mapped to first-class fields (username, password, url)
     // should be saved in customFields!
