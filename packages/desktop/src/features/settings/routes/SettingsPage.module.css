@@ -1,0 +1,56 @@
+.scrollContainer {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: var(--mantine-spacing-xl);
+  overflow-y: auto;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 767px) {
+  .scrollContainer {
+    padding: var(--mantine-spacing-md);
+  }
+}
+
+.settingsContainer {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.sectionCard {
+  background-color: rgba(30, 31, 33, 0.45);
+  border: 1px solid var(--mantine-color-dark-5);
+  backdrop-filter: blur(16px);
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-lg);
+  margin-bottom: var(--mantine-spacing-lg);
+  color: white;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sectionCard:hover {
+  border-color: var(--mantine-color-indigo-8);
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+}
+
+.sectionTitle {
+  font-size: var(--mantine-font-size-md);
+  font-weight: 700;
+  margin-bottom: var(--mantine-spacing-md);
+  border-bottom: 1px solid var(--mantine-color-dark-4);
+  padding-bottom: var(--mantine-spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+}
+
+.sectionIcon {
+  color: var(--mantine-color-indigo-4);
+  display: flex;
+  align-items: center;
+}

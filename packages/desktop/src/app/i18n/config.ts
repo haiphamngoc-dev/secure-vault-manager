@@ -14,6 +14,8 @@ import unlockEn from "@/features/unlock/i18n/en.json";
 import unlockVi from "@/features/unlock/i18n/vi.json";
 import dashboardEn from "@/features/dashboard/i18n/en.json";
 import dashboardVi from "@/features/dashboard/i18n/vi.json";
+import settingsEn from "@/features/settings/i18n/en.json";
+import settingsVi from "@/features/settings/i18n/vi.json";
 import { invoke } from "@tauri-apps/api/core";
 
 /**
@@ -26,6 +28,7 @@ const resources = {
       ...onboardingEn,
       ...unlockEn,
       ...dashboardEn,
+      ...settingsEn,
     },
   },
   vi: {
@@ -34,6 +37,7 @@ const resources = {
       ...onboardingVi,
       ...unlockVi,
       ...dashboardVi,
+      ...settingsVi,
     },
   },
 };

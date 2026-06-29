@@ -34,6 +34,175 @@ interface SidebarProps {
   onMobileClose: () => void;
 }
 
+interface NewItemButtonProps {
+  isCollapsed: boolean;
+  onClick: () => void;
+}
+
+function NewItemButton({ isCollapsed, onClick }: Readonly<NewItemButtonProps>) {
+  const { t } = useTranslation();
+
+  if (isCollapsed) {
+    return (
+      <Tooltip label={t("newItemBtn")} position="right" withArrow>
+        <ActionIcon
+          size="xl"
+          color="indigo"
+          radius="md"
+          onClick={onClick}
+          style={{ alignSelf: "center", marginBottom: "8px" }}
+        >
+          <IconPlus size={22} />
+        </ActionIcon>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Button
+      leftSection={<IconPlus size={16} />}
+      onClick={onClick}
+      radius="md"
+      color="indigo"
+      style={{ marginBottom: "8px" }}
+    >
+      {t("newItemBtn")}
+    </Button>
+  );
+}
+
+interface VaultNavLinkProps {
+  isCollapsed: boolean;
+  activeTab: string;
+  activeCategory: string;
+  onTabChange: (tab: "vault" | "settings") => void;
+  onCategoryChange: (category: string) => void;
+}
+
+function VaultNavLink({
+  isCollapsed,
+  activeTab,
+  activeCategory,
+  onTabChange,
+  onCategoryChange,
+}: Readonly<VaultNavLinkProps>) {
+  const { t } = useTranslation();
+  const isActive = activeTab === "vault";
+
+  if (isCollapsed) {
+    return (
+      <Tooltip label={t("vaultItems")} position="right" withArrow>
+        <ActionIcon
+          size="xl"
+          variant={isActive ? "light" : "subtle"}
+          color={isActive ? "indigo" : "gray"}
+          radius="md"
+          onClick={() => onTabChange("vault")}
+          style={{ alignSelf: "center" }}
+        >
+          <IconShield size={22} />
+        </ActionIcon>
+      </Tooltip>
+    );
+  }
+
+  const isCategoryActive = (category: string) =>
+    isActive && activeCategory === category;
+
+  return (
+    <NavLink
+      label={t("vaultItems")}
+      leftSection={<IconShield size={18} />}
+      className={`${classes.sidebarNavlink} ${
+        isActive ? classes.sidebarNavlinkActive : ""
+      }`}
+      active={isActive}
+      onClick={() => onTabChange("vault")}
+      defaultOpened
+    >
+      <NavLink
+        label={t("allSub")}
+        leftSection={<IconShield size={16} />}
+        active={isCategoryActive("all")}
+        onClick={() => onCategoryChange("all")}
+        className={classes.sidebarSubNavlink}
+      />
+      <NavLink
+        label={t("logins")}
+        leftSection={<IconKey size={16} />}
+        active={isCategoryActive("Login")}
+        onClick={() => onCategoryChange("Login")}
+        className={classes.sidebarSubNavlink}
+      />
+      <NavLink
+        label={t("notes")}
+        leftSection={<IconFileText size={16} />}
+        active={isCategoryActive("Note")}
+        onClick={() => onCategoryChange("Note")}
+        className={classes.sidebarSubNavlink}
+      />
+      <NavLink
+        label={t("cards")}
+        leftSection={<IconCreditCard size={16} />}
+        active={isCategoryActive("Card")}
+        onClick={() => onCategoryChange("Card")}
+        className={classes.sidebarSubNavlink}
+      />
+      <NavLink
+        label={t("databases")}
+        leftSection={<IconDatabase size={16} />}
+        active={isCategoryActive("Database")}
+        onClick={() => onCategoryChange("Database")}
+        className={classes.sidebarSubNavlink}
+      />
+    </NavLink>
+  );
+}
+
+interface SettingsNavLinkProps {
+  isCollapsed: boolean;
+  activeTab: string;
+  onTabChange: (tab: "vault" | "settings") => void;
+}
+
+function SettingsNavLink({
+  isCollapsed,
+  activeTab,
+  onTabChange,
+}: Readonly<SettingsNavLinkProps>) {
+  const { t } = useTranslation();
+  const isActive = activeTab === "settings";
+
+  if (isCollapsed) {
+    return (
+      <Tooltip label={t("settingsSync")} position="right" withArrow>
+        <ActionIcon
+          size="xl"
+          variant={isActive ? "light" : "subtle"}
+          color={isActive ? "indigo" : "gray"}
+          radius="md"
+          onClick={() => onTabChange("settings")}
+          style={{ alignSelf: "center" }}
+        >
+          <IconSettings size={22} />
+        </ActionIcon>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <NavLink
+      label={t("settingsSync")}
+      leftSection={<IconSettings size={18} />}
+      className={`${classes.sidebarNavlink} ${
+        isActive ? classes.sidebarNavlinkActive : ""
+      }`}
+      active={isActive}
+      onClick={() => onTabChange("settings")}
+    />
+  );
+}
+
 export function Sidebar({
   isCollapsed,
   onToggleCollapse,
@@ -42,7 +211,6 @@ export function Sidebar({
   mobileOpen,
   onMobileClose,
 }: Readonly<SidebarProps>) {
-  const { t } = useTranslation();
   const isMobile = useMediaQuery("(max-width: 767px)");
   const isTablet = useMediaQuery("(max-width: 991px) and (min-width: 768px)");
   const wasTabletRef = useRef(false);
@@ -105,117 +273,24 @@ export function Sidebar({
       {/* Sidebar Navigation */}
       <ScrollArea style={{ flex: 1 }} p="xs">
         <Stack gap="xs">
-          {/* Nút Thêm Mới Item */}
-          {effectiveCollapsed ? (
-            <Tooltip label={t("newItemBtn")} position="right" withArrow>
-              <ActionIcon
-                size="xl"
-                color="indigo"
-                radius="md"
-                onClick={handleOpenAdd}
-                style={{ alignSelf: "center", marginBottom: "8px" }}
-              >
-                <IconPlus size={22} />
-              </ActionIcon>
-            </Tooltip>
-          ) : (
-            <Button
-              leftSection={<IconPlus size={16} />}
-              onClick={handleOpenAdd}
-              radius="md"
-              color="indigo"
-              style={{ marginBottom: "8px" }}
-            >
-              {t("newItemBtn")}
-            </Button>
-          )}
+          <NewItemButton
+            isCollapsed={effectiveCollapsed}
+            onClick={handleOpenAdd}
+          />
 
-          {effectiveCollapsed ? (
-            <Tooltip label={t("vaultItems")} position="right" withArrow>
-              <ActionIcon
-                size="xl"
-                variant={activeTab === "vault" ? "light" : "subtle"}
-                color={activeTab === "vault" ? "indigo" : "gray"}
-                radius="md"
-                onClick={() => handleTabChange("vault")}
-                style={{ alignSelf: "center" }}
-              >
-                <IconShield size={22} />
-              </ActionIcon>
-            </Tooltip>
-          ) : (
-            <NavLink
-              label={t("vaultItems")}
-              leftSection={<IconShield size={18} />}
-              className={`${classes.sidebarNavlink} ${
-                activeTab === "vault" ? classes.sidebarNavlinkActive : ""
-              }`}
-              active={activeTab === "vault"}
-              onClick={() => handleTabChange("vault")}
-              defaultOpened
-            >
-              <NavLink
-                label={t("allSub")}
-                leftSection={<IconShield size={16} />}
-                active={activeTab === "vault" && activeCategory === "all"}
-                onClick={() => handleCategoryChange("all")}
-                className={classes.sidebarSubNavlink}
-              />
-              <NavLink
-                label={t("logins")}
-                leftSection={<IconKey size={16} />}
-                active={activeTab === "vault" && activeCategory === "Login"}
-                onClick={() => handleCategoryChange("Login")}
-                className={classes.sidebarSubNavlink}
-              />
-              <NavLink
-                label={t("notes")}
-                leftSection={<IconFileText size={16} />}
-                active={activeTab === "vault" && activeCategory === "Note"}
-                onClick={() => handleCategoryChange("Note")}
-                className={classes.sidebarSubNavlink}
-              />
-              <NavLink
-                label={t("cards")}
-                leftSection={<IconCreditCard size={16} />}
-                active={activeTab === "vault" && activeCategory === "Card"}
-                onClick={() => handleCategoryChange("Card")}
-                className={classes.sidebarSubNavlink}
-              />
-              <NavLink
-                label={t("databases")}
-                leftSection={<IconDatabase size={16} />}
-                active={activeTab === "vault" && activeCategory === "Database"}
-                onClick={() => handleCategoryChange("Database")}
-                className={classes.sidebarSubNavlink}
-              />
-            </NavLink>
-          )}
+          <VaultNavLink
+            isCollapsed={effectiveCollapsed}
+            activeTab={activeTab}
+            activeCategory={activeCategory}
+            onTabChange={handleTabChange}
+            onCategoryChange={handleCategoryChange}
+          />
 
-          {effectiveCollapsed ? (
-            <Tooltip label={t("settingsSync")} position="right" withArrow>
-              <ActionIcon
-                size="xl"
-                variant={activeTab === "settings" ? "light" : "subtle"}
-                color={activeTab === "settings" ? "indigo" : "gray"}
-                radius="md"
-                onClick={() => handleTabChange("settings")}
-                style={{ alignSelf: "center" }}
-              >
-                <IconSettings size={22} />
-              </ActionIcon>
-            </Tooltip>
-          ) : (
-            <NavLink
-              label={t("settingsSync")}
-              leftSection={<IconSettings size={18} />}
-              className={`${classes.sidebarNavlink} ${
-                activeTab === "settings" ? classes.sidebarNavlinkActive : ""
-              }`}
-              active={activeTab === "settings"}
-              onClick={() => handleTabChange("settings")}
-            />
-          )}
+          <SettingsNavLink
+            isCollapsed={effectiveCollapsed}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
         </Stack>
       </ScrollArea>
 

@@ -125,6 +125,12 @@ fn toggle_window_visibility(app: &tauri::AppHandle) {
     }
 }
 
+pub(crate) fn sync_tray_menu_lang(app: &tauri::AppHandle, lang: &str) {
+    let state = app.state::<AppState>();
+    *state.lang.lock().unwrap() = AppLang::from(lang);
+    update_tray_menu(app);
+}
+
 /// Command to change the system tray menu language.
 ///
 /// Updates the application state language preference and refreshes the tray menu.
@@ -135,9 +141,7 @@ fn toggle_window_visibility(app: &tauri::AppHandle) {
 /// * `lang` - A string slice indicating the language locale (e.g. "vi" or "en").
 #[tauri::command]
 fn set_tray_menu_lang(app: tauri::AppHandle, lang: &str) {
-    let state = app.state::<AppState>();
-    *state.lang.lock().unwrap() = AppLang::from(lang);
-    update_tray_menu(&app);
+    sync_tray_menu_lang(&app, lang);
 }
 
 /// Command to terminate the application.
@@ -218,6 +222,12 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            // Load initial settings to update tray language
+            let app_handle = app.app_handle();
+            if let Ok(settings) = commands::settings::get_settings(app_handle.clone()) {
+                sync_tray_menu_lang(app_handle, &settings.lang);
+            }
+
             // Populate initial tray menu
             update_tray_menu(app.app_handle());
 
@@ -244,6 +254,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             set_tray_menu_lang,
             exit_app,
+            commands::settings::get_settings,
+            commands::settings::save_settings,
             commands::vault::check_vault_initialized,
             commands::vault::check_is_unlocked,
             commands::vault::initialize_vault,

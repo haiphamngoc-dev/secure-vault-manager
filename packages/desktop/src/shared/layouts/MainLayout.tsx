@@ -4,9 +4,11 @@ import { Outlet } from "react-router-dom";
 import { useVault } from "@/app/providers/VaultProvider";
 import { Sidebar } from "./components/Sidebar";
 import { AddItemModal } from "@/features/dashboard/components/AddItemModal";
+import { useAutoLock } from "@/features/settings/hooks/useAutoLock";
 import classes from "./MainLayout.module.css";
 
 export function MainLayout() {
+  useAutoLock();
   const { lock } = useVault();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);

@@ -1,5 +1,12 @@
-/// Stub command for browser extension pairing and token exchange logic.
+/// Command for browser extension pairing and token exchange logic.
 #[tauri::command]
 pub fn start_pairing() -> Result<String, String> {
-    Ok("Pairing stub".to_string())
+    use rand::distributions::Alphanumeric;
+    use rand::{thread_rng, Rng};
+    let token: String = thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(16)
+        .map(char::from)
+        .collect();
+    Ok(token)
 }

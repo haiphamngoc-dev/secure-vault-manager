@@ -7,7 +7,8 @@
 import { AppLayout } from "@/shared/layouts/AppLayout";
 import { MainLayout } from "@/shared/layouts/MainLayout";
 import { createHashRouter } from "react-router-dom";
-import { DashboardPage, SettingsPage } from "@/features/dashboard";
+import { DashboardPage } from "@/features/dashboard";
+import { SettingsPage } from "@/features/settings";
 
 /**
  * Global application router instance.
