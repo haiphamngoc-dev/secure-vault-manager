@@ -14,8 +14,9 @@ const NONCE_SIZE: usize = 12;
 pub fn get_vault_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let app_dir = app
         .path()
-        .app_data_dir()
-        .map_err(|e| format!("Failed to get app data directory: {}", e))?;
+        .local_data_dir()
+        .map_err(|e| format!("Failed to get local data directory: {}", e))?
+        .join("secure-vault-manager");
     Ok(app_dir.join(VAULT_FILENAME))
 }
 
