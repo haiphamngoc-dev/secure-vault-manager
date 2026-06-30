@@ -15,6 +15,7 @@ pub struct AppSettings {
     pub extension_id: Option<String>,
     #[serde(default = "default_true")]
     pub minimize_to_tray: bool,
+    pub pairing_token: Option<String>,
 }
 
 impl Default for AppSettings {
@@ -24,6 +25,7 @@ impl Default for AppSettings {
             auto_lock_interval: "15m".to_string(),
             extension_id: None,
             minimize_to_tray: true,
+            pairing_token: None,
         }
     }
 }

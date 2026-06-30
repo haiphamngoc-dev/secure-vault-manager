@@ -234,6 +234,12 @@ pub fn run() {
             // Populate initial tray menu
             update_tray_menu(app.app_handle());
 
+            // Start the IPC socket/pipe listener
+            #[cfg(not(windows))]
+            ipc::socket::start_unix_socket_listener(app.app_handle().clone());
+            #[cfg(windows)]
+            ipc::pipe::start_named_pipe_listener(app.app_handle().clone());
+
             Ok(())
         })
         // Global listener for window events (e.g. intercepts close to minimize to tray)
