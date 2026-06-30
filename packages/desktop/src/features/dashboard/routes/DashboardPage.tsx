@@ -10,6 +10,9 @@ import {
   Button,
   Pagination,
   Modal,
+  Table,
+  Tooltip,
+  Checkbox,
 } from "@mantine/core";
 import {
   IconCopy,
@@ -17,6 +20,7 @@ import {
   IconShield,
   IconKey,
   IconPlus,
+  IconDownload,
 } from "@tabler/icons-react";
 import { useSearchParams, useOutletContext } from "react-router-dom";
 import { ITEM_TYPES } from "../components/AddItemModal";
@@ -24,6 +28,7 @@ import { ItemDrawer } from "../components/ItemDrawer";
 import { useVault, VaultItem } from "@/app/providers/VaultProvider";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery, useClipboard } from "@mantine/hooks";
+
 import { MainHeader } from "@/shared/layouts/components/MainHeader";
 import classes from "./DashboardPage.module.css";
 
@@ -31,6 +36,7 @@ export function DashboardPage() {
   const { items, deleteItem } = useVault();
   const { t } = useTranslation();
   const isMobile = useMediaQuery("(max-width: 767px)");
+  const showCards = useMediaQuery("(max-width: 1024px)");
   const clipboard = useClipboard();
 
   const [searchParams] = useSearchParams();
@@ -46,12 +52,15 @@ export function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   // Sync category changes and clear selection during render
   const [prevCategory, setPrevCategory] = useState(activeCategory);
   if (activeCategory !== prevCategory) {
     setPrevCategory(activeCategory);
     setSelectedItemId(null);
+    setSelectedIds(new Set());
   }
 
   const handleSearchChange = (query: string) => {
@@ -96,18 +105,12 @@ export function DashboardPage() {
   // Filter items matching category and search query
   const filteredItems = items.filter((item) => {
     // Category check
-    let categoryMatch = false;
-    if (activeCategory === "all") {
-      categoryMatch = true;
-    } else if (activeCategory === "Login" && item.category === "Login") {
-      categoryMatch = true;
-    } else if (activeCategory === "Card" && item.category === "Credit Card") {
-      categoryMatch = true;
-    } else if (activeCategory === "Note" && item.category === "Secure Note") {
-      categoryMatch = true;
-    } else if (activeCategory === "Database" && item.category === "Database") {
-      categoryMatch = true;
-    }
+    const categoryMatch =
+      activeCategory === "all" ||
+      (activeCategory === "Login" && item.category === "Login") ||
+      (activeCategory === "Card" && item.category === "Credit Card") ||
+      (activeCategory === "Note" && item.category === "Secure Note") ||
+      (activeCategory === "Database" && item.category === "Database");
 
     if (!categoryMatch) return false;
 
@@ -118,9 +121,9 @@ export function DashboardPage() {
     const fieldsMatch =
       item.title.toLowerCase().includes(query) ||
       item.category.toLowerCase().includes(query) ||
-      (item.username && item.username.toLowerCase().includes(query)) ||
-      (item.url && item.url.toLowerCase().includes(query)) ||
-      (item.notes && item.notes.toLowerCase().includes(query));
+      item.username?.toLowerCase().includes(query) ||
+      item.url?.toLowerCase().includes(query) ||
+      item.notes?.toLowerCase().includes(query);
 
     const customFieldsMatch = item.customFields?.some(
       (cf) =>
@@ -174,7 +177,7 @@ export function DashboardPage() {
 
     // Capture specific custom template fields for summary cards
     if (item.customFields) {
-      item.customFields.forEach((cf) => {
+      for (const cf of item.customFields) {
         const labelLower = cf.label.toLowerCase();
         const idLower = cf.id.toLowerCase();
 
@@ -193,6 +196,14 @@ export function DashboardPage() {
           idLower.includes("cardnumber") ||
           labelLower.includes("card number") ||
           labelLower.includes("số thẻ");
+
+        const isCommonField =
+          idLower.includes("cardholder") ||
+          idLower.includes("hostname") ||
+          idLower.includes("bankname") ||
+          idLower.includes("fullname") ||
+          idLower.includes("emailaddress") ||
+          idLower.includes("ipaddress");
 
         if (isSensitive) {
           fields.push({
@@ -213,16 +224,7 @@ export function DashboardPage() {
             isMasked: true,
             rawValue: cf.value,
           });
-        } else if (
-          [
-            "cardholder",
-            "hostname",
-            "bankname",
-            "fullname",
-            "emailaddress",
-            "ipaddress",
-          ].some((k) => idLower.includes(k))
-        ) {
+        } else if (isCommonField) {
           fields.push({
             label: cf.label,
             value: cf.value,
@@ -230,16 +232,16 @@ export function DashboardPage() {
             rawValue: cf.value,
           });
         }
-      });
+      }
     }
 
     const visibleFields = fields.slice(0, 3);
 
     return (
       <Stack gap={4} mt="xs">
-        {visibleFields.map((f, index) => (
+        {visibleFields.map((f) => (
           <Group
-            key={index}
+            key={f.label}
             justify="space-between"
             align="center"
             wrap="nowrap"
@@ -291,133 +293,65 @@ export function DashboardPage() {
     );
   };
 
-  const renderContent = () => {
-    if (filteredItems.length === 0) {
-      // Premium Empty State
-      return (
-        <Box
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            flex: 1,
-            minHeight: "350px",
-            textAlign: "center",
-          }}
-          px="md"
-        >
-          <IconShield
-            size={64}
-            color="var(--mantine-color-indigo-5)"
-            style={{ marginBottom: "16px", opacity: 0.8 }}
-          />
-          <Text fw={700} size="lg" c="white" mb={4}>
-            {t("noItemsFound")}
-          </Text>
-          <Text size="sm" c="dimmed" mb="lg" style={{ maxWidth: 350 }}>
-            {t("noItemsDesc")}
-          </Text>
-          <Button
-            leftSection={<IconPlus size={16} />}
-            color="indigo"
-            radius="md"
-            onClick={onOpenAdd}
-          >
-            {t("createItem")}
-          </Button>
-        </Box>
+  const getPrimaryIdentifier = (item: VaultItem) => {
+    if (item.username) return item.username;
+    if (item.category === "Credit Card") {
+      const cardField = item.customFields?.find(
+        (cf) =>
+          cf.label.toLowerCase().includes("card number") ||
+          cf.label.toLowerCase().includes("số thẻ") ||
+          cf.id.toLowerCase().includes("cardnumber")
       );
+      if (cardField) {
+        const clean = cardField.value.replace(/\s+/g, "");
+        return clean.length >= 4
+          ? `•••• •••• •••• ${clean.slice(-4)}`
+          : "••••••••";
+      }
     }
+    return "-";
+  };
 
-    const itemsPerPage = 9;
-    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-    const paginatedItems = filteredItems.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
-    );
+  const itemsPerPage = showCards ? 9 : 15;
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const paginatedItems = filteredItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-    return (
-      <Box
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100%",
-          justifyContent: "space-between",
-        }}
-      >
-        <Box className={classes.itemsGrid}>
-          {paginatedItems.map((item) => (
-            <Card
-              key={item.id}
-              withBorder
-              radius="md"
-              className={classes.itemCard}
-              onClick={() => setSelectedItemId(item.id)}
-            >
-              <Group
-                justify="space-between"
-                align="center"
-                mb="xs"
-                wrap="nowrap"
-              >
-                <Group
-                  gap="xs"
-                  style={{ overflow: "hidden", flex: 1 }}
-                  wrap="nowrap"
-                >
-                  <div className={classes.cardIconWrapper}>
-                    {getCategoryIcon(item.category)}
-                  </div>
-                  <Text
-                    fw={700}
-                    size="sm"
-                    style={{
-                      color: "white",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {item.title}
-                  </Text>
-                </Group>
-                <ActionIcon
-                  variant="subtle"
-                  color="red"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setItemToDeleteId(item.id);
-                  }}
-                >
-                  <IconTrash size={14} />
-                </ActionIcon>
-              </Group>
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
-              <Badge size="xs" variant="light" color="indigo" mb="xs">
-                {t(`types.${item.category}`, item.category)}
-              </Badge>
+  const isAllPageSelected =
+    paginatedItems.length > 0 &&
+    paginatedItems.every((item) => selectedIds.has(item.id));
+  const isSomePageSelected = paginatedItems.some((item) =>
+    selectedIds.has(item.id)
+  );
 
-              {renderCardFields(item)}
-            </Card>
-          ))}
-        </Box>
-
-        {totalPages > 1 && (
-          <Group justify="center" mt="xl" pb="md">
-            <Pagination
-              total={totalPages}
-              value={currentPage}
-              onChange={setCurrentPage}
-              color="indigo"
-              radius="md"
-              size="sm"
-            />
-          </Group>
-        )}
-      </Box>
-    );
+  const toggleSelectAllPage = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (isAllPageSelected) {
+        for (const item of paginatedItems) {
+          next.delete(item.id);
+        }
+      } else {
+        for (const item of paginatedItems) {
+          next.add(item.id);
+        }
+      }
+      return next;
+    });
   };
 
   const selectedItem = items.find((item) => item.id === selectedItemId);
@@ -431,8 +365,361 @@ export function DashboardPage() {
         onMenuClick={openMobileSidebar}
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
+        onItemClick={(id) => setSelectedItemId(id)}
       />
-      <Box className={classes.scrollContainer}>{renderContent()}</Box>
+      <Box className={classes.scrollContainer}>
+        {filteredItems.length === 0 ? (
+          // Premium Empty State
+          <Box
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              flex: 1,
+              minHeight: "350px",
+              textAlign: "center",
+            }}
+            px="md"
+          >
+            <IconShield
+              size={64}
+              color="var(--mantine-color-indigo-5)"
+              style={{ marginBottom: "16px", opacity: 0.8 }}
+            />
+            <Text fw={700} size="lg" c="white" mb={4}>
+              {t("noItemsFound")}
+            </Text>
+            <Text size="sm" c="dimmed" mb="lg" style={{ maxWidth: 350 }}>
+              {t("noItemsDesc")}
+            </Text>
+            <Button
+              leftSection={<IconPlus size={16} />}
+              color="indigo"
+              radius="md"
+              onClick={onOpenAdd}
+            >
+              {t("createItem")}
+            </Button>
+          </Box>
+        ) : (
+          <Box
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              minHeight: "100%",
+            }}
+          >
+            <Box
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                flex: 1,
+              }}
+            >
+              {selectedIds.size > 0 && (
+                <Box
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    backgroundColor: "rgba(36, 37, 41, 0.85)",
+                    border: "1px solid var(--mantine-color-dark-4)",
+                    borderRadius: "var(--mantine-radius-md)",
+                    padding: "12px 16px",
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 10,
+                    backdropFilter: "blur(12px)",
+                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
+                  }}
+                >
+                  <Group gap="xs">
+                    <Badge variant="filled" color="indigo" radius="sm">
+                      {selectedIds.size}
+                    </Badge>
+                    <Text size="sm" fw={600} c="white">
+                      {t("selectedItemsCount", { count: selectedIds.size })}
+                    </Text>
+                  </Group>
+                  <Group gap="sm">
+                    <Button
+                      variant="subtle"
+                      color="gray"
+                      size="xs"
+                      radius="md"
+                      leftSection={<IconDownload size={14} />}
+                      onClick={() => {
+                        // Export functionality will be wired here
+                      }}
+                    >
+                      {t("exportSelected")}
+                    </Button>
+                    <Button
+                      color="red"
+                      variant="light"
+                      size="xs"
+                      radius="md"
+                      leftSection={<IconTrash size={14} />}
+                      onClick={() => setConfirmBulkDelete(true)}
+                    >
+                      {t("deleteSelected")}
+                    </Button>
+                  </Group>
+                </Box>
+              )}
+
+              {showCards ? (
+                <Box className={classes.itemsGrid}>
+                  {paginatedItems.map((item) => (
+                    <Card
+                      key={item.id}
+                      withBorder
+                      radius="md"
+                      className={classes.itemCard}
+                      onClick={() => setSelectedItemId(item.id)}
+                    >
+                      <Group
+                        justify="space-between"
+                        align="center"
+                        wrap="nowrap"
+                        mb="xs"
+                      >
+                        <Group
+                          gap="xs"
+                          style={{ overflow: "hidden", flex: 1 }}
+                          wrap="nowrap"
+                        >
+                          <Checkbox
+                            checked={selectedIds.has(item.id)}
+                            onChange={() => toggleSelect(item.id)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className={classes.cardIconWrapper}>
+                            {getCategoryIcon(item.category)}
+                          </div>
+                          <Text
+                            fw={700}
+                            size="sm"
+                            style={{
+                              color: "white",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {item.title}
+                          </Text>
+                        </Group>
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setItemToDeleteId(item.id);
+                          }}
+                        >
+                          <IconTrash size={14} />
+                        </ActionIcon>
+                      </Group>
+
+                      <Badge size="xs" variant="light" color="indigo" mb="xs">
+                        {t(`types.${item.category}`, item.category)}
+                      </Badge>
+
+                      {renderCardFields(item)}
+                    </Card>
+                  ))}
+                </Box>
+              ) : (
+                <Table.ScrollContainer
+                  minWidth={500}
+                  className={classes.tableScroll}
+                >
+                  <Table
+                    verticalSpacing="sm"
+                    striped
+                    highlightOnHover
+                    withTableBorder
+                    withRowBorders
+                  >
+                    <Table.Thead>
+                      <Table.Tr
+                        style={{
+                          borderBottom: "1px solid var(--mantine-color-dark-4)",
+                        }}
+                      >
+                        <Table.Th style={{ width: 40 }}>
+                          <Checkbox
+                            checked={isAllPageSelected}
+                            indeterminate={
+                              isSomePageSelected && !isAllPageSelected
+                            }
+                            onChange={toggleSelectAllPage}
+                          />
+                        </Table.Th>
+                        <Table.Th
+                          style={{
+                            width: 60,
+                            color: "var(--mantine-color-dark-2)",
+                          }}
+                        >
+                          {t("tableHeaderIndex")}
+                        </Table.Th>
+                        <Table.Th
+                          style={{ color: "var(--mantine-color-dark-2)" }}
+                        >
+                          {t("tableHeaderTitle")}
+                        </Table.Th>
+                        <Table.Th
+                          style={{ color: "var(--mantine-color-dark-2)" }}
+                        >
+                          {t("tableHeaderCategory")}
+                        </Table.Th>
+                        <Table.Th
+                          style={{ color: "var(--mantine-color-dark-2)" }}
+                        >
+                          {t("tableHeaderUsername")}
+                        </Table.Th>
+                        <Table.Th
+                          style={{
+                            color: "var(--mantine-color-dark-2)",
+                            textAlign: "right",
+                          }}
+                        >
+                          {t("tableHeaderActions")}
+                        </Table.Th>
+                      </Table.Tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {paginatedItems.map((item, index) => (
+                        <Table.Tr
+                          key={item.id}
+                          className={classes.tableRow}
+                          onClick={() => setSelectedItemId(item.id)}
+                          style={{
+                            borderBottom:
+                              "1px solid var(--mantine-color-dark-6)",
+                          }}
+                        >
+                          <Table.Td onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(item.id)}
+                              onChange={() => toggleSelect(item.id)}
+                            />
+                          </Table.Td>
+                          <Table.Td
+                            style={{
+                              color: "var(--mantine-color-dark-3)",
+                              fontSize: "13px",
+                            }}
+                          >
+                            {(currentPage - 1) * itemsPerPage + index + 1}
+                          </Table.Td>
+                          <Table.Td>
+                            <Group gap="xs" wrap="nowrap">
+                              <div className={classes.cardIconWrapper}>
+                                {getCategoryIcon(item.category)}
+                              </div>
+                              <Text
+                                fw={700}
+                                size="sm"
+                                c="white"
+                                style={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {item.title}
+                              </Text>
+                            </Group>
+                          </Table.Td>
+                          <Table.Td>
+                            <Badge size="xs" variant="light" color="indigo">
+                              {t(`types.${item.category}`, item.category)}
+                            </Badge>
+                          </Table.Td>
+                          <Table.Td>
+                            <Text
+                              size="sm"
+                              c="white"
+                              style={{
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                fontFamily:
+                                  "var(--mantine-font-family-monospace)",
+                              }}
+                            >
+                              {getPrimaryIdentifier(item)}
+                            </Text>
+                          </Table.Td>
+                          <Table.Td>
+                            <Group gap="xs" justify="flex-end" wrap="nowrap">
+                              {item.username && (
+                                <Tooltip
+                                  label={t("copyUsername", "Copy Username")}
+                                  position="top"
+                                  withArrow
+                                >
+                                  <ActionIcon
+                                    variant="subtle"
+                                    color="gray"
+                                    size="md"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      clipboard.copy(item.username!);
+                                    }}
+                                  >
+                                    <IconCopy size={16} />
+                                  </ActionIcon>
+                                </Tooltip>
+                              )}
+                              <Tooltip
+                                label={t("delete", "Delete")}
+                                position="top"
+                                withArrow
+                              >
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="red"
+                                  size="md"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setItemToDeleteId(item.id);
+                                  }}
+                                >
+                                  <IconTrash size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            </Group>
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </Table.ScrollContainer>
+              )}
+            </Box>
+
+            {totalPages > 1 && (
+              <Group justify="center" mt="xl" pb="md">
+                <Pagination
+                  total={totalPages}
+                  value={currentPage}
+                  onChange={setCurrentPage}
+                  color="indigo"
+                  radius="md"
+                  size="sm"
+                />
+              </Group>
+            )}
+          </Box>
+        )}
+      </Box>
 
       {/* Item Details and Edit Drawer */}
       {selectedItem && (
@@ -493,6 +780,53 @@ export function DashboardPage() {
                   }
                   setItemToDeleteId(null);
                 }
+              }}
+            >
+              {t("delete", "Xóa")}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* Bulk Delete Confirmation Modal */}
+      <Modal
+        opened={confirmBulkDelete}
+        onClose={() => setConfirmBulkDelete(false)}
+        title={t("confirmBulkDeleteTitle", "Xác nhận xóa hàng loạt")}
+        centered
+        radius="md"
+        size="sm"
+        styles={{
+          content: {
+            backgroundColor: "rgba(26, 27, 30, 0.98)",
+            border: "1px solid var(--mantine-color-dark-4)",
+            color: "white",
+          },
+        }}
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            {t("confirmBulkDeleteDesc", { count: selectedIds.size })}
+          </Text>
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              radius="md"
+              size="xs"
+              onClick={() => setConfirmBulkDelete(false)}
+            >
+              {t("cancelBtn")}
+            </Button>
+            <Button
+              color="red"
+              radius="md"
+              size="xs"
+              onClick={() => {
+                for (const id of selectedIds) {
+                  deleteItem(id);
+                }
+                setSelectedIds(new Set());
+                setConfirmBulkDelete(false);
               }}
             >
               {t("delete", "Xóa")}

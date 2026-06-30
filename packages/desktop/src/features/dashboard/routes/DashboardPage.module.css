@@ -74,3 +74,21 @@
     opacity: 1;
   }
 }
+
+.tableScroll {
+  background-color: rgba(30, 31, 33, 0.45);
+  border: 1px solid var(--mantine-color-dark-5);
+  backdrop-filter: blur(16px);
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-md);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.tableRow {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:hover {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+}

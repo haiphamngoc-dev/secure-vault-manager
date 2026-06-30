@@ -62,5 +62,15 @@
     "Social Security Number": "Social Security Number",
     "Software License": "Software License",
     "Wireless Router": "Wireless Router"
-  }
+  },
+  "tableHeaderIndex": "No.",
+  "tableHeaderTitle": "Title",
+  "tableHeaderCategory": "Category",
+  "tableHeaderUsername": "Username / Email",
+  "tableHeaderActions": "Actions",
+  "exportSelected": "Export Selected",
+  "deleteSelected": "Delete Selected",
+  "selectedItemsCount": "Selected: {{count}}",
+  "confirmBulkDeleteTitle": "Confirm Bulk Delete",
+  "confirmBulkDeleteDesc": "Are you sure you want to delete the {{count}} selected items? This action cannot be undone."
 }

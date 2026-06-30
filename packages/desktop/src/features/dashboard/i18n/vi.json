@@ -62,5 +62,15 @@
     "Social Security Number": "Số an sinh xã hội",
     "Software License": "Bản quyền phần mềm",
     "Wireless Router": "Bộ định tuyến wifi (Router)"
-  }
+  },
+  "tableHeaderIndex": "STT",
+  "tableHeaderTitle": "Tiêu đề",
+  "tableHeaderCategory": "Loại",
+  "tableHeaderUsername": "Tên đăng nhập / Email",
+  "tableHeaderActions": "Thao tác",
+  "exportSelected": "Xuất dữ liệu",
+  "deleteSelected": "Xóa mục đã chọn",
+  "selectedItemsCount": "Đã chọn: {{count}}",
+  "confirmBulkDeleteTitle": "Xác nhận xóa hàng loạt",
+  "confirmBulkDeleteDesc": "Bạn có chắc chắn muốn xóa {{count}} mục đã chọn? Hành động này không thể hoàn tác."
 }
