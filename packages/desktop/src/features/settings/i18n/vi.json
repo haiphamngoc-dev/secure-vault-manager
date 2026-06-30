@@ -20,5 +20,8 @@
   "pairingKeyDesc": "Mã này đã được tự động copy vào clipboard. Hãy dán mã này vào phần cài đặt của Extension.",
   "statusLabel": "Trạng thái",
   "statusConnected": "Đã kết nối",
-  "statusDisconnected": "Chưa kết nối"
+  "statusDisconnected": "Chưa kết nối",
+  "systemSection": "Cài đặt hệ thống",
+  "minimizeToTrayLabel": "Thu nhỏ về khay hệ thống khi đóng cửa sổ",
+  "minimizeToTrayDesc": "Nếu không được bật, đóng cửa sổ sẽ thoát hoàn toàn chương trình."
 }

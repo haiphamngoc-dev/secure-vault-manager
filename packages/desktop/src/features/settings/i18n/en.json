@@ -22,5 +22,8 @@
   "pairingKeyDesc": "This key has been copied to your clipboard. Paste this key into the Extension configuration.",
   "statusLabel": "Status",
   "statusConnected": "Connected",
-  "statusDisconnected": "Disconnected"
+  "statusDisconnected": "Disconnected",
+  "systemSection": "System Settings",
+  "minimizeToTrayLabel": "Minimize to system tray on close",
+  "minimizeToTrayDesc": "If disabled, closing the window will exit the program completely."
 }

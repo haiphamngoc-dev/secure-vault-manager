@@ -236,18 +236,26 @@ pub fn run() {
         // Global listener for window events (e.g. intercepts close to minimize to tray)
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let _ = window.hide();
-                api.prevent_close();
+                let minimize = commands::settings::get_settings(window.app_handle().clone())
+                    .map(|s| s.minimize_to_tray)
+                    .unwrap_or(true);
 
-                let state = window.state::<AppState>();
-                *state.is_visible.lock().unwrap() = false;
+                if minimize {
+                    let _ = window.hide();
+                    api.prevent_close();
 
-                // Lock vault and emit event on window close
-                *state.vault_key.lock().unwrap() = None;
-                *state.vault_salt.lock().unwrap() = None;
-                let _ = window.emit("vault-locked", ());
+                    let state = window.state::<AppState>();
+                    *state.is_visible.lock().unwrap() = false;
 
-                update_tray_menu(window.app_handle());
+                    // Lock vault and emit event on window close
+                    *state.vault_key.lock().unwrap() = None;
+                    *state.vault_salt.lock().unwrap() = None;
+                    let _ = window.emit("vault-locked", ());
+
+                    update_tray_menu(window.app_handle());
+                } else {
+                    window.app_handle().exit(0);
+                }
             }
         })
         // Custom command handlers callable from frontend React app

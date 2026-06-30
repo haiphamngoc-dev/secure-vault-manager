@@ -10,6 +10,7 @@ import {
   Group,
   ActionIcon,
   Badge,
+  Switch,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useOutletContext } from "react-router-dom";
@@ -20,6 +21,7 @@ import {
   IconLink,
   IconCopy,
   IconCheck,
+  IconDeviceDesktop,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { invoke } from "@tauri-apps/api/core";
@@ -30,6 +32,7 @@ interface AppSettings {
   lang: string;
   auto_lock_interval: string;
   extension_id: string | null;
+  minimize_to_tray: boolean;
 }
 
 export function SettingsPage() {
@@ -44,6 +47,7 @@ export function SettingsPage() {
     lang: "vi",
     auto_lock_interval: "15m",
     extension_id: "",
+    minimize_to_tray: true,
   });
 
   const [pairingKey, setPairingKey] = useState<string>("");
@@ -57,6 +61,7 @@ export function SettingsPage() {
         setSettings({
           ...res,
           extension_id: res.extension_id || "",
+          minimize_to_tray: res.minimize_to_tray !== false,
         });
       } catch (err) {
         console.error("Failed to load settings from Rust:", err);
@@ -68,7 +73,7 @@ export function SettingsPage() {
   // Update settings in state and save to Rust config file
   const updateSetting = async (
     key: keyof AppSettings,
-    value: string | null
+    value: string | boolean | null
   ) => {
     const newSettings = {
       ...settings,
@@ -79,7 +84,7 @@ export function SettingsPage() {
     try {
       await invoke("save_settings", { settings: newSettings });
 
-      if (key === "lang" && value) {
+      if (key === "lang" && typeof value === "string") {
         i18n.changeLanguage(value);
       }
 
@@ -169,6 +174,27 @@ export function SettingsPage() {
                 ]}
                 color="indigo"
                 style={{ alignSelf: "flex-start" }}
+              />
+            </Stack>
+          </Box>
+
+          {/* System Section */}
+          <Box className={classes.sectionCard}>
+            <div className={classes.sectionTitle}>
+              <span className={classes.sectionIcon}>
+                <IconDeviceDesktop size={20} />
+              </span>
+              <Text>{t("systemSection")}</Text>
+            </div>
+            <Stack gap="xs">
+              <Switch
+                label={t("minimizeToTrayLabel")}
+                description={t("minimizeToTrayDesc")}
+                checked={settings.minimize_to_tray}
+                onChange={(event) =>
+                  updateSetting("minimize_to_tray", event.currentTarget.checked)
+                }
+                color="indigo"
               />
             </Stack>
           </Box>

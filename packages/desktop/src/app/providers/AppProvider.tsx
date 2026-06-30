@@ -32,7 +32,7 @@ export function AppProvider({ children }: Readonly<AppProviderProps>) {
       defaultColorScheme="auto"
       deduplicateInlineStyles
     >
-      <Notifications position="top-right" zIndex={1000} />
+      <Notifications position="bottom-right" zIndex={1000} />
       <VaultProvider>{children}</VaultProvider>
     </MantineProvider>
   );

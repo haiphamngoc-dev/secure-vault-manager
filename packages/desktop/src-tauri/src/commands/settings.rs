@@ -4,11 +4,17 @@ use tauri::Manager;
 use serde::{Deserialize, Serialize};
 use crate::core::storage::write_atomic;
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     pub lang: String,
     pub auto_lock_interval: String,
     pub extension_id: Option<String>,
+    #[serde(default = "default_true")]
+    pub minimize_to_tray: bool,
 }
 
 impl Default for AppSettings {
@@ -17,6 +23,7 @@ impl Default for AppSettings {
             lang: "vi".to_string(),
             auto_lock_interval: "15m".to_string(),
             extension_id: None,
+            minimize_to_tray: true,
         }
     }
 }
