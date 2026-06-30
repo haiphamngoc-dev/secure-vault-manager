@@ -10,7 +10,9 @@
     var(--mantine-color-dark-9) 100%
   );
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px 16px;
 }
 
 /* Ambient glowing backgrounds behind the card */

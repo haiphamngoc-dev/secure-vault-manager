@@ -57,6 +57,8 @@ pub struct AppState {
     pub lang: Mutex<AppLang>,
     /// Track whether the main window is currently visible or hidden.
     pub is_visible: Mutex<bool>,
+    /// Track which vault file is currently unlocked.
+    pub current_vault_file: Mutex<Option<String>>,
 }
 
 /// Updates the system tray menu items dynamically.
@@ -189,6 +191,7 @@ pub fn run() {
             vault_salt: std::sync::Mutex::new(None),
             lang: std::sync::Mutex::new(AppLang::Vi),
             is_visible: std::sync::Mutex::new(true),
+            current_vault_file: std::sync::Mutex::new(None),
         })
         .setup(|app| {
             // Load icon from default window icon
@@ -250,6 +253,7 @@ pub fn run() {
                     // Lock vault and emit event on window close
                     *state.vault_key.lock().unwrap() = None;
                     *state.vault_salt.lock().unwrap() = None;
+                    *state.current_vault_file.lock().unwrap() = None;
                     let _ = window.emit("vault-locked", ());
 
                     update_tray_menu(window.app_handle());
@@ -271,6 +275,11 @@ pub fn run() {
             commands::vault::lock_vault,
             commands::vault::load_items,
             commands::vault::save_items,
+            commands::vault::get_vaults,
+            commands::vault::rename_vault,
+            commands::vault::set_default_vault,
+            commands::vault::delete_vault,
+            commands::vault::get_current_vault_id,
             commands::pairing::start_pairing,
         ])
         .run(tauri::generate_context!())

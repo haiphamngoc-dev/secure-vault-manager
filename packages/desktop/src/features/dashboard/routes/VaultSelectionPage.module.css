@@ -1,0 +1,66 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px 16px;
+}
+
+.card {
+  background-color: rgba(30, 31, 33, 0.45);
+  border: 1px solid var(--mantine-color-dark-5);
+  backdrop-filter: blur(16px);
+  border-radius: var(--mantine-radius-md);
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+  width: 100%;
+  max-width: 480px;
+}
+
+.titleText {
+  font-family: "Outfit", "Inter", sans-serif;
+  font-weight: 700;
+  color: var(--mantine-color-white);
+  letter-spacing: -0.5px;
+}
+
+.iconContainer {
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+.form {
+  width: 100%;
+}
+
+.vaultItemCard {
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--mantine-color-dark-5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.vaultItemCard:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  border-color: var(--mantine-color-indigo-6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.vaultItemCard:active {
+  transform: translateY(0);
+}
+
+.createVaultCard {
+  background-color: rgba(99, 102, 241, 0.04);
+  border: 1px dashed var(--mantine-color-indigo-8);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.createVaultCard:hover {
+  background-color: rgba(99, 102, 241, 0.08);
+  border-color: var(--mantine-color-indigo-5);
+}

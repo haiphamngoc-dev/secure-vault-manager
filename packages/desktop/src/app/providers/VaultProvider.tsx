@@ -23,14 +23,24 @@ export interface VaultItem {
   tags?: string[];
 }
 
+export interface VaultProfile {
+  id: string;
+  name: string;
+  file_name: string;
+}
+
 export type VaultStatus = "loading" | "uninitialized" | "locked" | "unlocked";
 
 interface VaultContextType {
   status: VaultStatus;
   checkVaultStatus: () => Promise<void>;
-  unlock: (password: string) => Promise<void>;
+  unlock: (vaultId: string, password: string) => Promise<void>;
   lock: () => Promise<void>;
-  initialize: (password: string) => Promise<void>;
+  initialize: (
+    vaultId: string,
+    name: string,
+    password: string
+  ) => Promise<void>;
   items: VaultItem[];
   addItem: (item: Omit<VaultItem, "id" | "updatedAt">) => void;
   deleteItem: (id: string) => void;
@@ -38,6 +48,13 @@ interface VaultContextType {
     id: string,
     updatedFields: Partial<Omit<VaultItem, "id" | "updatedAt">>
   ) => void;
+  vaults: VaultProfile[];
+  currentVaultId: string | null;
+  defaultVaultId: string | null;
+  refreshVaultsList: () => Promise<void>;
+  renameVault: (vaultId: string, newName: string) => Promise<void>;
+  setDefaultVault: (vaultId: string | null) => Promise<void>;
+  deleteVault: (vaultId: string, deleteFile: boolean) => Promise<void>;
 }
 
 const VaultContext = createContext<VaultContextType | null>(null);
@@ -49,6 +66,9 @@ export function VaultProvider({
 }>) {
   const [status, setStatus] = useState<VaultStatus>("loading");
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [vaults, setVaults] = useState<VaultProfile[]>([]);
+  const [currentVaultId, setCurrentVaultId] = useState<string | null>(null);
+  const [defaultVaultId, setDefaultVaultId] = useState<string | null>(null);
 
   const addItem = useCallback(
     (newItem: Omit<VaultItem, "id" | "updatedAt">) => {
@@ -83,20 +103,49 @@ export function VaultProvider({
     },
     []
   );
+
+  const refreshVaultsList = useCallback(async () => {
+    try {
+      const registry = await invoke<{
+        default_vault_id: string | null;
+        vaults: VaultProfile[];
+      }>("get_vaults");
+      setVaults(registry.vaults);
+      setDefaultVaultId(registry.default_vault_id);
+    } catch (err) {
+      console.error("Failed to fetch vaults registry:", err);
+    }
+  }, []);
+
   const checkVaultStatus = useCallback(async () => {
     try {
       const initialized = await invoke<boolean>("check_vault_initialized");
       if (!initialized) {
         setStatus("uninitialized");
+        setVaults([]);
+        setCurrentVaultId(null);
+        setDefaultVaultId(null);
         return;
       }
+
+      await refreshVaultsList();
+
       const unlocked = await invoke<boolean>("check_is_unlocked");
-      setStatus(unlocked ? "unlocked" : "locked");
+      if (unlocked) {
+        const activeId = await invoke<string | null>("get_current_vault_id");
+        setCurrentVaultId(activeId);
+        const loaded: VaultItem[] = await invoke("load_items");
+        setItems(loaded);
+        setStatus("unlocked");
+      } else {
+        setStatus("locked");
+        setCurrentVaultId(null);
+      }
     } catch (err) {
       console.error("Failed to check vault status:", err);
-      setStatus("locked"); // Lock by default on failure for safety
+      setStatus("locked");
     }
-  }, []);
+  }, [refreshVaultsList]);
 
   useEffect(() => {
     let active = true;
@@ -108,12 +157,28 @@ export function VaultProvider({
           setStatus("uninitialized");
           return;
         }
+
+        // Fetch registry
+        const registry = await invoke<{
+          default_vault_id: string | null;
+          vaults: VaultProfile[];
+        }>("get_vaults");
+        if (!active) return;
+        setVaults(registry.vaults);
+        setDefaultVaultId(registry.default_vault_id);
+
         const unlocked = await invoke<boolean>("check_is_unlocked");
         if (!active) return;
-        setStatus(unlocked ? "unlocked" : "locked");
         if (unlocked) {
+          const activeId = await invoke<string | null>("get_current_vault_id");
+          if (active) setCurrentVaultId(activeId);
           const loaded: VaultItem[] = await invoke("load_items");
-          if (active) setItems(loaded);
+          if (active) {
+            setItems(loaded);
+            setStatus("unlocked");
+          }
+        } else {
+          setStatus("locked");
         }
       } catch (err) {
         console.error("Failed to check vault status on mount:", err);
@@ -129,6 +194,7 @@ export function VaultProvider({
       if (active) {
         setStatus("locked");
         setItems([]);
+        setCurrentVaultId(null);
       }
     });
 
@@ -138,29 +204,57 @@ export function VaultProvider({
     };
   }, []);
 
-  const unlock = useCallback(
-    async (password: string) => {
-      await invoke("unlock_vault", { password });
-      await checkVaultStatus();
-      const loaded: VaultItem[] = await invoke("load_items");
-      setItems(loaded);
-    },
-    [checkVaultStatus]
-  );
+  const unlock = useCallback(async (vaultId: string, password: string) => {
+    await invoke("unlock_vault", { vaultId, password });
+    setCurrentVaultId(vaultId);
+    const loaded: VaultItem[] = await invoke("load_items");
+    setItems(loaded);
+    setStatus("unlocked");
+  }, []);
 
   const lock = useCallback(async () => {
     await invoke("lock_vault");
     setItems([]);
-    await checkVaultStatus();
-  }, [checkVaultStatus]);
+    setCurrentVaultId(null);
+    setStatus("locked");
+  }, []);
 
   const initialize = useCallback(
-    async (password: string) => {
-      await invoke("initialize_vault", { password });
-      await checkVaultStatus();
+    async (vaultId: string, name: string, password: string) => {
+      await invoke("initialize_vault", { vaultId, name, password });
+      await refreshVaultsList();
+      setCurrentVaultId(vaultId);
       setItems([]);
+      setStatus("unlocked");
     },
-    [checkVaultStatus]
+    [refreshVaultsList]
+  );
+
+  const renameVault = useCallback(
+    async (vaultId: string, newName: string) => {
+      await invoke("rename_vault", { vaultId, newName });
+      await refreshVaultsList();
+    },
+    [refreshVaultsList]
+  );
+
+  const setDefaultVault = useCallback(
+    async (vaultId: string | null) => {
+      await invoke("set_default_vault", { vaultId });
+      await refreshVaultsList();
+    },
+    [refreshVaultsList]
+  );
+
+  const deleteVault = useCallback(
+    async (vaultId: string, deleteFile: boolean) => {
+      await invoke("delete_vault", { vaultId, deleteFile });
+      await refreshVaultsList();
+      if (currentVaultId === vaultId) {
+        await lock();
+      }
+    },
+    [currentVaultId, refreshVaultsList, lock]
   );
 
   // Auto-save vault items when they change
@@ -187,6 +281,13 @@ export function VaultProvider({
       addItem,
       deleteItem,
       updateItem,
+      vaults,
+      currentVaultId,
+      defaultVaultId,
+      refreshVaultsList,
+      renameVault,
+      setDefaultVault,
+      deleteVault,
     }),
     [
       status,
@@ -198,6 +299,13 @@ export function VaultProvider({
       addItem,
       deleteItem,
       updateItem,
+      vaults,
+      currentVaultId,
+      defaultVaultId,
+      refreshVaultsList,
+      renameVault,
+      setDefaultVault,
+      deleteVault,
     ]
   );
 
@@ -214,7 +322,9 @@ export function VaultProvider({
   }
 
   return (
-    <VaultContext.Provider value={value}>{children}</VaultContext.Provider>
+    <Box style={{ width: "100vw", height: "100vh", position: "relative" }}>
+      <VaultContext.Provider value={value}>{children}</VaultContext.Provider>
+    </Box>
   );
 }
 

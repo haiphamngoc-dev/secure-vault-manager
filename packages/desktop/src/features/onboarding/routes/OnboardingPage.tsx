@@ -12,6 +12,7 @@ import {
   Box,
   Progress,
   Group,
+  TextInput,
 } from "@mantine/core";
 import { IconLock, IconAlertTriangle } from "@tabler/icons-react";
 import { invoke } from "@tauri-apps/api/core";
@@ -24,6 +25,7 @@ interface OnboardingPageProps {
 
 export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
   const { t } = useTranslation();
+  const [vaultName, setVaultName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -71,7 +73,9 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
     setError(null);
 
     try {
-      await invoke("initialize_vault", { password });
+      const vaultId = "default";
+      const name = vaultName.trim() || t("defaultVaultName", "Kho cá nhân");
+      await invoke("initialize_vault", { vaultId, name, password });
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -117,6 +121,19 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
                   {error}
                 </Alert>
               )}
+
+              <TextInput
+                required
+                label={t("vaultNameLabel", "Tên hiển thị")}
+                placeholder={t(
+                  "vaultNamePlaceholder",
+                  "Ví dụ: Kho cá nhân, Kho công việc"
+                )}
+                value={vaultName}
+                onChange={(e) => setVaultName(e.currentTarget.value)}
+                disabled={loading}
+                radius="md"
+              />
 
               <PasswordInput
                 required

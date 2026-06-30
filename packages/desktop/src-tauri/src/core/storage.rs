@@ -6,24 +6,23 @@ use tauri::Manager;
 use super::crypto::{decrypt, derive_key, encrypt};
 use super::vault::Vault;
 
-const VAULT_FILENAME: &str = "vault.enc";
 const SALT_SIZE: usize = 16;
 const NONCE_SIZE: usize = 12;
 
 /// Resolves the absolute path to the encrypted vault database in OS AppData directory.
-pub fn get_vault_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+pub fn get_vault_path(app: &tauri::AppHandle, filename: &str) -> Result<PathBuf, String> {
     let app_dir = app
         .path()
         .local_data_dir()
         .map_err(|e| format!("Failed to get local data directory: {}", e))?
         .join("secure-vault-manager");
-    Ok(app_dir.join(VAULT_FILENAME))
+    Ok(app_dir.join(filename))
 }
 
-/// Checks if the encrypted vault database file exists.
+/// Checks if there is any initialized vault database registered on the system.
 pub fn vault_exists(app: &tauri::AppHandle) -> bool {
-    if let Ok(path) = get_vault_path(app) {
-        path.exists()
+    if let Ok(registry) = super::vault_registry::load_registry(app) {
+        !registry.vaults.is_empty()
     } else {
         false
     }
@@ -57,8 +56,9 @@ pub fn write_atomic(path: &Path, data: &[u8]) -> Result<(), String> {
 pub fn initialize_new_vault(
     app: &tauri::AppHandle,
     password: &str,
+    filename: &str,
 ) -> Result<([u8; 32], [u8; 16]), String> {
-    let path = get_vault_path(app)?;
+    let path = get_vault_path(app, filename)?;
 
     // 1. Generate random 16-byte salt
     let mut salt = [0u8; SALT_SIZE];
@@ -96,8 +96,9 @@ pub fn initialize_new_vault(
 pub fn unlock_and_load_vault(
     app: &tauri::AppHandle,
     password: &str,
+    filename: &str,
 ) -> Result<(Vault, [u8; 32], [u8; 16]), String> {
-    let path = get_vault_path(app)?;
+    let path = get_vault_path(app, filename)?;
     if !path.exists() {
         return Err("Vault database does not exist.".to_string());
     }
@@ -140,8 +141,9 @@ pub fn save_existing_vault(
     key: &[u8; 32],
     salt: &[u8; 16],
     vault: &Vault,
+    filename: &str,
 ) -> Result<(), String> {
-    let path = get_vault_path(app)?;
+    let path = get_vault_path(app, filename)?;
 
     // 1. Serialize vault JSON
     let json_bytes = serde_json::to_vec(vault)
@@ -166,8 +168,9 @@ pub fn save_existing_vault(
 pub fn load_vault_with_key(
     app: &tauri::AppHandle,
     key: &[u8; 32],
+    filename: &str,
 ) -> Result<Vault, String> {
-    let path = get_vault_path(app)?;
+    let path = get_vault_path(app, filename)?;
     if !path.exists() {
         return Err("Vault database does not exist.".to_string());
     }
