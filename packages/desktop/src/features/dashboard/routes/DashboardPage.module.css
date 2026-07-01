@@ -109,16 +109,14 @@
   background-color: var(--color-brand-primary-highlight) !important;
 }
 
-/* Ẩn các thao tác nhanh mặc định và hiển thị khi hover dòng hoặc card */
+/* Luôn hiển thị các thao tác nhanh dưới dạng mờ và làm nổi bật khi hover */
 .rowActions,
 .cardActions {
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0.5;
   transition: opacity 0.2s ease;
 }
 
 .tableRow:hover .rowActions,
 .itemCard:hover .cardActions {
   opacity: 1;
-  pointer-events: auto;
 }
