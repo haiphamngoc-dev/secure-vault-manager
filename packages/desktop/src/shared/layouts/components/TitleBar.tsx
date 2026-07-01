@@ -13,6 +13,7 @@ import {
   Box,
   ActionIcon,
   Tooltip,
+  Badge,
 } from "@mantine/core";
 import {
   IconMinus,
@@ -188,6 +189,19 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
             <Text className={classes.title} data-tauri-drag-region>
               Secure Vault Manager
             </Text>
+            <Badge
+              variant="outline"
+              color="gray"
+              size="xs"
+              style={{
+                fontSize: "9px",
+                height: "16px",
+                padding: "0 4px",
+                alignSelf: "center",
+              }}
+            >
+              v1.0.0
+            </Badge>
           </Group>
 
           {/* Central Searchbar (visible only on Dashboard when unlocked) */}

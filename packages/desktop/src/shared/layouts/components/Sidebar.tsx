@@ -264,6 +264,7 @@ export function Sidebar({
       <SidebarHeader
         isCollapsed={effectiveCollapsed}
         onToggleCollapse={isMobile ? onMobileClose : onToggleCollapse}
+        onLock={onLock}
       />
 
       {/* Sidebar Navigation */}
