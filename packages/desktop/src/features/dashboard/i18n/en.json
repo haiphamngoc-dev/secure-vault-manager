@@ -72,5 +72,7 @@
   "deleteSelected": "Delete Selected",
   "selectedItemsCount": "Selected: {{count}}",
   "confirmBulkDeleteTitle": "Confirm Bulk Delete",
-  "confirmBulkDeleteDesc": "Are you sure you want to delete the {{count}} selected items? This action cannot be undone."
+  "confirmBulkDeleteDesc": "Are you sure you want to delete the {{count}} selected items? This action cannot be undone.",
+  "duplicate": "Duplicate",
+  "successDuplicate": "Item duplicated successfully!"
 }

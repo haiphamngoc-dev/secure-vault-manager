@@ -30,11 +30,12 @@ import { ItemDrawer } from "../components/ItemDrawer";
 import { useVault, VaultItem } from "@/app/providers/VaultProvider";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery, useClipboard } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 
 import classes from "./DashboardPage.module.css";
 
 export function DashboardPage() {
-  const { items, deleteItem } = useVault();
+  const { items, deleteItem, addItem } = useVault();
   const { t } = useTranslation();
   const showCards = useMediaQuery("(max-width: 1024px)");
   const clipboard = useClipboard();
@@ -158,6 +159,22 @@ export function DashboardPage() {
         }
       }
       return next;
+    });
+  };
+
+  const handleDuplicateItem = (item: VaultItem) => {
+    const itemCopy = { ...item };
+    delete (itemCopy as Partial<VaultItem>).id;
+    delete (itemCopy as Partial<VaultItem>).updatedAt;
+    addItem({
+      ...itemCopy,
+      title: `${itemCopy.title} (Copy)`,
+    });
+    notifications.show({
+      title: t("successDuplicate", "Nhân bản mục thành công!"),
+      message: "",
+      color: "green",
+      autoClose: 2000,
     });
   };
 
@@ -380,6 +397,12 @@ export function DashboardPage() {
                             </Menu.Target>
                             <Menu.Dropdown>
                               <Menu.Item
+                                leftSection={<IconCopy size={12} />}
+                                onClick={() => handleDuplicateItem(item)}
+                              >
+                                {t("duplicate", "Nhân bản")}
+                              </Menu.Item>
+                              <Menu.Item
                                 color="red"
                                 leftSection={<IconTrash size={12} />}
                                 onClick={() => setItemToDeleteId(item.id)}
@@ -583,6 +606,12 @@ export function DashboardPage() {
                                   </ActionIcon>
                                 </Menu.Target>
                                 <Menu.Dropdown>
+                                  <Menu.Item
+                                    leftSection={<IconCopy size={14} />}
+                                    onClick={() => handleDuplicateItem(item)}
+                                  >
+                                    {t("duplicate", "Nhân bản")}
+                                  </Menu.Item>
                                   <Menu.Item
                                     color="red"
                                     leftSection={<IconTrash size={14} />}

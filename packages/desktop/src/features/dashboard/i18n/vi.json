@@ -72,5 +72,7 @@
   "deleteSelected": "Xóa mục đã chọn",
   "selectedItemsCount": "Đã chọn: {{count}}",
   "confirmBulkDeleteTitle": "Xác nhận xóa hàng loạt",
-  "confirmBulkDeleteDesc": "Bạn có chắc chắn muốn xóa {{count}} mục đã chọn? Hành động này không thể hoàn tác."
+  "confirmBulkDeleteDesc": "Bạn có chắc chắn muốn xóa {{count}} mục đã chọn? Hành động này không thể hoàn tác.",
+  "duplicate": "Nhân bản",
+  "successDuplicate": "Nhân bản mục thành công!"
 }
