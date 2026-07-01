@@ -93,7 +93,7 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
               size={64}
               radius="xl"
               variant="gradient"
-              gradient={{ from: "indigo", to: "cyan", deg: 45 }}
+              gradient={{ from: "blue", to: "cyan", deg: 45 }}
               className={classes.iconContainer}
             >
               <IconLock size={36} />
@@ -132,7 +132,6 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
                 value={vaultName}
                 onChange={(e) => setVaultName(e.currentTarget.value)}
                 disabled={loading}
-                radius="md"
               />
 
               <PasswordInput
@@ -142,7 +141,6 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
                 value={password}
                 onChange={(e) => setPassword(e.currentTarget.value)}
                 disabled={loading}
-                radius="md"
               />
 
               {password && (
@@ -171,17 +169,15 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.currentTarget.value)}
                 disabled={loading}
-                radius="md"
               />
 
               <Button
                 type="submit"
                 fullWidth
                 loading={loading}
-                gradient={{ from: "indigo", to: "cyan", deg: 45 }}
+                gradient={{ from: "blue", to: "cyan", deg: 45 }}
                 variant="gradient"
-                radius="md"
-                size="md"
+                size="sm"
                 mt="md"
                 className={classes.button}
               >

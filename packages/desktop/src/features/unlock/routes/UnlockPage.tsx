@@ -56,7 +56,7 @@ export function UnlockPage({ onSuccess, onUnlock }: Readonly<UnlockPageProps>) {
               size={64}
               radius="xl"
               variant="gradient"
-              gradient={{ from: "indigo", to: "cyan", deg: 45 }}
+              gradient={{ from: "blue", to: "cyan", deg: 45 }}
               className={classes.iconContainer}
             >
               <IconLock size={36} />
@@ -99,7 +99,7 @@ export function UnlockPage({ onSuccess, onUnlock }: Readonly<UnlockPageProps>) {
                 type="submit"
                 fullWidth
                 loading={loading}
-                gradient={{ from: "indigo", to: "cyan", deg: 45 }}
+                gradient={{ from: "blue", to: "cyan", deg: 45 }}
                 variant="gradient"
                 radius="md"
                 size="md"

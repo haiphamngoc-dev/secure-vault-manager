@@ -10,17 +10,19 @@
   flex: 1;
   height: 100%;
   position: relative;
-  background: radial-gradient(
-    circle at 50% 50%,
-    var(--mantine-color-dark-8) 0%,
-    var(--mantine-color-dark-9) 100%
+  background: var(--color-neutral-bg);
+  /* Tạo chiều sâu bằng radial gradient tối sâu ở chế độ tối */
+  background: light-dark(
+    var(--color-neutral-bg),
+    radial-gradient(circle at 50% 50%, #11131c 0%, #08090d 100%)
   );
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: background-color 0.2s ease;
 }
 
-/* Ambient glowing backgrounds behind layout content */
+/* Ambient glowing backgrounds behind layout content - Royal Blue & Cyan */
 .mainContent::before {
   content: "";
   position: absolute;
@@ -28,8 +30,8 @@
   height: 400px;
   background: radial-gradient(
     circle,
-    rgba(99, 102, 241, 0.12) 0%,
-    rgba(99, 102, 241, 0) 70%
+    light-dark(rgba(37, 99, 235, 0.04), rgba(37, 99, 235, 0.08)) 0%,
+    rgba(37, 99, 235, 0) 70%
   );
   top: -100px;
   left: -100px;
@@ -44,7 +46,7 @@
   height: 450px;
   background: radial-gradient(
     circle,
-    rgba(6, 182, 212, 0.12) 0%,
+    light-dark(rgba(6, 182, 212, 0.04), rgba(6, 182, 212, 0.08)) 0%,
     rgba(6, 182, 212, 0) 70%
   );
   bottom: -150px;

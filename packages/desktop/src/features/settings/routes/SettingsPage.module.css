@@ -2,7 +2,7 @@
   flex: 1;
   min-height: 0;
   width: 100%;
-  padding: var(--mantine-spacing-xl);
+  padding: var(--space-6);
   overflow-y: auto;
   position: relative;
   z-index: 2;
@@ -12,7 +12,7 @@
 
 @media (max-width: 767px) {
   .scrollContainer {
-    padding: var(--mantine-spacing-md);
+    padding: var(--space-4);
   }
 }
 
@@ -23,34 +23,34 @@
 }
 
 .sectionCard {
-  background-color: rgba(30, 31, 33, 0.45);
-  border: 1px solid var(--mantine-color-dark-5);
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-neutral-light);
   backdrop-filter: blur(16px);
-  border-radius: var(--mantine-radius-md);
-  padding: var(--mantine-spacing-lg);
-  margin-bottom: var(--mantine-spacing-lg);
-  color: white;
+  border-radius: var(--mantine-radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  color: var(--color-neutral-dark);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sectionCard:hover {
-  border-color: var(--mantine-color-indigo-8);
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 8px 32px rgba(44, 160, 28, 0.08);
 }
 
 .sectionTitle {
-  font-size: var(--mantine-font-size-md);
-  font-weight: 700;
-  margin-bottom: var(--mantine-spacing-md);
-  border-bottom: 1px solid var(--mantine-color-dark-4);
-  padding-bottom: var(--mantine-spacing-xs);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-neutral-light);
+  padding-bottom: var(--space-2);
   display: flex;
   align-items: center;
-  gap: var(--mantine-spacing-xs);
+  gap: var(--space-2);
 }
 
 .sectionIcon {
-  color: var(--mantine-color-indigo-4);
+  color: var(--color-brand-primary);
   display: flex;
   align-items: center;
 }

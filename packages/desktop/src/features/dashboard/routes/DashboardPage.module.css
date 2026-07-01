@@ -2,7 +2,7 @@
   flex: 1;
   min-height: 0;
   width: 100%;
-  padding: var(--mantine-spacing-xl);
+  padding: var(--space-6);
   overflow-y: auto;
   position: relative;
   z-index: 2;
@@ -12,45 +12,50 @@
 
 @media (max-width: 767px) {
   .scrollContainer {
-    padding: var(--mantine-spacing-md);
+    padding: var(--space-4);
   }
 }
 
 .itemsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--mantine-spacing-md);
-  margin-bottom: var(--mantine-spacing-md);
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
 }
 
 .itemCard {
-  background-color: rgba(30, 31, 33, 0.45);
-  border: 1px solid var(--mantine-color-dark-5);
-  color: white;
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-neutral-light);
+  color: var(--color-neutral-dark);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
 .itemCard:hover {
-  transform: translateY(-2px);
-  background-color: rgba(35, 36, 38, 0.6);
-  border-color: var(--mantine-color-indigo-5);
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+  transform: translateY(-4px); /* Nhấc card lên tạo độ nổi */
+  background-color: light-dark(
+    rgba(255, 255, 255, 0.85),
+    rgba(25, 27, 34, 0.75)
+  );
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12); /* Phát sáng Royal Blue huyền ảo */
 }
 
 .cardIconWrapper {
   width: 32px;
   height: 32px;
-  border-radius: var(--mantine-radius-md);
+  border-radius: var(--mantine-radius-md); /* Bo góc icon wrapper 8px */
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  color: var(--mantine-color-indigo-4);
+  background-color: var(--color-brand-primary-highlight);
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  color: var(--color-brand-primary);
   flex-shrink: 0;
 }
 
@@ -76,19 +81,30 @@
 }
 
 .tableScroll {
-  background-color: rgba(30, 31, 33, 0.45);
-  border: 1px solid var(--mantine-color-dark-5);
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-neutral-light);
   backdrop-filter: blur(16px);
-  border-radius: var(--mantine-radius-md);
-  padding: var(--mantine-spacing-md);
-  margin-bottom: var(--mantine-spacing-md);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--mantine-radius-lg); /* Bo góc 12px chuẩn card lớn */
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
 }
 
 .tableRow {
   cursor: pointer;
   transition: background-color 0.2s ease;
+  color: var(--color-neutral-dark);
 }
 
+/* Hover hàng dữ liệu màu Emerald nhẹ dịu */
 .tableRow:hover {
-  background-color: rgba(99, 102, 241, 0.08) !important;
+  background-color: light-dark(
+    rgba(37, 99, 235, 0.04),
+    rgba(37, 99, 235, 0.06)
+  ) !important;
+}
+
+/* Đổi màu nền hàng khi được tích chọn checkbox sang xanh nhạt */
+.tableRowSelected {
+  background-color: var(--color-brand-primary-highlight) !important;
 }

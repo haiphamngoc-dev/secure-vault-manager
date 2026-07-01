@@ -602,7 +602,7 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
                     style={{
                       textDecoration: "underline",
                       cursor: "pointer",
-                      color: "var(--mantine-color-indigo-4)",
+                      color: "var(--color-brand-primary)",
                     }}
                     onClick={() => window.open(item.url, "_blank")}
                   >
@@ -638,7 +638,7 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
                 <Text className={classes.fieldLabel}>{t("notesLabel")}</Text>
                 <Text
                   size="sm"
-                  c="white"
+                  c="var(--color-neutral-dark)"
                   style={{
                     whiteSpace: "pre-wrap",
                     fontFamily: "var(--mantine-font-family-monospace)",
@@ -654,7 +654,7 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
                 <Text className={classes.fieldLabel}>{t("tagsLabel")}</Text>
                 <Group gap="xs">
                   {item.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" color="indigo" size="sm">
+                    <Badge key={tag} variant="outline" color="green" size="sm">
                       {tag}
                     </Badge>
                   ))}
@@ -681,7 +681,7 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
               {t("cancelBtn")}
             </Button>
             <Button
-              color="indigo"
+              color="blue"
               size="xs"
               radius="md"
               onClick={handleSave}
@@ -703,7 +703,7 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
               {t("delete", "Xóa")}
             </Button>
             <Button
-              color="indigo"
+              color="blue"
               size="xs"
               radius="md"
               leftSection={<IconEdit size={14} />}
@@ -724,13 +724,17 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
         onClose={() => setShowDeleteConfirm(false)}
         title={t("confirmDeleteTitle", "Xác nhận xóa")}
         centered
-        radius="md"
+        radius="lg"
         size="sm"
         styles={{
           content: {
-            backgroundColor: "rgba(26, 27, 30, 0.98)",
-            border: "1px solid var(--mantine-color-dark-4)",
-            color: "white",
+            backgroundColor: "var(--color-neutral-card)",
+            border: "1px solid var(--color-neutral-light)",
+            color: "var(--color-neutral-dark)",
+          },
+          header: {
+            backgroundColor: "transparent",
+            color: "var(--color-neutral-dark)",
           },
         }}
       >
@@ -744,13 +748,12 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
           <Group justify="flex-end" gap="sm">
             <Button
               variant="default"
-              radius="md"
               size="xs"
               onClick={() => setShowDeleteConfirm(false)}
             >
               {t("cancelBtn")}
             </Button>
-            <Button color="red" radius="md" size="xs" onClick={handleDelete}>
+            <Button color="red" size="xs" onClick={handleDelete}>
               {t("delete", "Xóa")}
             </Button>
           </Group>

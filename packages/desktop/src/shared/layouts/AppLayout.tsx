@@ -58,7 +58,11 @@ export function AppLayout() {
       {!isMaximized && <ResizeHandles />}
 
       {/* Render the application custom title bar */}
-      <TitleBar title="Secure Vault Manager" />
+      <TitleBar
+        onMenuClick={() =>
+          window.dispatchEvent(new CustomEvent("open-mobile-sidebar"))
+        }
+      />
 
       {/* Route Outlet child view container */}
       <Box className={classes.content}>

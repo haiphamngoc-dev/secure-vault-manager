@@ -3,8 +3,87 @@
 
 :root {
   --font-native:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Brand Colors (Royal Blue) */
+  --color-brand-primary: #2563eb;
+  --color-brand-primary-hover: #3b82f6;
+  --color-brand-primary-active: #1d4ed8;
+
+  /* State Colors */
+  --color-success: #10b981;
+  --color-success-hover: #34d399;
+
+  --color-warning: #f1c40f;
+  --color-warning-hover: #f3d13f;
+
+  --color-danger: #ff4d4f;
+  --color-danger-hover: #ff7875;
+
+  --color-info: #3b82f6;
+  --color-info-hover: #60a5fa;
+
+  /* Light Theme Defaults */
+  --color-brand-primary-highlight: rgba(37, 99, 235, 0.06);
+  --color-success-bg: rgba(16, 185, 129, 0.06);
+  --color-warning-bg: #fffde6;
+  --color-danger-bg: #fff1f0;
+  --color-info-bg: #eff6ff;
+
+  --color-neutral-dark: #0f172a;
+  --color-neutral-medium: #475569;
+  --color-neutral-light: rgba(0, 0, 0, 0.06);
+  --color-neutral-bg: #f8fafc;
+  --color-neutral-card: rgba(255, 255, 255, 0.8);
+
+  /* Spacing Scale (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Font Sizes */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-xxl: 24px;
+
+  /* Line Heights */
+  --line-height-xs: 16px;
+  --line-height-sm: 20px;
+  --line-height-md: 22px;
+  --line-height-lg: 24px;
+  --line-height-xl: 28px;
+  --line-height-xxl: 32px;
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+[data-mantine-color-scheme="dark"] {
+  /* Brand Highlight */
+  --color-brand-primary-highlight: rgba(37, 99, 235, 0.15);
+  --color-success-bg: rgba(16, 185, 129, 0.15);
+  --color-warning-bg: #2d2a10;
+  --color-danger-bg: #2c1a1b;
+  --color-info-bg: #172554;
+
+  /* Neutral Dark Theme */
+  --color-neutral-dark: #f8fafc;
+  --color-neutral-medium: #94a3b8;
+  --color-neutral-light: rgba(255, 255, 255, 0.08);
+  --color-neutral-bg: #090a0f;
+  --color-neutral-card: rgba(26, 28, 38, 0.75);
 }
 
 * {
@@ -30,7 +109,7 @@ body {
   overscroll-behavior: none;
 
   background-color: transparent;
-  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
+  color: var(--color-neutral-dark);
 }
 
 /* Allow users to select text in specific elements */

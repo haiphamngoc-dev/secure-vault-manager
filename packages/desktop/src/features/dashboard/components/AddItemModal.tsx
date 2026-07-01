@@ -310,6 +310,16 @@ export const ITEM_TYPES = [
   },
 ];
 
+const generateId = () =>
+  crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).substring(2, 9);
+
+interface WebsiteInput {
+  id: string;
+  value: string;
+}
+
 export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
   const { t } = useTranslation();
   const { addItem } = useVault();
@@ -329,7 +339,9 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     isCustom: boolean;
   }
   const [formFields, setFormFields] = useState<FormField[]>([]);
-  const [websites, setWebsites] = useState<string[]>([""]);
+  const [websites, setWebsites] = useState<WebsiteInput[]>([
+    { id: generateId(), value: "" },
+  ]);
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -342,7 +354,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     setSelectedType(null);
     setTitle("");
     setFormFields([]);
-    setWebsites([""]);
+    setWebsites([{ id: generateId(), value: "" }]);
     setNotes("");
     setTags([]);
     setTagInput("");
@@ -373,12 +385,12 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
 
   // Add website input
   const handleAddWebsite = () => {
-    setWebsites([...websites, ""]);
+    setWebsites([...websites, { id: generateId(), value: "" }]);
   };
 
   const handleWebsiteChange = (index: number, val: string) => {
     const updated = [...websites];
-    updated[index] = val;
+    updated[index] = { ...updated[index], value: val };
     setWebsites(updated);
   };
 
@@ -403,9 +415,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     type: "text" | "password" | "date" | "url" | "email" | "phone"
   ) => {
     const newField: FormField = {
-      id: crypto.randomUUID
-        ? crypto.randomUUID()
-        : Math.random().toString(36).substring(2, 9),
+      id: generateId(),
       label: "",
       value: "",
       type,
@@ -469,7 +479,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
 
     const url =
       selectedType === "Login"
-        ? websites[0]
+        ? websites[0]?.value
         : findFieldVal("server") ||
           findFieldVal("endpoint") ||
           findFieldVal("ipAddress");
@@ -561,138 +571,29 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
       size={selectedType ? "lg" : "xl"}
       radius="lg"
       overlayProps={{
-        blur: 10,
-        backgroundOpacity: 0.5,
+        blur: 8,
+        backgroundOpacity: 0.35,
       }}
       styles={{
         overlay: {
-          top: 32,
-          height: "calc(100vh - 32px)",
+          top: 48,
+          height: "calc(100vh - 48px)",
         },
         inner: {
-          top: 32,
-          height: "calc(100vh - 32px)",
+          top: 48,
+          height: "calc(100vh - 48px)",
         },
         content: {
-          backgroundColor: "rgba(26, 27, 30, 0.95)",
-          border: "1px solid var(--mantine-color-dark-4)",
+          backgroundColor: "var(--color-neutral-card)",
+          border: "1px solid var(--color-neutral-light)",
+          color: "var(--color-neutral-dark)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
         },
       }}
     >
       {/* Dynamic Modal Body */}
-      {!selectedType ? (
-        // Step 1: Type Selection Screen
-        <Box p="md">
-          {/* Custom Header */}
-          <Group justify="space-between" align="center" mb="lg">
-            <div style={{ width: 32 }} />
-            <Title order={3} className={classes.modalTitle}>
-              {t("modalTitleAdd")}
-            </Title>
-            <ActionIcon variant="subtle" color="gray" onClick={handleClose}>
-              <IconX size={20} />
-            </ActionIcon>
-          </Group>
-
-          {/* Search bar */}
-          <Box className={classes.searchBox}>
-            <TextInput
-              placeholder={t("searchPlaceholder")}
-              value={search}
-              onChange={(e) => setSearch(e.currentTarget.value)}
-              leftSection={<IconSearch size={18} />}
-              radius="md"
-              size="sm"
-            />
-          </Box>
-
-          {/* Grid Layouts */}
-          {search ? (
-            // Search result listing
-            <Box className={classes.secondaryGrid}>
-              {filteredTypes.map((type) => {
-                const IconComponent = type.icon;
-                return (
-                  <Box
-                    key={type.id}
-                    className={classes.typeCard}
-                    onClick={() => handleSelectType(type.id)}
-                  >
-                    <div className={`${classes.iconWrapper} ${type.bgClass}`}>
-                      <IconComponent size={20} />
-                    </div>
-                    <Text className={classes.typeName}>
-                      {t(`types.${type.id}`)}
-                    </Text>
-                  </Box>
-                );
-              })}
-            </Box>
-          ) : (
-            // Category panels
-            <>
-              {/* Primary grid */}
-              <Box className={classes.primaryGrid}>
-                {ITEM_TYPES.filter((t) => t.isPrimary).map((type) => {
-                  const IconComponent = type.icon;
-                  return (
-                    <Box
-                      key={type.id}
-                      className={`${classes.typeCard} ${classes.typeCardPrimary}`}
-                      onClick={() => handleSelectType(type.id)}
-                    >
-                      <div className={`${classes.iconWrapper} ${type.bgClass}`}>
-                        <IconComponent size={22} />
-                      </div>
-                      <Text className={classes.typeName}>
-                        {t(`types.${type.id}`)}
-                      </Text>
-                    </Box>
-                  );
-                })}
-              </Box>
-
-              {/* Show more toggle */}
-              <Group justify="center" mt="md">
-                <Button
-                  variant="subtle"
-                  color="indigo"
-                  size="sm"
-                  onClick={() => setShowMore(!showMore)}
-                  rightSection={<IconChevronDown size={16} />}
-                >
-                  {showMore ? t("showLess") : t("showMore")}
-                </Button>
-              </Group>
-
-              {/* Secondary list */}
-              {showMore && (
-                <Box className={classes.secondaryGrid}>
-                  {ITEM_TYPES.filter((t) => !t.isPrimary).map((type) => {
-                    const IconComponent = type.icon;
-                    return (
-                      <Box
-                        key={type.id}
-                        className={classes.typeCard}
-                        onClick={() => handleSelectType(type.id)}
-                      >
-                        <div
-                          className={`${classes.iconWrapper} ${type.bgClass}`}
-                        >
-                          <IconComponent size={18} />
-                        </div>
-                        <Text className={classes.typeName}>
-                          {t(`types.${type.id}`)}
-                        </Text>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              )}
-            </>
-          )}
-        </Box>
-      ) : (
+      {selectedType ? (
         // Step 2: Form Creator
         <Box p="md">
           {/* Custom Form Header */}
@@ -754,7 +655,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
                         styles={{
                           input: {
                             fontWeight: 600,
-                            color: "var(--mantine-color-white)",
+                            color: "var(--color-neutral-dark)",
                             fontSize: "var(--mantine-font-size-sm)",
                             padding: 0,
                             height: "auto",
@@ -763,7 +664,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
                         }}
                       />
                     ) : (
-                      <Text size="sm" fw={600} c="white">
+                      <Text size="sm" fw={600}>
                         {field.label}
                       </Text>
                     )}
@@ -813,10 +714,10 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
                 {t("websiteLabel")}
               </Text>
               {websites.map((web, idx) => (
-                <Box key={idx} className={classes.websiteRow}>
+                <Box key={web.id} className={classes.websiteRow}>
                   <TextInput
                     placeholder="https://example.com"
-                    value={web}
+                    value={web.value}
                     onChange={(e) =>
                       handleWebsiteChange(idx, e.currentTarget.value)
                     }
@@ -953,6 +854,118 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
               {t("saveBtn")}
             </Button>
           </Group>
+        </Box>
+      ) : (
+        // Step 1: Type Selection Screen
+        <Box p="md">
+          {/* Custom Header */}
+          <Group justify="space-between" align="center" mb="lg">
+            <div style={{ width: 32 }} />
+            <Title order={3} className={classes.modalTitle}>
+              {t("modalTitleAdd")}
+            </Title>
+            <ActionIcon variant="subtle" color="gray" onClick={handleClose}>
+              <IconX size={20} />
+            </ActionIcon>
+          </Group>
+
+          {/* Search bar */}
+          <Box className={classes.searchBox}>
+            <TextInput
+              placeholder={t("searchPlaceholder")}
+              value={search}
+              onChange={(e) => setSearch(e.currentTarget.value)}
+              leftSection={<IconSearch size={18} />}
+              radius="md"
+              size="sm"
+            />
+          </Box>
+
+          {/* Grid Layouts */}
+          {search ? (
+            // Search result listing
+            <Box className={classes.secondaryGrid}>
+              {filteredTypes.map((type) => {
+                const IconComponent = type.icon;
+                return (
+                  <Box
+                    key={type.id}
+                    className={classes.typeCard}
+                    onClick={() => handleSelectType(type.id)}
+                  >
+                    <div className={`${classes.iconWrapper} ${type.bgClass}`}>
+                      <IconComponent size={20} />
+                    </div>
+                    <Text className={classes.typeName}>
+                      {t(`types.${type.id}`)}
+                    </Text>
+                  </Box>
+                );
+              })}
+            </Box>
+          ) : (
+            // Category panels
+            <>
+              {/* Primary grid */}
+              <Box className={classes.primaryGrid}>
+                {ITEM_TYPES.filter((t) => t.isPrimary).map((type) => {
+                  const IconComponent = type.icon;
+                  return (
+                    <Box
+                      key={type.id}
+                      className={`${classes.typeCard} ${classes.typeCardPrimary}`}
+                      onClick={() => handleSelectType(type.id)}
+                    >
+                      <div className={`${classes.iconWrapper} ${type.bgClass}`}>
+                        <IconComponent size={22} />
+                      </div>
+                      <Text className={classes.typeName}>
+                        {t(`types.${type.id}`)}
+                      </Text>
+                    </Box>
+                  );
+                })}
+              </Box>
+
+              {/* Show more toggle */}
+              <Group justify="center" mt="md">
+                <Button
+                  variant="subtle"
+                  color="indigo"
+                  size="sm"
+                  onClick={() => setShowMore(!showMore)}
+                  rightSection={<IconChevronDown size={16} />}
+                >
+                  {showMore ? t("showLess") : t("showMore")}
+                </Button>
+              </Group>
+
+              {/* Secondary list */}
+              {showMore && (
+                <Box className={classes.secondaryGrid}>
+                  {ITEM_TYPES.filter((t) => !t.isPrimary).map((type) => {
+                    const IconComponent = type.icon;
+                    return (
+                      <Box
+                        key={type.id}
+                        className={classes.typeCard}
+                        onClick={() => handleSelectType(type.id)}
+                      >
+                        <div
+                          className={`${classes.iconWrapper} ${type.bgClass}`}
+                        >
+                          <IconComponent size={18} />
+                        </div>
+                        <Text className={classes.typeName}>
+                          {t(`types.${type.id}`)}
+                        </Text>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+            </>
+          )}
         </Box>
       )}
     </Modal>

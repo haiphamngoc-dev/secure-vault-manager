@@ -46,13 +46,12 @@ function NewItemButton({ isCollapsed, onClick }: Readonly<NewItemButtonProps>) {
     return (
       <Tooltip label={t("newItemBtn")} position="right" withArrow>
         <ActionIcon
-          size="xl"
-          color="indigo"
-          radius="md"
+          size="lg"
+          color="blue"
           onClick={onClick}
           style={{ alignSelf: "center", marginBottom: "8px" }}
         >
-          <IconPlus size={22} />
+          <IconPlus size={18} />
         </ActionIcon>
       </Tooltip>
     );
@@ -62,8 +61,7 @@ function NewItemButton({ isCollapsed, onClick }: Readonly<NewItemButtonProps>) {
     <Button
       leftSection={<IconPlus size={16} />}
       onClick={onClick}
-      radius="md"
-      color="indigo"
+      color="blue"
       style={{ marginBottom: "8px" }}
     >
       {t("newItemBtn")}
@@ -93,14 +91,13 @@ function VaultNavLink({
     return (
       <Tooltip label={t("vaultItems")} position="right" withArrow>
         <ActionIcon
-          size="xl"
+          size="lg"
           variant={isActive ? "light" : "subtle"}
-          color={isActive ? "indigo" : "gray"}
-          radius="md"
+          color={isActive ? "blue" : "gray"}
           onClick={() => onTabChange("vault")}
           style={{ alignSelf: "center" }}
         >
-          <IconShield size={22} />
+          <IconShield size={18} />
         </ActionIcon>
       </Tooltip>
     );
@@ -177,14 +174,13 @@ function SettingsNavLink({
     return (
       <Tooltip label={t("settingsSync")} position="right" withArrow>
         <ActionIcon
-          size="xl"
+          size="lg"
           variant={isActive ? "light" : "subtle"}
-          color={isActive ? "indigo" : "gray"}
-          radius="md"
+          color={isActive ? "blue" : "gray"}
           onClick={() => onTabChange("settings")}
           style={{ alignSelf: "center" }}
         >
-          <IconSettings size={22} />
+          <IconSettings size={18} />
         </ActionIcon>
       </Tooltip>
     );

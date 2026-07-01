@@ -25,7 +25,6 @@ import {
   IconDotsVertical,
   IconStar,
   IconTrash,
-  IconEdit,
   IconPlus,
   IconArrowLeft,
   IconFolder,
@@ -41,7 +40,6 @@ export function VaultSelectionPage() {
     defaultVaultId,
     unlock,
     initialize,
-    renameVault,
     setDefaultVault,
     deleteVault,
   } = useVault();
@@ -60,11 +58,6 @@ export function VaultSelectionPage() {
   const [newVaultPassword, setNewVaultPassword] = useState("");
   const [newVaultConfirm, setNewVaultConfirm] = useState("");
   const [newVaultError, setNewVaultError] = useState<string | null>(null);
-
-  // Rename Modal States
-  const [renameOpened, setRenameOpened] = useState(false);
-  const [vaultToRename, setVaultToRename] = useState<VaultProfile | null>(null);
-  const [renamedName, setRenamedName] = useState("");
 
   // Delete Modal States
   const [deleteOpened, setDeleteOpened] = useState(false);
@@ -148,18 +141,6 @@ export function VaultSelectionPage() {
     }
   };
 
-  const handleRenameSubmit = async (e: React.SyntheticEvent) => {
-    e.preventDefault();
-    if (!vaultToRename || !renamedName.trim()) return;
-    try {
-      await renameVault(vaultToRename.id, renamedName.trim());
-      setRenameOpened(false);
-      setVaultToRename(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const handleDeleteSubmit = async () => {
     if (!vaultToDelete) return;
     try {
@@ -185,7 +166,7 @@ export function VaultSelectionPage() {
                 size={64}
                 radius="xl"
                 variant="gradient"
-                gradient={{ from: "indigo", to: "cyan", deg: 45 }}
+                gradient={{ from: "blue", to: "cyan", deg: 45 }}
                 className={classes.iconContainer}
               >
                 <IconLock size={36} />
@@ -254,10 +235,10 @@ export function VaultSelectionPage() {
                   <Button
                     type="submit"
                     loading={loading}
-                    gradient={{ from: "indigo", to: "cyan", deg: 45 }}
+                    gradient={{ from: "blue", to: "cyan", deg: 45 }}
                     variant="gradient"
                     radius="md"
-                    size="md"
+                    size="sm"
                     style={{ flex: 2 }}
                   >
                     {t("unlockSubmitBtn", "Mở khóa")}
@@ -270,7 +251,7 @@ export function VaultSelectionPage() {
           /* VAULT LIST VIEW */
           <Paper radius="lg" p="xl" withBorder className={classes.card}>
             <Stack gap="xs" align="center" mb="lg">
-              <ThemeIcon size={54} radius="md" variant="light" color="indigo">
+              <ThemeIcon size={54} radius="md" variant="light" color="blue">
                 <IconFolder size={28} />
               </ThemeIcon>
               <Title order={2} className={classes.titleText}>
@@ -298,7 +279,7 @@ export function VaultSelectionPage() {
                     <Group gap="md" style={{ flex: 1, overflow: "hidden" }}>
                       <ThemeIcon
                         variant="light"
-                        color="indigo"
+                        color="blue"
                         radius="md"
                         size="md"
                       >
@@ -308,12 +289,13 @@ export function VaultSelectionPage() {
                         <Group gap="xs" wrap="nowrap">
                           <Text
                             fw={700}
-                            c="white"
+                            c="var(--color-neutral-dark)"
                             size="sm"
                             style={{
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
+                              maxWidth: "160px",
                             }}
                           >
                             {vault.name}
@@ -323,8 +305,8 @@ export function VaultSelectionPage() {
                               <Badge
                                 size="xs"
                                 variant="light"
-                                color="indigo"
-                                radius="sm"
+                                color="blue"
+                                radius="md"
                               >
                                 {t("defaultBadge", "Mặc định")}
                               </Badge>
@@ -369,16 +351,7 @@ export function VaultSelectionPage() {
                             ? t("removeDefault", "Bỏ mặc định")
                             : t("setAsDefault", "Đặt làm mặc định")}
                         </Menu.Item>
-                        <Menu.Item
-                          leftSection={<IconEdit size={14} />}
-                          onClick={() => {
-                            setVaultToRename(vault);
-                            setRenamedName(vault.name);
-                            setRenameOpened(true);
-                          }}
-                        >
-                          {t("rename", "Đổi tên")}
-                        </Menu.Item>
+
                         <Menu.Item
                           color="red"
                           leftSection={<IconTrash size={14} />}
@@ -404,8 +377,8 @@ export function VaultSelectionPage() {
                 onClick={() => setNewVaultOpened(true)}
               >
                 <Group justify="center" gap="xs">
-                  <IconPlus size={16} color="var(--mantine-color-indigo-4)" />
-                  <Text fw={600} size="sm" c="indigo.4">
+                  <IconPlus size={16} color="var(--color-brand-primary)" />
+                  <Text fw={600} size="sm" c="blue.6">
                     {t("createNewVaultBtn", "Tạo Vault mới")}
                   </Text>
                 </Group>
@@ -420,18 +393,20 @@ export function VaultSelectionPage() {
         opened={newVaultOpened}
         onClose={() => setNewVaultOpened(false)}
         title={t("createNewVaultTitle", "Tạo Vault mới")}
-        radius="md"
+        radius="lg"
         centered
         styles={{
           content: {
-            backgroundColor: "rgba(26, 27, 30, 0.98)",
-            border: "1px solid var(--mantine-color-dark-4)",
-            color: "white",
+            backgroundColor: "var(--color-neutral-card)",
+            border: "1px solid var(--color-neutral-light)",
+            color: "var(--color-neutral-dark)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
           },
           header: {
             backgroundColor: "transparent",
-            color: "white",
-            borderBottom: "1px solid var(--mantine-color-dark-5)",
+            color: "var(--color-neutral-dark)",
+            borderBottom: "1px solid var(--color-neutral-light)",
             paddingBottom: "12px",
           },
         }}
@@ -458,7 +433,6 @@ export function VaultSelectionPage() {
                   e.currentTarget.value.replace(/[^A-Za-z0-9_-]/g, "")
                 )
               }
-              radius="md"
             />
 
             <TextInput
@@ -467,7 +441,6 @@ export function VaultSelectionPage() {
               placeholder="Ví dụ: Kho công việc, Kho cá nhân"
               value={newVaultName}
               onChange={(e) => setNewVaultName(e.currentTarget.value)}
-              radius="md"
             />
 
             <PasswordInput
@@ -476,7 +449,6 @@ export function VaultSelectionPage() {
               placeholder="Nhập mật khẩu cho Vault này (tối thiểu 8 ký tự)"
               value={newVaultPassword}
               onChange={(e) => setNewVaultPassword(e.currentTarget.value)}
-              radius="md"
             />
 
             <PasswordInput
@@ -485,70 +457,18 @@ export function VaultSelectionPage() {
               placeholder="Nhập lại mật khẩu..."
               value={newVaultConfirm}
               onChange={(e) => setNewVaultConfirm(e.currentTarget.value)}
-              radius="md"
             />
 
             <Group justify="flex-end" gap="sm" mt="md">
               <Button
                 variant="default"
-                radius="md"
                 size="xs"
                 onClick={() => setNewVaultOpened(false)}
               >
                 {t("cancelBtn", "Hủy")}
               </Button>
-              <Button type="submit" color="indigo" radius="md" size="xs">
+              <Button type="submit" color="blue" size="xs">
                 {t("createBtn", "Tạo mới")}
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Modal>
-
-      {/* RENAME VAULT MODAL */}
-      <Modal
-        opened={renameOpened}
-        onClose={() => setRenameOpened(false)}
-        title={t("renameVaultTitle", "Đổi tên Vault")}
-        radius="md"
-        centered
-        size="sm"
-        styles={{
-          content: {
-            backgroundColor: "rgba(26, 27, 30, 0.98)",
-            border: "1px solid var(--mantine-color-dark-4)",
-            color: "white",
-          },
-          header: {
-            backgroundColor: "transparent",
-            color: "white",
-            borderBottom: "1px solid var(--mantine-color-dark-5)",
-            paddingBottom: "12px",
-          },
-        }}
-      >
-        <form onSubmit={handleRenameSubmit}>
-          <Stack gap="md" mt="xs">
-            <TextInput
-              required
-              label={t("newVaultNameLabel", "Tên hiển thị mới")}
-              value={renamedName}
-              onChange={(e) => setRenamedName(e.currentTarget.value)}
-              radius="md"
-              autoFocus
-            />
-
-            <Group justify="flex-end" gap="sm">
-              <Button
-                variant="default"
-                radius="md"
-                size="xs"
-                onClick={() => setRenameOpened(false)}
-              >
-                {t("cancelBtn", "Hủy")}
-              </Button>
-              <Button type="submit" color="indigo" radius="md" size="xs">
-                {t("saveBtn", "Lưu")}
               </Button>
             </Group>
           </Stack>
@@ -560,19 +480,21 @@ export function VaultSelectionPage() {
         opened={deleteOpened}
         onClose={() => setDeleteOpened(false)}
         title={t("deleteVaultTitle", "Xóa Vault")}
-        radius="md"
+        radius="lg"
         centered
         size="sm"
         styles={{
           content: {
-            backgroundColor: "rgba(26, 27, 30, 0.98)",
-            border: "1px solid var(--mantine-color-dark-4)",
-            color: "white",
+            backgroundColor: "var(--color-neutral-card)",
+            border: "1px solid var(--color-neutral-light)",
+            color: "var(--color-neutral-dark)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
           },
           header: {
             backgroundColor: "transparent",
-            color: "white",
-            borderBottom: "1px solid var(--mantine-color-dark-5)",
+            color: "var(--color-neutral-dark)",
+            borderBottom: "1px solid var(--color-neutral-light)",
             paddingBottom: "12px",
           },
         }}
@@ -615,18 +537,12 @@ export function VaultSelectionPage() {
           <Group justify="flex-end" gap="sm">
             <Button
               variant="default"
-              radius="md"
               size="xs"
               onClick={() => setDeleteOpened(false)}
             >
               {t("cancelBtn", "Hủy")}
             </Button>
-            <Button
-              color="red"
-              radius="md"
-              size="xs"
-              onClick={handleDeleteSubmit}
-            >
+            <Button color="red" size="xs" onClick={handleDeleteSubmit}>
               {t("deleteSubmitBtn", "Xóa")}
             </Button>
           </Group>

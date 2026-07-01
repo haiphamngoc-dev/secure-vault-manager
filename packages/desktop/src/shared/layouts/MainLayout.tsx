@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box } from "@mantine/core";
 import { Outlet } from "react-router-dom";
 import { useVault } from "@/app/providers/VaultProvider";
@@ -13,6 +13,12 @@ export function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpen = () => setMobileOpen(true);
+    window.addEventListener("open-mobile-sidebar", handleOpen);
+    return () => window.removeEventListener("open-mobile-sidebar", handleOpen);
+  }, []);
 
   return (
     <Box className={classes.dashboardContainer}>

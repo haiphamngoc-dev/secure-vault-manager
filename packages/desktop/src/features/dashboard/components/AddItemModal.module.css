@@ -2,7 +2,7 @@
   font-family: "Outfit", "Inter", sans-serif;
   font-weight: 700;
   text-align: center;
-  color: var(--mantine-color-white);
+  color: var(--color-neutral-dark);
   font-size: 1.15rem;
   margin-bottom: var(--mantine-spacing-md);
 }
@@ -39,8 +39,8 @@
 }
 
 .typeCard {
-  border: 1px solid var(--mantine-color-dark-5);
-  background-color: rgba(30, 31, 33, 0.4);
+  border: 1px solid var(--color-neutral-light);
+  background-color: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03));
   border-radius: var(--mantine-radius-md);
   padding: var(--mantine-spacing-md);
   cursor: pointer;
@@ -67,13 +67,13 @@
   font-family: "Outfit", "Inter", sans-serif;
   font-weight: 600;
   font-size: 0.85rem;
-  color: var(--mantine-color-white);
+  color: var(--color-neutral-dark);
 }
 
 .typeName {
   font-weight: 500;
   font-size: 0.8rem;
-  color: var(--mantine-color-dark-0);
+  color: var(--color-neutral-dark);
 }
 
 .iconWrapper {
@@ -99,8 +99,8 @@
   position: absolute;
   bottom: -4px;
   right: -4px;
-  background-color: var(--mantine-color-dark-6);
-  border: 1px solid var(--mantine-color-dark-4);
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-neutral-light);
   border-radius: 50%;
   width: 16px;
   height: 16px;
@@ -111,19 +111,19 @@
 
 /* Category Specific Colors */
 .bgLogin {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
   color: white;
 }
 .bgNote {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
   color: white;
 }
 .bgCard {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
 }
 .bgIdentity {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
   color: white;
 }
 .bgPassword {
@@ -131,7 +131,7 @@
   color: white;
 }
 .bgDocument {
-  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
   color: white;
 }
 .bgDatabase {
@@ -139,23 +139,23 @@
   color: white;
 }
 .bgGeneric {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   color: white;
 }
 .bgSsh {
-  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
   color: white;
 }
 .bgApi {
-  background: linear-gradient(135deg, #d946ef 0%, #a21caf 100%);
+  background: linear-gradient(135deg, #a21caf 0%, #86198f 100%);
   color: white;
 }
 .bgBank {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  background: linear-gradient(135deg, #0e7490 0%, #155e75 100%);
   color: white;
 }
 .bgCrypto {
-  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
   color: white;
 }
 .bgLicense {
@@ -163,19 +163,19 @@
   color: white;
 }
 .bgEmail {
-  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
   color: white;
 }
 .bgMedical {
-  background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+  background: linear-gradient(135deg, #be123c 0%, #9f1239 100%);
   color: white;
 }
 .bgMembership {
-  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  background: linear-gradient(135deg, #be185d 0%, #9d174d 100%);
   color: white;
 }
 .bgOutdoor {
-  background: linear-gradient(135deg, #84cc16 0%, #4d7c0f 100%);
+  background: linear-gradient(135deg, #4d7c0f 0%, #3f6212 100%);
   color: white;
 }
 .bgPassport {
@@ -183,11 +183,11 @@
   color: white;
 }
 .bgRewards {
-  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
   color: white;
 }
 .bgServer {
-  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
   color: white;
 }
 .bgSsn {
@@ -195,11 +195,11 @@
   color: white;
 }
 .bgSoftware {
-  background: linear-gradient(135deg, #eab308 0%, #a16207 100%);
+  background: linear-gradient(135deg, #a16207 0%, #854d0e 100%);
   color: white;
 }
 .bgWifi {
-  background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
   color: white;
 }
 
@@ -210,7 +210,7 @@
   gap: var(--mantine-spacing-md);
   margin-bottom: var(--mantine-spacing-lg);
   padding-bottom: var(--mantine-spacing-md);
-  border-bottom: 1px solid var(--mantine-color-dark-5);
+  border-bottom: 1px solid var(--color-neutral-light);
 }
 
 .titleInput {
@@ -221,8 +221,8 @@
 }
 
 .formSection {
-  background-color: rgba(25, 26, 28, 0.4);
-  border: 1px solid var(--mantine-color-dark-6);
+  background-color: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--color-neutral-light);
   border-radius: var(--mantine-radius-md);
   padding: var(--mantine-spacing-md);
   margin-bottom: var(--mantine-spacing-md);

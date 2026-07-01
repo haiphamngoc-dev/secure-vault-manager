@@ -13,8 +13,7 @@ import {
   Switch,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import { useOutletContext } from "react-router-dom";
-import { useMediaQuery, useClipboard } from "@mantine/hooks";
+import { useClipboard } from "@mantine/hooks";
 import {
   IconLanguage,
   IconLock,
@@ -25,7 +24,6 @@ import {
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { invoke } from "@tauri-apps/api/core";
-import { MainHeader } from "@/shared/layouts/components/MainHeader";
 import classes from "./SettingsPage.module.css";
 
 interface AppSettings {
@@ -37,11 +35,7 @@ interface AppSettings {
 
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
-  const isMobile = useMediaQuery("(max-width: 767px)");
   const clipboard = useClipboard();
-  const { openMobileSidebar } = useOutletContext<{
-    openMobileSidebar: () => void;
-  }>();
 
   const [settings, setSettings] = useState<AppSettings>({
     lang: "vi",
@@ -95,7 +89,7 @@ export function SettingsPage() {
       notifications.show({
         title: t("saveSuccess", "Cập nhật cài đặt thành công!"),
         message: "",
-        color: "indigo",
+        color: "green",
         autoClose: 2000,
       });
     } catch (err) {
@@ -118,7 +112,7 @@ export function SettingsPage() {
       notifications.show({
         title: t("pairSuccess"),
         message: t("pairingKeyDesc"),
-        color: "indigo",
+        color: "green",
         autoClose: 5000,
       });
     } catch (err) {
@@ -144,191 +138,173 @@ export function SettingsPage() {
   ];
 
   return (
-    <>
-      <MainHeader
-        title={t("settingsSync")}
-        description={t("settingsSyncDesc")}
-        showMenuButton={isMobile}
-        onMenuClick={openMobileSidebar}
-      />
-      <Box className={classes.scrollContainer}>
-        <Stack gap="md" className={classes.settingsContainer} p="md">
-          {/* General Section */}
-          <Box className={classes.sectionCard}>
-            <div className={classes.sectionTitle}>
-              <span className={classes.sectionIcon}>
-                <IconLanguage size={20} />
-              </span>
-              <Text>{t("generalSection")}</Text>
-            </div>
-            <Stack gap="sm">
-              <Text size="sm" fw={600}>
-                {t("languageLabel")}
+    <Box className={classes.scrollContainer}>
+      <Stack gap="md" className={classes.settingsContainer} p="md">
+        {/* General Section */}
+        <Box className={classes.sectionCard}>
+          <div className={classes.sectionTitle}>
+            <span className={classes.sectionIcon}>
+              <IconLanguage size={20} />
+            </span>
+            <Text>{t("generalSection")}</Text>
+          </div>
+          <Stack gap="sm">
+            <Text size="sm" fw={600}>
+              {t("languageLabel")}
+            </Text>
+            <SegmentedControl
+              value={settings.lang}
+              onChange={(val) => updateSetting("lang", val)}
+              data={[
+                { label: "Tiếng Việt", value: "vi" },
+                { label: "English", value: "en" },
+              ]}
+              color="blue"
+              style={{ alignSelf: "flex-start" }}
+            />
+          </Stack>
+        </Box>
+
+        {/* System Section */}
+        <Box className={classes.sectionCard}>
+          <div className={classes.sectionTitle}>
+            <span className={classes.sectionIcon}>
+              <IconDeviceDesktop size={20} />
+            </span>
+            <Text>{t("systemSection")}</Text>
+          </div>
+          <Stack gap="xs">
+            <Switch
+              label={t("minimizeToTrayLabel")}
+              description={t("minimizeToTrayDesc")}
+              checked={settings.minimize_to_tray}
+              onChange={(event) =>
+                updateSetting("minimize_to_tray", event.currentTarget.checked)
+              }
+              color="blue"
+            />
+          </Stack>
+        </Box>
+
+        {/* Security Section */}
+        <Box className={classes.sectionCard}>
+          <div className={classes.sectionTitle}>
+            <span className={classes.sectionIcon}>
+              <IconLock size={20} />
+            </span>
+            <Text>{t("securitySection")}</Text>
+          </div>
+          <Stack gap="sm" style={{ maxWidth: "400px" }}>
+            <Select
+              label={t("autoLockLabel")}
+              value={settings.auto_lock_interval}
+              onChange={(val) => updateSetting("auto_lock_interval", val)}
+              data={autoLockOptions}
+              allowDeselect={false}
+              styles={{
+                dropdown: {
+                  backgroundColor: "var(--color-neutral-card)",
+                  border: "1px solid var(--color-neutral-light)",
+                  color: "var(--color-neutral-dark)",
+                },
+                option: {
+                  color: "var(--color-neutral-dark)",
+                  "&[data-hovered]": {
+                    backgroundColor: "var(--color-brand-primary-highlight)",
+                  },
+                  "&[data-selected]": {
+                    backgroundColor: "var(--color-brand-primary)",
+                    color: "white",
+                  },
+                },
+              }}
+            />
+          </Stack>
+        </Box>
+
+        {/* Extension Section */}
+        <Box className={classes.sectionCard}>
+          <div className={classes.sectionTitle}>
+            <span className={classes.sectionIcon}>
+              <IconLink size={20} />
+            </span>
+            <Text>{t("extensionSection")}</Text>
+          </div>
+          <Stack gap="md">
+            <Group justify="space-between">
+              <Text size="sm" c="dimmed">
+                {t("statusLabel")}:
               </Text>
-              <SegmentedControl
-                value={settings.lang}
-                onChange={(val) => updateSetting("lang", val)}
-                data={[
-                  { label: "Tiếng Việt", value: "vi" },
-                  { label: "English", value: "en" },
-                ]}
-                color="indigo"
-                style={{ alignSelf: "flex-start" }}
-              />
-            </Stack>
-          </Box>
-
-          {/* System Section */}
-          <Box className={classes.sectionCard}>
-            <div className={classes.sectionTitle}>
-              <span className={classes.sectionIcon}>
-                <IconDeviceDesktop size={20} />
-              </span>
-              <Text>{t("systemSection")}</Text>
-            </div>
-            <Stack gap="xs">
-              <Switch
-                label={t("minimizeToTrayLabel")}
-                description={t("minimizeToTrayDesc")}
-                checked={settings.minimize_to_tray}
-                onChange={(event) =>
-                  updateSetting("minimize_to_tray", event.currentTarget.checked)
-                }
-                color="indigo"
-              />
-            </Stack>
-          </Box>
-
-          {/* Security Section */}
-          <Box className={classes.sectionCard}>
-            <div className={classes.sectionTitle}>
-              <span className={classes.sectionIcon}>
-                <IconLock size={20} />
-              </span>
-              <Text>{t("securitySection")}</Text>
-            </div>
-            <Stack gap="sm" style={{ maxWidth: "400px" }}>
-              <Select
-                label={t("autoLockLabel")}
-                value={settings.auto_lock_interval}
-                onChange={(val) => updateSetting("auto_lock_interval", val)}
-                data={autoLockOptions}
-                allowDeselect={false}
-                styles={{
-                  dropdown: {
-                    backgroundColor: "rgba(26, 27, 30, 0.98)",
-                    border: "1px solid var(--mantine-color-dark-4)",
-                    color: "white",
-                  },
-                  option: {
-                    color: "white",
-                    "&[data-hovered]": {
-                      backgroundColor: "var(--mantine-color-indigo-9)",
-                    },
-                    "&[data-selected]": {
-                      backgroundColor: "var(--mantine-color-indigo-6)",
-                    },
-                  },
-                }}
-              />
-            </Stack>
-          </Box>
-
-          {/* Extension Section */}
-          <Box className={classes.sectionCard}>
-            <div className={classes.sectionTitle}>
-              <span className={classes.sectionIcon}>
-                <IconLink size={20} />
-              </span>
-              <Text>{t("extensionSection")}</Text>
-            </div>
-            <Stack gap="md">
-              <Group justify="space-between">
-                <Text size="sm" c="dimmed">
-                  {t("statusLabel")}:
-                </Text>
-                <Badge
-                  color={settings.extension_id ? "green" : "gray"}
-                  variant="dot"
-                >
-                  {settings.extension_id
-                    ? t("statusConnected")
-                    : t("statusDisconnected")}
-                </Badge>
-              </Group>
-
-              <TextInput
-                label={t("extensionIdLabel")}
-                placeholder={t("extensionIdPlaceholder")}
-                value={settings.extension_id || ""}
-                onChange={(e) => updateSetting("extension_id", e.target.value)}
-                styles={{
-                  input: {
-                    backgroundColor: "rgba(30, 31, 33, 0.45)",
-                    color: "white",
-                    borderColor: "var(--mantine-color-dark-5)",
-                  },
-                }}
-              />
-
-              <Button
-                color="indigo"
-                radius="md"
-                onClick={handlePair}
-                loading={isPairing}
-                style={{ alignSelf: "flex-start" }}
+              <Badge
+                color={settings.extension_id ? "green" : "gray"}
+                variant="dot"
               >
-                {t("pairBtn")}
-              </Button>
+                {settings.extension_id
+                  ? t("statusConnected")
+                  : t("statusDisconnected")}
+              </Badge>
+            </Group>
 
-              {pairingKey && (
-                <Stack gap="xs" mt="xs">
-                  <Text size="sm" fw={600}>
-                    {t("pairingKeyLabel")}
-                  </Text>
-                  <Group gap="xs" wrap="nowrap">
-                    <TextInput
-                      readOnly
-                      value={pairingKey}
-                      styles={{
-                        input: {
-                          backgroundColor: "rgba(26, 27, 30, 0.98)",
-                          color: "white",
-                          borderColor: "var(--mantine-color-dark-4)",
-                          fontFamily: "var(--mantine-font-family-monospace)",
-                        },
-                      }}
-                      style={{ flex: 1 }}
-                    />
-                    <ActionIcon
-                      variant="light"
-                      color="indigo"
-                      size="lg"
-                      onClick={() => {
-                        clipboard.copy(pairingKey);
-                        notifications.show({
-                          message: "Copied!",
-                          autoClose: 1000,
-                        });
-                      }}
-                    >
-                      {clipboard.copied ? (
-                        <IconCheck size={18} />
-                      ) : (
-                        <IconCopy size={18} />
-                      )}
-                    </ActionIcon>
-                  </Group>
-                  <Text size="xs" c="dimmed">
-                    {t("pairingKeyDesc")}
-                  </Text>
-                </Stack>
-              )}
-            </Stack>
-          </Box>
-        </Stack>
-      </Box>
-    </>
+            <TextInput
+              label={t("extensionIdLabel")}
+              placeholder={t("extensionIdPlaceholder")}
+              value={settings.extension_id || ""}
+              onChange={(e) => updateSetting("extension_id", e.target.value)}
+            />
+
+            <Button
+              color="blue"
+              onClick={handlePair}
+              loading={isPairing}
+              style={{ alignSelf: "flex-start" }}
+            >
+              {t("pairBtn")}
+            </Button>
+
+            {pairingKey && (
+              <Stack gap="xs" mt="xs">
+                <Text size="sm" fw={600}>
+                  {t("pairingKeyLabel")}
+                </Text>
+                <Group gap="xs" wrap="nowrap">
+                  <TextInput
+                    readOnly
+                    value={pairingKey}
+                    styles={{
+                      input: {
+                        fontFamily: "var(--mantine-font-family-monospace)",
+                      },
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <ActionIcon
+                    variant="light"
+                    color="blue"
+                    size="lg"
+                    onClick={() => {
+                      clipboard.copy(pairingKey);
+                      notifications.show({
+                        message: "Copied!",
+                        autoClose: 1000,
+                      });
+                    }}
+                  >
+                    {clipboard.copied ? (
+                      <IconCheck size={18} />
+                    ) : (
+                      <IconCopy size={18} />
+                    )}
+                  </ActionIcon>
+                </Group>
+                <Text size="xs" c="dimmed">
+                  {t("pairingKeyDesc")}
+                </Text>
+              </Stack>
+            )}
+          </Stack>
+        </Box>
+      </Stack>
+    </Box>
   );
 }
 

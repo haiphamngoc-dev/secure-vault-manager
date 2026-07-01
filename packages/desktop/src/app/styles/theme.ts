@@ -23,19 +23,36 @@ const darkColors: MantineColorsTuple = [
 ];
 
 /**
+ * Custom Royal/Indigo Blue color palette aligned with the brand design specs (#2563eb).
+ */
+const brandBlueColors: MantineColorsTuple = [
+  "#eff6ff", // index 0 (Highlight / bg tint)
+  "#dbeafe",
+  "#bfdbfe",
+  "#93c5fd",
+  "#60a5fa",
+  "#3b82f6", // Hover style
+  "#2563eb", // Main primary brand color (index 6)
+  "#1d4ed8", // Active/pressed style (index 7)
+  "#1e40af",
+  "#1e3a8a",
+];
+
+/**
  * The application's customized Mantine theme instance.
  */
 export const theme = createTheme({
-  primaryColor: "indigo",
+  primaryColor: "blue",
   colors: {
     dark: darkColors,
+    blue: brandBlueColors,
   },
   fontFamily:
-    "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   headings: {
     fontFamily: "Outfit, Inter, sans-serif",
   },
-  defaultRadius: "lg",
+  defaultRadius: "md", // Bo góc mềm mại hiện đại (8px)
   components: {
     Button: {
       defaultProps: {
@@ -46,7 +63,7 @@ export const theme = createTheme({
     },
     Card: {
       defaultProps: {
-        radius: "md",
+        radius: "lg", // Cards bo góc lớn hơn tạo chiều sâu khối (12px)
         withBorder: true,
         shadow: "sm",
       },

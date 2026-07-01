@@ -54,12 +54,12 @@ export function SidebarFooter({
           mb="xs"
           style={{
             textAlign: "center",
-            borderBottom: "1px solid var(--mantine-color-dark-6)",
+            borderBottom: "1px solid var(--color-neutral-light)",
             paddingBottom: "8px",
           }}
         >
           <Group gap="xs" justify="center" wrap="nowrap">
-            <IconFolder size={14} color="var(--mantine-color-indigo-4)" />
+            <IconFolder size={14} color="var(--color-brand-primary)" />
             <Text
               size="xs"
               fw={700}
@@ -88,10 +88,9 @@ export function SidebarFooter({
             >
               <ActionIcon
                 variant="light"
-                color="indigo"
+                color="blue"
                 size="md"
                 onClick={onLock}
-                radius="md"
               >
                 <IconReplace size={16} />
               </ActionIcon>
@@ -102,7 +101,6 @@ export function SidebarFooter({
                 color="red"
                 size="md"
                 onClick={onLock}
-                radius="md"
               >
                 <IconLock size={16} />
               </ActionIcon>
@@ -113,10 +111,9 @@ export function SidebarFooter({
             <Button
               size="xs"
               variant="light"
-              color="indigo"
+              color="blue"
               leftSection={<IconReplace size={12} />}
               onClick={onLock}
-              radius="md"
               style={{ flex: 1 }}
             >
               {t("switchVault", "Chuyển Vault")}
@@ -127,7 +124,6 @@ export function SidebarFooter({
               color="red"
               leftSection={<IconLock size={12} />}
               onClick={onLock}
-              radius="md"
               style={{ flex: 1 }}
             >
               {t("lockApp")}

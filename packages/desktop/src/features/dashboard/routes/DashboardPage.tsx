@@ -29,19 +29,16 @@ import { useVault, VaultItem } from "@/app/providers/VaultProvider";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery, useClipboard } from "@mantine/hooks";
 
-import { MainHeader } from "@/shared/layouts/components/MainHeader";
 import classes from "./DashboardPage.module.css";
 
 export function DashboardPage() {
   const { items, deleteItem } = useVault();
   const { t } = useTranslation();
-  const isMobile = useMediaQuery("(max-width: 767px)");
   const showCards = useMediaQuery("(max-width: 1024px)");
   const clipboard = useClipboard();
 
   const [searchParams] = useSearchParams();
-  const { openMobileSidebar, onOpenAdd } = useOutletContext<{
-    openMobileSidebar: () => void;
+  const { onOpenAdd } = useOutletContext<{
     onOpenAdd: () => void;
   }>();
 
@@ -49,7 +46,7 @@ export function DashboardPage() {
 
   // State controls
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchQuery = searchParams.get("q") || "";
   const [currentPage, setCurrentPage] = useState(1);
   const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -62,45 +59,6 @@ export function DashboardPage() {
     setSelectedItemId(null);
     setSelectedIds(new Set());
   }
-
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
-    setCurrentPage(1);
-  };
-
-  const getHeaderTitle = () => {
-    switch (activeCategory) {
-      case "all":
-        return t("allSub");
-      case "Login":
-        return t("logins");
-      case "Card":
-        return t("cards");
-      case "Note":
-        return t("notes");
-      case "Database":
-        return t("databases");
-      default:
-        return "";
-    }
-  };
-
-  const getHeaderDescription = () => {
-    switch (activeCategory) {
-      case "all":
-        return t("allSubDesc");
-      case "Login":
-        return t("loginsDesc");
-      case "Card":
-        return t("cardsDesc");
-      case "Note":
-        return t("notesDesc");
-      case "Database":
-        return t("databasesDesc");
-      default:
-        return "";
-    }
-  };
 
   // Filter items matching category and search query
   const filteredItems = items.filter((item) => {
@@ -253,7 +211,8 @@ export function DashboardPage() {
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                flexShrink: 0,
+                flexShrink: 1,
+                maxWidth: "45%",
               }}
             >
               {f.label}:
@@ -264,7 +223,6 @@ export function DashboardPage() {
             >
               <Text
                 size="xs"
-                c="white"
                 style={{
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -358,15 +316,6 @@ export function DashboardPage() {
 
   return (
     <>
-      <MainHeader
-        title={getHeaderTitle()}
-        description={getHeaderDescription()}
-        showMenuButton={isMobile}
-        onMenuClick={openMobileSidebar}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        onItemClick={(id) => setSelectedItemId(id)}
-      />
       <Box className={classes.scrollContainer}>
         {filteredItems.length === 0 ? (
           // Premium Empty State
@@ -384,10 +333,10 @@ export function DashboardPage() {
           >
             <IconShield
               size={64}
-              color="var(--mantine-color-indigo-5)"
+              color="var(--color-brand-primary)"
               style={{ marginBottom: "16px", opacity: 0.8 }}
             />
-            <Text fw={700} size="lg" c="white" mb={4}>
+            <Text fw={700} size="lg" mb={4}>
               {t("noItemsFound")}
             </Text>
             <Text size="sm" c="dimmed" mb="lg" style={{ maxWidth: 350 }}>
@@ -395,8 +344,7 @@ export function DashboardPage() {
             </Text>
             <Button
               leftSection={<IconPlus size={16} />}
-              color="indigo"
-              radius="md"
+              color="blue"
               onClick={onOpenAdd}
             >
               {t("createItem")}
@@ -424,8 +372,9 @@ export function DashboardPage() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    backgroundColor: "rgba(36, 37, 41, 0.85)",
-                    border: "1px solid var(--mantine-color-dark-4)",
+                    backgroundColor:
+                      "light-dark(rgba(240, 243, 246, 0.95), rgba(36, 37, 41, 0.85))",
+                    border: "1px solid var(--color-neutral-light)",
                     borderRadius: "var(--mantine-radius-md)",
                     padding: "12px 16px",
                     position: "sticky",
@@ -436,10 +385,10 @@ export function DashboardPage() {
                   }}
                 >
                   <Group gap="xs">
-                    <Badge variant="filled" color="indigo" radius="sm">
+                    <Badge variant="filled" color="blue" radius="md">
                       {selectedIds.size}
                     </Badge>
-                    <Text size="sm" fw={600} c="white">
+                    <Text size="sm" fw={600}>
                       {t("selectedItemsCount", { count: selectedIds.size })}
                     </Text>
                   </Group>
@@ -448,7 +397,6 @@ export function DashboardPage() {
                       variant="subtle"
                       color="gray"
                       size="xs"
-                      radius="md"
                       leftSection={<IconDownload size={14} />}
                       onClick={() => {
                         // Export functionality will be wired here
@@ -476,7 +424,6 @@ export function DashboardPage() {
                     <Card
                       key={item.id}
                       withBorder
-                      radius="md"
                       className={classes.itemCard}
                       onClick={() => setSelectedItemId(item.id)}
                     >
@@ -488,7 +435,7 @@ export function DashboardPage() {
                       >
                         <Group
                           gap="xs"
-                          style={{ overflow: "hidden", flex: 1 }}
+                          style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
                           wrap="nowrap"
                         >
                           <Checkbox
@@ -503,10 +450,12 @@ export function DashboardPage() {
                             fw={700}
                             size="sm"
                             style={{
-                              color: "white",
+                              color: "var(--color-neutral-dark)",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
+                              flex: 1,
+                              minWidth: 0,
                             }}
                           >
                             {item.title}
@@ -525,7 +474,7 @@ export function DashboardPage() {
                         </ActionIcon>
                       </Group>
 
-                      <Badge size="xs" variant="light" color="indigo" mb="xs">
+                      <Badge size="xs" variant="light" color="green" mb="xs">
                         {t(`types.${item.category}`, item.category)}
                       </Badge>
 
@@ -548,7 +497,7 @@ export function DashboardPage() {
                     <Table.Thead>
                       <Table.Tr
                         style={{
-                          borderBottom: "1px solid var(--mantine-color-dark-4)",
+                          borderBottom: "1px solid var(--color-neutral-light)",
                         }}
                       >
                         <Table.Th style={{ width: 40 }}>
@@ -563,29 +512,29 @@ export function DashboardPage() {
                         <Table.Th
                           style={{
                             width: 60,
-                            color: "var(--mantine-color-dark-2)",
+                            color: "var(--color-neutral-medium)",
                           }}
                         >
                           {t("tableHeaderIndex")}
                         </Table.Th>
                         <Table.Th
-                          style={{ color: "var(--mantine-color-dark-2)" }}
+                          style={{ color: "var(--color-neutral-medium)" }}
                         >
                           {t("tableHeaderTitle")}
                         </Table.Th>
                         <Table.Th
-                          style={{ color: "var(--mantine-color-dark-2)" }}
+                          style={{ color: "var(--color-neutral-medium)" }}
                         >
                           {t("tableHeaderCategory")}
                         </Table.Th>
                         <Table.Th
-                          style={{ color: "var(--mantine-color-dark-2)" }}
+                          style={{ color: "var(--color-neutral-medium)" }}
                         >
                           {t("tableHeaderUsername")}
                         </Table.Th>
                         <Table.Th
                           style={{
-                            color: "var(--mantine-color-dark-2)",
+                            color: "var(--color-neutral-medium)",
                             textAlign: "right",
                           }}
                         >
@@ -597,11 +546,15 @@ export function DashboardPage() {
                       {paginatedItems.map((item, index) => (
                         <Table.Tr
                           key={item.id}
-                          className={classes.tableRow}
+                          className={`${classes.tableRow} ${
+                            selectedIds.has(item.id)
+                              ? classes.tableRowSelected
+                              : ""
+                          }`}
                           onClick={() => setSelectedItemId(item.id)}
                           style={{
                             borderBottom:
-                              "1px solid var(--mantine-color-dark-6)",
+                              "1px solid var(--color-neutral-light)",
                           }}
                         >
                           <Table.Td onClick={(e) => e.stopPropagation()}>
@@ -626,7 +579,6 @@ export function DashboardPage() {
                               <Text
                                 fw={700}
                                 size="sm"
-                                c="white"
                                 style={{
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
@@ -638,14 +590,13 @@ export function DashboardPage() {
                             </Group>
                           </Table.Td>
                           <Table.Td>
-                            <Badge size="xs" variant="light" color="indigo">
+                            <Badge size="xs" variant="light" color="green">
                               {t(`types.${item.category}`, item.category)}
                             </Badge>
                           </Table.Td>
                           <Table.Td>
                             <Text
                               size="sm"
-                              c="white"
                               style={{
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",

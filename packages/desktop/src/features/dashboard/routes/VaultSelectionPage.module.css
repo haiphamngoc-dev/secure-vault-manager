@@ -10,12 +10,12 @@
 }
 
 .card {
-  background-color: rgba(30, 31, 33, 0.45);
-  border: 1px solid var(--mantine-color-dark-5);
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-neutral-light);
   backdrop-filter: blur(16px);
-  border-radius: var(--mantine-radius-md);
+  border-radius: var(--mantine-radius-lg);
   padding: 32px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   width: 100%;
   max-width: 480px;
 }
@@ -23,7 +23,7 @@
 .titleText {
   font-family: "Outfit", "Inter", sans-serif;
   font-weight: 700;
-  color: var(--mantine-color-white);
+  color: var(--color-neutral-dark);
   letter-spacing: -0.5px;
 }
 
@@ -36,17 +36,17 @@
 }
 
 .vaultItemCard {
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--mantine-color-dark-5);
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-neutral-light);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 }
 
 .vaultItemCard:hover {
-  background-color: rgba(255, 255, 255, 0.07);
-  border-color: var(--mantine-color-indigo-6);
+  background-color: var(--color-brand-primary-highlight);
+  border-color: var(--color-brand-primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
 }
 
 .vaultItemCard:active {
@@ -54,13 +54,13 @@
 }
 
 .createVaultCard {
-  background-color: rgba(99, 102, 241, 0.04);
-  border: 1px dashed var(--mantine-color-indigo-8);
+  background-color: var(--color-brand-primary-highlight);
+  border: 1px dashed var(--color-brand-primary);
   transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .createVaultCard:hover {
-  background-color: rgba(99, 102, 241, 0.08);
-  border-color: var(--mantine-color-indigo-5);
+  background-color: rgba(37, 99, 235, 0.12);
+  border-color: var(--color-brand-primary-hover);
 }

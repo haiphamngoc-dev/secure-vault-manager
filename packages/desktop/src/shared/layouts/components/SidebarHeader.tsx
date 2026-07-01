@@ -2,6 +2,7 @@ import { Box, Group, Avatar, Text, ActionIcon, Badge } from "@mantine/core";
 import { IconChevronLeft } from "@tabler/icons-react";
 import classes from "./SidebarHeader.module.css";
 import { useTranslation } from "react-i18next";
+import { useVault } from "@/app/providers/VaultProvider";
 
 interface SidebarHeaderProps {
   isCollapsed: boolean;
@@ -13,13 +14,20 @@ export function SidebarHeader({
   onToggleCollapse,
 }: Readonly<SidebarHeaderProps>) {
   const { t } = useTranslation();
+  const { vaults, currentVaultId } = useVault();
+
+  const currentVault = vaults.find((v) => v.id === currentVaultId);
+  const vaultName = currentVault ? currentVault.name : t("vaultTitle");
+  const avatarInitials = vaultName
+    ? vaultName.substring(0, 2).toUpperCase()
+    : "PW";
 
   return (
     <Box px="md" className={classes.headerContainer}>
       <Group justify={isCollapsed ? "center" : "space-between"} wrap="nowrap">
         <Group gap="xs" wrap="nowrap" style={{ overflow: "hidden" }}>
-          <Avatar radius="md" color="indigo" style={{ fontWeight: 800 }}>
-            PW
+          <Avatar color="blue" style={{ fontWeight: 800 }}>
+            {avatarInitials}
           </Avatar>
           {!isCollapsed && (
             <Box style={{ whiteSpace: "nowrap" }}>
@@ -30,7 +38,7 @@ export function SidebarHeader({
                 style={{ marginBottom: "2px" }}
               >
                 <Text size="sm" fw={700} className={classes.logoText}>
-                  {t("vaultTitle")}
+                  {vaultName}
                 </Text>
                 <Badge
                   variant="outline"
