@@ -108,3 +108,17 @@
 .tableRowSelected {
   background-color: var(--color-brand-primary-highlight) !important;
 }
+
+/* Ẩn các thao tác nhanh mặc định và hiển thị khi hover dòng hoặc card */
+.rowActions,
+.cardActions {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.tableRow:hover .rowActions,
+.itemCard:hover .cardActions {
+  opacity: 1;
+  pointer-events: auto;
+}

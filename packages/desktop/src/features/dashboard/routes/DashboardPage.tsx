@@ -13,6 +13,7 @@ import {
   Table,
   Tooltip,
   Checkbox,
+  Menu,
 } from "@mantine/core";
 import {
   IconCopy,
@@ -21,6 +22,7 @@ import {
   IconKey,
   IconPlus,
   IconDownload,
+  IconDotsVertical,
 } from "@tabler/icons-react";
 import { useSearchParams, useOutletContext } from "react-router-dom";
 import { ITEM_TYPES } from "../components/AddItemModal";
@@ -96,159 +98,6 @@ export function DashboardPage() {
     const type = ITEM_TYPES.find((t) => t.id === category);
     const IconComponent = type?.icon || IconKey;
     return <IconComponent size={18} />;
-  };
-
-  const renderCardFields = (item: VaultItem) => {
-    const fields: {
-      label: string;
-      value: string;
-      isMasked: boolean;
-      rawValue: string;
-    }[] = [];
-
-    if (item.username) {
-      fields.push({
-        label: t("usernameLabel", "Username"),
-        value: item.username,
-        isMasked: false,
-        rawValue: item.username,
-      });
-    }
-
-    if (item.password) {
-      fields.push({
-        label: t("passwordLabel", "Password"),
-        value: "••••••••",
-        isMasked: true,
-        rawValue: item.password,
-      });
-    }
-
-    if (item.url) {
-      fields.push({
-        label: "URL",
-        value: item.url,
-        isMasked: false,
-        rawValue: item.url,
-      });
-    }
-
-    // Capture specific custom template fields for summary cards
-    if (item.customFields) {
-      for (const cf of item.customFields) {
-        const labelLower = cf.label.toLowerCase();
-        const idLower = cf.id.toLowerCase();
-
-        const isSensitive =
-          cf.type === "password" ||
-          idLower.includes("password") ||
-          idLower.includes("secret") ||
-          idLower.includes("cvv") ||
-          idLower.includes("pin") ||
-          idLower.includes("passphrase") ||
-          labelLower.includes("mật khẩu") ||
-          labelLower.includes("pin") ||
-          labelLower.includes("cvv");
-
-        const isCardNumber =
-          idLower.includes("cardnumber") ||
-          labelLower.includes("card number") ||
-          labelLower.includes("số thẻ");
-
-        const isCommonField =
-          idLower.includes("cardholder") ||
-          idLower.includes("hostname") ||
-          idLower.includes("bankname") ||
-          idLower.includes("fullname") ||
-          idLower.includes("emailaddress") ||
-          idLower.includes("ipaddress");
-
-        if (isSensitive) {
-          fields.push({
-            label: cf.label,
-            value: "••••••••",
-            isMasked: true,
-            rawValue: cf.value,
-          });
-        } else if (isCardNumber) {
-          const clean = cf.value.replace(/\s+/g, "");
-          const maskedValue =
-            clean.length >= 4
-              ? `•••• •••• •••• ${clean.slice(-4)}`
-              : "••••••••";
-          fields.push({
-            label: cf.label,
-            value: maskedValue,
-            isMasked: true,
-            rawValue: cf.value,
-          });
-        } else if (isCommonField) {
-          fields.push({
-            label: cf.label,
-            value: cf.value,
-            isMasked: false,
-            rawValue: cf.value,
-          });
-        }
-      }
-    }
-
-    const visibleFields = fields.slice(0, 3);
-
-    return (
-      <Stack gap={4} mt="xs">
-        {visibleFields.map((f) => (
-          <Group
-            key={f.label}
-            justify="space-between"
-            align="center"
-            wrap="nowrap"
-          >
-            <Text
-              size="xs"
-              c="dimmed"
-              style={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                flexShrink: 1,
-                maxWidth: "45%",
-              }}
-            >
-              {f.label}:
-            </Text>
-            <Group
-              gap="xs"
-              style={{ flex: 1, minWidth: 0, justifyContent: "flex-end" }}
-            >
-              <Text
-                size="xs"
-                style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  fontFamily: "var(--mantine-font-family-monospace)",
-                }}
-              >
-                {f.value}
-              </Text>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="sm"
-                style={{ flexShrink: 0 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  clipboard.copy(f.rawValue);
-                }}
-              >
-                <IconCopy size={12} />
-              </ActionIcon>
-            </Group>
-          </Group>
-        ))}
-      </Stack>
-    );
   };
 
   const getPrimaryIdentifier = (item: VaultItem) => {
@@ -431,7 +280,6 @@ export function DashboardPage() {
                         justify="space-between"
                         align="center"
                         wrap="nowrap"
-                        mb="xs"
                       >
                         <Group
                           gap="xs"
@@ -446,39 +294,102 @@ export function DashboardPage() {
                           <div className={classes.cardIconWrapper}>
                             {getCategoryIcon(item.category)}
                           </div>
-                          <Text
-                            fw={700}
-                            size="sm"
-                            style={{
-                              color: "var(--color-neutral-dark)",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              flex: 1,
-                              minWidth: 0,
-                            }}
+
+                          <Stack
+                            gap={0}
+                            style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
                           >
-                            {item.title}
-                          </Text>
+                            <Text
+                              fw={700}
+                              size="sm"
+                              style={{
+                                color: "var(--color-neutral-dark)",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {item.title}
+                            </Text>
+                            {getPrimaryIdentifier(item) !== "-" && (
+                              <Text
+                                size="xs"
+                                c="dimmed"
+                                style={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  fontFamily:
+                                    item.category === "Credit Card"
+                                      ? "var(--mantine-font-family-monospace)"
+                                      : "inherit",
+                                }}
+                              >
+                                {getPrimaryIdentifier(item)}
+                              </Text>
+                            )}
+                          </Stack>
                         </Group>
-                        <ActionIcon
-                          variant="subtle"
-                          color="red"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setItemToDeleteId(item.id);
-                          }}
+
+                        <Group
+                          gap={4}
+                          className={classes.cardActions}
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <IconTrash size={14} />
-                        </ActionIcon>
+                          {item.username && (
+                            <Tooltip
+                              label={t("copyUsername", "Copy Username")}
+                              position="top"
+                              withArrow
+                            >
+                              <ActionIcon
+                                variant="subtle"
+                                color="gray"
+                                size="sm"
+                                onClick={() => clipboard.copy(item.username!)}
+                              >
+                                <IconCopy size={14} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )}
+                          {item.password && (
+                            <Tooltip
+                              label={t("copyPassword", "Copy Password")}
+                              position="top"
+                              withArrow
+                            >
+                              <ActionIcon
+                                variant="subtle"
+                                color="gray"
+                                size="sm"
+                                onClick={() => clipboard.copy(item.password!)}
+                              >
+                                <IconKey size={14} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )}
+                          <Menu position="bottom-end" shadow="md" radius="md">
+                            <Menu.Target>
+                              <ActionIcon
+                                variant="subtle"
+                                color="gray"
+                                size="sm"
+                              >
+                                <IconDotsVertical size={14} />
+                              </ActionIcon>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                              <Menu.Item
+                                color="red"
+                                leftSection={<IconTrash size={12} />}
+                                onClick={() => setItemToDeleteId(item.id)}
+                              >
+                                {t("delete", "Xóa")}
+                              </Menu.Item>
+                            </Menu.Dropdown>
+                          </Menu>
+                        </Group>
                       </Group>
-
-                      <Badge size="xs" variant="light" color="green" mb="xs">
-                        {t(`types.${item.category}`, item.category)}
-                      </Badge>
-
-                      {renderCardFields(item)}
                     </Card>
                   ))}
                 </Box>
@@ -500,7 +411,7 @@ export function DashboardPage() {
                           borderBottom: "1px solid var(--color-neutral-light)",
                         }}
                       >
-                        <Table.Th style={{ width: 40 }}>
+                        <Table.Th style={{ width: 40, textAlign: "center" }}>
                           <Checkbox
                             checked={isAllPageSelected}
                             indeterminate={
@@ -513,6 +424,7 @@ export function DashboardPage() {
                           style={{
                             width: 60,
                             color: "var(--color-neutral-medium)",
+                            textAlign: "center",
                           }}
                         >
                           {t("tableHeaderIndex")}
@@ -557,7 +469,10 @@ export function DashboardPage() {
                               "1px solid var(--color-neutral-light)",
                           }}
                         >
-                          <Table.Td onClick={(e) => e.stopPropagation()}>
+                          <Table.Td
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ textAlign: "center" }}
+                          >
                             <Checkbox
                               checked={selectedIds.has(item.id)}
                               onChange={() => toggleSelect(item.id)}
@@ -567,6 +482,7 @@ export function DashboardPage() {
                             style={{
                               color: "var(--mantine-color-dark-3)",
                               fontSize: "13px",
+                              textAlign: "center",
                             }}
                           >
                             {(currentPage - 1) * itemsPerPage + index + 1}
@@ -609,7 +525,13 @@ export function DashboardPage() {
                             </Text>
                           </Table.Td>
                           <Table.Td>
-                            <Group gap="xs" justify="flex-end" wrap="nowrap">
+                            <Group
+                              gap="xs"
+                              justify="flex-end"
+                              wrap="nowrap"
+                              className={classes.rowActions}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {item.username && (
                                 <Tooltip
                                   label={t("copyUsername", "Copy Username")}
@@ -620,8 +542,7 @@ export function DashboardPage() {
                                     variant="subtle"
                                     color="gray"
                                     size="md"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
+                                    onClick={() => {
                                       clipboard.copy(item.username!);
                                     }}
                                   >
@@ -629,23 +550,48 @@ export function DashboardPage() {
                                   </ActionIcon>
                                 </Tooltip>
                               )}
-                              <Tooltip
-                                label={t("delete", "Delete")}
-                                position="top"
-                                withArrow
-                              >
-                                <ActionIcon
-                                  variant="subtle"
-                                  color="red"
-                                  size="md"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setItemToDeleteId(item.id);
-                                  }}
+                              {item.password && (
+                                <Tooltip
+                                  label={t("copyPassword", "Copy Password")}
+                                  position="top"
+                                  withArrow
                                 >
-                                  <IconTrash size={16} />
-                                </ActionIcon>
-                              </Tooltip>
+                                  <ActionIcon
+                                    variant="subtle"
+                                    color="gray"
+                                    size="md"
+                                    onClick={() => {
+                                      clipboard.copy(item.password!);
+                                    }}
+                                  >
+                                    <IconKey size={16} />
+                                  </ActionIcon>
+                                </Tooltip>
+                              )}
+                              <Menu
+                                position="bottom-end"
+                                shadow="md"
+                                radius="md"
+                              >
+                                <Menu.Target>
+                                  <ActionIcon
+                                    variant="subtle"
+                                    color="gray"
+                                    size="md"
+                                  >
+                                    <IconDotsVertical size={16} />
+                                  </ActionIcon>
+                                </Menu.Target>
+                                <Menu.Dropdown>
+                                  <Menu.Item
+                                    color="red"
+                                    leftSection={<IconTrash size={14} />}
+                                    onClick={() => setItemToDeleteId(item.id)}
+                                  >
+                                    {t("delete", "Xóa")}
+                                  </Menu.Item>
+                                </Menu.Dropdown>
+                              </Menu>
                             </Group>
                           </Table.Td>
                         </Table.Tr>
