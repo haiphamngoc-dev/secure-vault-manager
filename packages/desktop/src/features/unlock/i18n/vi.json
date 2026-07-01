@@ -5,5 +5,7 @@
   "unlockPasswordPlaceholder": "Nhập mật khẩu Master...",
   "unlockSubmitBtn": "Mở khóa",
   "unlockErrorTitle": "Mở khóa thất bại",
-  "unlockErrorInvalid": "Mật khẩu Master không chính xác. Vui lòng thử lại!"
+  "unlockErrorInvalid": "Mật khẩu Master không chính xác. Vui lòng thử lại!",
+  "back": "Quay lại",
+  "switchVault": "Chuyển vault"
 }

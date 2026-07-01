@@ -5,5 +5,7 @@
   "unlockPasswordPlaceholder": "Enter Master Password...",
   "unlockSubmitBtn": "Unlock Database",
   "unlockErrorTitle": "Unlock Failed",
-  "unlockErrorInvalid": "Incorrect Master Password. Please try again!"
+  "unlockErrorInvalid": "Incorrect Master Password. Please try again!",
+  "back": "Back",
+  "switchVault": "Switch vault"
 }

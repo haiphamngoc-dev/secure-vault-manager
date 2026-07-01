@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Container,
   Paper,
@@ -51,6 +51,7 @@ export function VaultSelectionPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoLoadedRef = useRef(false);
 
   // New Vault Modal States
   const [newVaultOpened, setNewVaultOpened] = useState(false);
@@ -72,9 +73,11 @@ export function VaultSelectionPage() {
 
   // Autoload default vault on mount
   useEffect(() => {
+    if (autoLoadedRef.current) return;
     if (defaultVaultId && vaults.length > 0 && !selectedVault) {
       const defVault = vaults.find((v) => v.id === defaultVaultId);
       if (defVault) {
+        autoLoadedRef.current = true;
         const timer = setTimeout(() => {
           setSelectedVault(defVault);
         }, 0);
@@ -244,7 +247,9 @@ export function VaultSelectionPage() {
                     leftSection={<IconArrowLeft size={16} />}
                     style={{ flex: 1 }}
                   >
-                    {t("back", "Quay lại")}
+                    {vaults.length > 1
+                      ? t("switchVault", "Chuyển vault")
+                      : t("back", "Quay lại")}
                   </Button>
                   <Button
                     type="submit"
