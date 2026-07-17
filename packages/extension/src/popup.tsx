@@ -21,6 +21,18 @@ function Popup() {
   const [locked, setLocked] = useState(true);
   const [domain, setDomain] = useState("");
   const [credentials, setCredentials] = useState<CredentialItem[]>([]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const updateTheme = (e: MediaQueryListEvent | MediaQueryList) => {
+      const theme = e.matches ? "dark" : "light";
+      document.body.setAttribute("data-theme", theme);
+    };
+
+    updateTheme(mediaQuery);
+    mediaQuery.addEventListener("change", updateTheme);
+    return () => mediaQuery.removeEventListener("change", updateTheme);
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [pairingInput, setPairingInput] = useState("");
   const [error, setError] = useState("");

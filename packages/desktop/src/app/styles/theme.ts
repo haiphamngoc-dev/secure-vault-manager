@@ -10,32 +10,32 @@ import { createTheme, MantineColorsTuple } from "@mantine/core";
  * Dark color palette overrides for consistent dark mode aesthetics.
  */
 const darkColors: MantineColorsTuple = [
-  "#c1c2c5",
-  "#a6a7ab",
-  "#909296",
-  "#5c5f66",
-  "#373a40",
-  "#2c2e33",
-  "#25262b",
-  "#1a1b1e",
-  "#141517",
-  "#101113",
+  "#ffffff", // text
+  "rgba(255, 255, 255, 0.9)",
+  "rgba(255, 255, 255, 0.65)", // subtext
+  "#555555",
+  "#444444", // borders
+  "#333333", // card bg (index 5)
+  "#2d2d2d",
+  "#262626", // body bg (index 7)
+  "#1c1c1c",
+  "#121212",
 ];
 
 /**
- * Custom Royal/Indigo Blue color palette aligned with the brand design specs (#2563eb).
+ * Custom Sky Blue color palette aligned with brand specs (#0c7df0).
  */
 const brandBlueColors: MantineColorsTuple = [
-  "#eff6ff", // index 0 (Highlight / bg tint)
-  "#dbeafe",
-  "#bfdbfe",
-  "#93c5fd",
-  "#60a5fa",
-  "#3b82f6", // Hover style
-  "#2563eb", // Main primary brand color (index 6)
-  "#1d4ed8", // Active/pressed style (index 7)
-  "#1e40af",
-  "#1e3a8a",
+  "#ebf5ff", // index 0 (Highlight / bg tint)
+  "#d1e9ff",
+  "#a3d3ff",
+  "#75bdff",
+  "#47a7ff",
+  "#2490ff", // Hover style
+  "#0c7df0", // Main primary brand color (index 6)
+  "#0067cc", // Active/pressed style (index 7)
+  "#00509e",
+  "#003870",
 ];
 
 /**

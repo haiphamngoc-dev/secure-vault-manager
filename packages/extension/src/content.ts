@@ -205,21 +205,21 @@ const showDropdown = (
   style.textContent = `
     :host {
       --bg: #ffffff;
-      --text-primary: #0f172a;
-      --text-secondary: #475569;
+      --text-primary: #262626;
+      --text-secondary: rgba(0, 0, 0, 0.55);
       --border: rgba(0, 0, 0, 0.08);
-      --hover-bg: rgba(37, 99, 235, 0.08);
-      --hover-text: #1d4ed8;
+      --hover-bg: hsla(212, 100%, 50%, 0.08);
+      --hover-text: #0c7df0;
       display: block;
     }
     @media (prefers-color-scheme: dark) {
       :host {
-        --bg: #1a1b1e;
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --border: rgba(255, 255, 255, 0.08);
-        --hover-bg: rgba(37, 99, 235, 0.15);
-        --hover-text: #60a5fa;
+        --bg: #333333;
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.65);
+        --border: rgba(255, 255, 255, 0.12);
+        --hover-bg: hsla(212, 100%, 50%, 0.24);
+        --hover-text: #85c2ff;
       }
     }
     .dropdown-wrapper {

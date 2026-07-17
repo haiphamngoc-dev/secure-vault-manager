@@ -19,11 +19,11 @@
 
 /* ===== Design Tokens — Light Mode (Default) ===== */
 :root {
-  /* Brand Colors (Royal Blue — synced with desktop) */
-  --color-brand-primary: #2563eb;
-  --color-brand-primary-hover: #3b82f6;
-  --color-brand-primary-active: #1d4ed8;
-  --color-brand-secondary: #06b6d4;
+  /* Brand Colors (Sky Blue — synced with desktop) */
+  --color-brand-primary: #0c7df0;
+  --color-brand-primary-hover: #2490ff;
+  --color-brand-primary-active: #0067cc;
+  --color-brand-secondary: #47a7ff;
 
   /* State Colors */
   --color-danger: #ff4d4f;
@@ -31,12 +31,12 @@
   --color-success: #10b981;
 
   /* Neutral — Light Theme */
-  --color-neutral-dark: #0f172a;
-  --color-neutral-medium: #475569;
-  --color-neutral-light: rgba(0, 0, 0, 0.06);
-  --color-neutral-bg: #f8fafc;
-  --color-neutral-card: rgba(255, 255, 255, 0.8);
-  --color-border: rgba(0, 0, 0, 0.06);
+  --color-neutral-dark: #262626;
+  --color-neutral-medium: rgba(0, 0, 0, 0.55);
+  --color-neutral-light: rgba(0, 0, 0, 0.08);
+  --color-neutral-bg: #f7f7f7;
+  --color-neutral-card: #ffffff;
+  --color-border: rgba(0, 0, 0, 0.08);
 
   /* Spacing Scale (4px base) */
   --space-1: 4px;
@@ -54,15 +54,16 @@
 }
 
 /* ===== Design Tokens — Dark Mode ===== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-neutral-dark: #f8fafc;
-    --color-neutral-medium: #94a3b8;
-    --color-neutral-light: rgba(255, 255, 255, 0.08);
-    --color-neutral-bg: #090a0f;
-    --color-neutral-card: rgba(26, 28, 38, 0.75);
-    --color-border: rgba(255, 255, 255, 0.08);
-  }
+body[data-theme="dark"] {
+  --color-brand-primary: #85c2ff;
+  --color-brand-primary-hover: #a8d4ff;
+  --color-brand-primary-active: #5caaff;
+  --color-neutral-dark: #ffffff;
+  --color-neutral-medium: rgba(255, 255, 255, 0.65);
+  --color-neutral-light: rgba(255, 255, 255, 0.12);
+  --color-neutral-bg: #262626;
+  --color-neutral-card: #333333;
+  --color-border: rgba(255, 255, 255, 0.12);
 }
 
 /* ===== Base Resets ===== */
