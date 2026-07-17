@@ -21,7 +21,7 @@
 
 .content {
   flex: 1;
-  height: calc(100vh - 48px);
+  height: calc(100vh - 40px);
   width: 100%;
   position: relative;
   overflow: hidden;

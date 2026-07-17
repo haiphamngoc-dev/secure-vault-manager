@@ -1,8 +1,22 @@
 {
   "titlebar": {
-    "minimize": "Thu nhỏ",
+    "about": "Giới thiệu",
+    "aboutDescription": "Ứng dụng quản lý mật mã cao cấp, hiệu năng cao được xây dựng bằng React và Rust.",
+    "close": "Đóng",
+    "copy": "Sao chép",
+    "cut": "Cắt",
+    "edit": "Chỉnh sửa",
+    "exit": "Thoát",
+    "file": "Tệp",
+    "githubLabel": "Dự án GitHub",
+    "help": "Trợ giúp",
+    "lockVault": "Khóa kho",
     "maximize": "Phóng to",
+    "minimize": "Thu nhỏ",
+    "paste": "Dán",
+    "redo": "Làm lại",
     "restore": "Khôi phục",
-    "close": "Đóng"
+    "searchPlaceholder": "Tìm kiếm kho...",
+    "undo": "Hoàn tác"
   }
 }

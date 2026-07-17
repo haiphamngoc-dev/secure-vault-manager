@@ -1,8 +1,22 @@
 {
   "titlebar": {
-    "minimize": "Minimize",
+    "about": "About",
+    "aboutDescription": "A premium, high-performance desktop application interface built with React and Rust.",
+    "close": "Close",
+    "copy": "Copy",
+    "cut": "Cut",
+    "edit": "Edit",
+    "exit": "Exit",
+    "file": "File",
+    "githubLabel": "GitHub Project",
+    "help": "Help",
+    "lockVault": "Lock Vault",
     "maximize": "Maximize",
+    "minimize": "Minimize",
+    "paste": "Paste",
+    "redo": "Redo",
     "restore": "Restore",
-    "close": "Close"
+    "searchPlaceholder": "Search vault...",
+    "undo": "Undo"
   }
 }

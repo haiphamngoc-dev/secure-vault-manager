@@ -1,0 +1,11 @@
+.titleGradient {
+  background: linear-gradient(
+    135deg,
+    var(--mantine-color-indigo-4) 0%,
+    var(--mantine-color-indigo-7) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}

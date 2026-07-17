@@ -4,6 +4,11 @@
  * Combines Tauri window controls, page titles, global search, and utility toggles.
  */
 
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   Group,
   UnstyledButton,
@@ -14,6 +19,7 @@ import {
   ActionIcon,
   Tooltip,
   Badge,
+  Menu,
 } from "@mantine/core";
 import {
   IconMinus,
@@ -24,15 +30,18 @@ import {
   IconBrandGithub,
   IconMenu2,
   IconChevronLeft,
+  IconLock,
+  IconLogout,
+  IconArrowBackUp,
+  IconArrowForwardUp,
+  IconScissors,
+  IconClipboard,
+  IconInfoCircle,
 } from "@tabler/icons-react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useLocation, useSearchParams } from "react-router-dom";
 import { useVault } from "@/app/providers/VaultProvider";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
+import { AboutModal } from "./AboutModal";
 import classes from "./TitleBar.module.css";
 
 /**
@@ -56,9 +65,13 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
   const { t } = useTranslation();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { status } = useVault();
+  const { status, lock } = useVault();
   const [isMaximized, setIsMaximized] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [aboutOpened, setAboutOpened] = useState(false);
+
+  const isMac =
+    typeof window !== "undefined" && navigator.userAgent.includes("Mac");
 
   useEffect(() => {
     // Keep track of maximized state
@@ -74,25 +87,32 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
 
     checkMaximizedState();
 
-    const unlistenMaximized = appWindow.onResized(() => {
-      checkMaximizedState();
-    });
+    let unlisten: (() => void) | undefined;
+    appWindow
+      .onResized(() => {
+        checkMaximizedState();
+      })
+      .then((fn) => {
+        unlisten = fn;
+      });
 
     return () => {
-      unlistenMaximized.then((fn) => fn);
+      if (unlisten) unlisten();
     };
   }, []);
 
   const handleMinimize = () => {
-    appWindow.minimize();
+    appWindow.minimize().catch((err) => console.error("Minimize error:", err));
   };
 
   const handleMaximize = () => {
-    appWindow.toggleMaximize();
+    appWindow
+      .toggleMaximize()
+      .catch((err) => console.error("Maximize error:", err));
   };
 
   const handleClose = () => {
-    appWindow.close();
+    appWindow.close().catch((err) => console.error("Close error:", err));
   };
 
   const handleOpenGithub = () => {
@@ -113,138 +133,284 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
     });
   };
 
+  const handleUndo = () => document.execCommand("undo");
+  const handleRedo = () => document.execCommand("redo");
+  const handleCut = () => document.execCommand("cut");
+  const handleCopyText = () => document.execCommand("copy");
+  const handlePaste = () => document.execCommand("paste");
+
   const showSearch = location.pathname === "/" && status === "unlocked";
 
-  return (
-    <Group
-      justify="space-between"
-      align="center"
-      className={classes.titlebar}
-      wrap="nowrap"
-      data-tauri-drag-region
-    >
-      {showSearch && isMobileSearchOpen ? (
-        <Group
-          className={classes.mobileSearchOverlay}
-          align="center"
-          wrap="nowrap"
-          style={{ width: "100%" }}
-        >
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="lg"
-            onClick={() => setIsMobileSearchOpen(false)}
+  // macOS window traffic lights controls
+  const macOSControls = (
+    <div className={classes.macOSControls}>
+      <button
+        onClick={handleClose}
+        className={`${classes.macOSButton} ${classes.macOSClose}`}
+        aria-label={t("titlebar.close", "Close")}
+      />
+      <button
+        onClick={handleMinimize}
+        className={`${classes.macOSButton} ${classes.macOSMinimize}`}
+        aria-label={t("titlebar.minimize", "Minimize")}
+      />
+      <button
+        onClick={handleMaximize}
+        className={`${classes.macOSButton} ${classes.macOSMaximize}`}
+        aria-label={
+          isMaximized
+            ? t("titlebar.restore", "Restore")
+            : t("titlebar.maximize", "Maximize")
+        }
+      />
+    </div>
+  );
+
+  // Windows/Linux native window controls
+  const windowsControls = (
+    <Group gap={0} wrap="nowrap" className={classes.windowButtons}>
+      <UnstyledButton
+        className={classes.button}
+        onClick={handleMinimize}
+        title={t("titlebar.minimize", "Minimize")}
+      >
+        <IconMinus size={14} />
+      </UnstyledButton>
+      <UnstyledButton
+        className={classes.button}
+        onClick={handleMaximize}
+        title={
+          isMaximized
+            ? t("titlebar.restore", "Restore")
+            : t("titlebar.maximize", "Maximize")
+        }
+      >
+        {isMaximized ? <IconCopy size={14} /> : <IconSquare size={14} />}
+      </UnstyledButton>
+      <UnstyledButton
+        className={`${classes.button} ${classes.closeButton}`}
+        onClick={handleClose}
+        title={t("titlebar.close", "Close")}
+      >
+        <IconX size={14} />
+      </UnstyledButton>
+    </Group>
+  );
+
+  // Custom Dropdown Menu Bar (Windows/Linux)
+  const menuBar = (
+    <div className={classes.menuBar}>
+      {/* File Dropdown */}
+      <Menu
+        shadow="md"
+        width={180}
+        trigger="click"
+        transitionProps={{ transition: "pop-top-left", duration: 150 }}
+      >
+        <Menu.Target>
+          <button className={classes.menuTrigger}>
+            {t("titlebar.file", "File")}
+          </button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          {status === "unlocked" && (
+            <Menu.Item leftSection={<IconLock size={14} />} onClick={lock}>
+              {t("titlebar.lockVault", "Lock Vault")}
+            </Menu.Item>
+          )}
+          {status === "unlocked" && <Menu.Divider />}
+          <Menu.Item
+            leftSection={<IconLogout size={14} />}
+            onClick={handleClose}
           >
-            <IconChevronLeft size={20} />
-          </ActionIcon>
-          <TextInput
-            placeholder={t("searchPlaceholder", "Tìm kiếm dữ liệu...")}
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.currentTarget.value)}
-            leftSection={<IconSearch size={16} />}
+            {t("titlebar.exit", "Exit")}
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+
+      {/* Edit Dropdown */}
+      <Menu
+        shadow="md"
+        width={180}
+        trigger="click"
+        transitionProps={{ transition: "pop-top-left", duration: 150 }}
+      >
+        <Menu.Target>
+          <button className={classes.menuTrigger}>
+            {t("titlebar.edit", "Edit")}
+          </button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item
+            leftSection={<IconArrowBackUp size={14} />}
             rightSection={
-              searchQuery ? (
-                <ActionIcon
-                  variant="transparent"
-                  color="gray"
-                  onClick={() => handleSearchChange("")}
-                >
-                  <IconX size={16} />
-                </ActionIcon>
-              ) : null
+              <Text size="xs" c="dimmed">
+                Ctrl+Z
+              </Text>
             }
-            size="sm"
-            style={{ flex: 1 }}
-            autoFocus
-          />
-        </Group>
-      ) : (
-        <>
-          {/* Brand logo, mobile menu, and Title section on the left */}
-          <Group
-            gap="xs"
-            className={classes.logoSection}
-            wrap="nowrap"
-            style={{ overflow: "hidden", flex: "0 1 auto", minWidth: 0 }}
-            data-tauri-drag-region
+            onClick={handleUndo}
           >
-            {onMenuClick && status === "unlocked" && (
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={onMenuClick}
-                size="md"
-                className={classes.mobileMenuBtn}
-              >
-                <IconMenu2 size={20} />
-              </ActionIcon>
-            )}
-            <Image
-              src="/logo.svg"
-              className={classes.logo}
-              alt="logo"
+            {t("titlebar.undo", "Undo")}
+          </Menu.Item>
+          <Menu.Item
+            leftSection={<IconArrowForwardUp size={14} />}
+            rightSection={
+              <Text size="xs" c="dimmed">
+                Ctrl+Y
+              </Text>
+            }
+            onClick={handleRedo}
+          >
+            {t("titlebar.redo", "Redo")}
+          </Menu.Item>
+          <Menu.Divider />
+          <Menu.Item
+            leftSection={<IconScissors size={14} />}
+            rightSection={
+              <Text size="xs" c="dimmed">
+                Ctrl+X
+              </Text>
+            }
+            onClick={handleCut}
+          >
+            {t("titlebar.cut", "Cut")}
+          </Menu.Item>
+          <Menu.Item
+            leftSection={<IconCopy size={14} />}
+            rightSection={
+              <Text size="xs" c="dimmed">
+                Ctrl+C
+              </Text>
+            }
+            onClick={handleCopyText}
+          >
+            {t("titlebar.copy", "Copy")}
+          </Menu.Item>
+          <Menu.Item
+            leftSection={<IconClipboard size={14} />}
+            rightSection={
+              <Text size="xs" c="dimmed">
+                Ctrl+V
+              </Text>
+            }
+            onClick={handlePaste}
+          >
+            {t("titlebar.paste", "Paste")}
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+
+      {/* Help Dropdown */}
+      <Menu
+        shadow="md"
+        width={150}
+        trigger="click"
+        transitionProps={{ transition: "pop-top-left", duration: 150 }}
+      >
+        <Menu.Target>
+          <button className={classes.menuTrigger}>
+            {t("titlebar.help", "Help")}
+          </button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item
+            leftSection={<IconInfoCircle size={14} />}
+            onClick={() => setAboutOpened(true)}
+          >
+            {t("titlebar.about", "About")}
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    </div>
+  );
+
+  return (
+    <>
+      <Group
+        justify="space-between"
+        align="center"
+        className={classes.titlebar}
+        wrap="nowrap"
+        data-tauri-drag-region
+      >
+        {isMac ? (
+          <>
+            {/* Left section: macOS Traffic Lights */}
+            <Group gap="xs" style={{ flexShrink: 0 }} data-tauri-drag-region>
+              {macOSControls}
+            </Group>
+
+            {/* Center section: macOS centered Title */}
+            <Group
+              gap="xs"
+              align="center"
+              justify="center"
               data-tauri-drag-region
-            />
-            <Text className={classes.title} data-tauri-drag-region>
-              Secure Vault Manager
-            </Text>
-            <Badge
-              variant="outline"
-              color="gray"
-              size="xs"
-              style={{
-                fontSize: "9px",
-                height: "16px",
-                padding: "0 4px",
-                alignSelf: "center",
-              }}
+              className={classes.centeredTitle}
             >
-              v1.0.0
-            </Badge>
-          </Group>
+              <Image
+                src="/logo.svg"
+                className={classes.logo}
+                alt="logo"
+                data-tauri-drag-region
+              />
+              <Text className={classes.title} data-tauri-drag-region>
+                Secure Vault Manager
+              </Text>
+              <Badge
+                variant="outline"
+                color="gray"
+                size="xs"
+                style={{
+                  fontSize: "9px",
+                  height: "16px",
+                  padding: "0 4px",
+                  alignSelf: "center",
+                }}
+              >
+                v1.0.0
+              </Badge>
+            </Group>
 
-          {/* Central Searchbar (visible only on Dashboard when unlocked) */}
-          <Box className={classes.searchContainer} data-tauri-drag-region>
-            {showSearch && (
-              <>
-                <TextInput
-                  placeholder={t("searchPlaceholder", "Tìm kiếm dữ liệu...")}
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.currentTarget.value)}
-                  leftSection={<IconSearch size={16} />}
-                  size="sm"
-                  className={`${classes.searchInput} ${classes.desktopSearch}`}
-                />
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  size="lg"
-                  onClick={() => setIsMobileSearchOpen(true)}
-                  className={classes.mobileSearchIcon}
-                >
-                  <IconSearch size={18} />
-                </ActionIcon>
-              </>
-            )}
-          </Box>
-
-          {/* Action utility buttons and window controls on the right */}
-          <Group
-            gap={0}
-            className={classes.controls}
-            wrap="nowrap"
-            style={{ flexShrink: 0 }}
-          >
-            {status === "unlocked" && (
-              <Group gap="xs" mr="xs" wrap="nowrap">
-                <Box className={classes.langToggle}>
+            {/* Right section: Search input and Toggles */}
+            <Group
+              gap={0}
+              className={classes.controls}
+              wrap="nowrap"
+              style={{ flexShrink: 0 }}
+            >
+              {status === "unlocked" && (
+                <Group gap="xs" mr="xs" wrap="nowrap">
+                  {showSearch && (
+                    <>
+                      <TextInput
+                        placeholder={t(
+                          "titlebar.searchPlaceholder",
+                          "Tìm kiếm dữ liệu..."
+                        )}
+                        value={searchQuery}
+                        onChange={(e) =>
+                          handleSearchChange(e.currentTarget.value)
+                        }
+                        leftSection={<IconSearch size={14} />}
+                        size="xs"
+                        className={`${classes.searchInput} ${classes.desktopSearch}`}
+                      />
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="md"
+                        onClick={() => setIsMobileSearchOpen(true)}
+                        className={classes.mobileSearchIcon}
+                      >
+                        <IconSearch size={18} />
+                      </ActionIcon>
+                    </>
+                  )}
                   <LanguageToggle />
-                </Box>
-                <ThemeToggle />
-                <Box className={classes.githubToggle}>
+                  <ThemeToggle />
                   <Tooltip
-                    label={t("githubLabel", "GitHub Project")}
+                    label={t("titlebar.githubLabel", "GitHub Project")}
                     position="bottom"
                     withArrow
                   >
@@ -257,46 +423,160 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
                       <IconBrandGithub size={18} />
                     </ActionIcon>
                   </Tooltip>
-                </Box>
-              </Group>
-            )}
-
-            {/* Tauri Native Window Controls */}
-            <Group gap={0} wrap="nowrap" className={classes.windowButtons}>
-              <UnstyledButton
-                className={classes.button}
-                onClick={handleMinimize}
-                title={t("titlebar.minimize", "Minimize")}
-              >
-                <IconMinus size={14} />
-              </UnstyledButton>
-              <UnstyledButton
-                className={classes.button}
-                onClick={handleMaximize}
-                title={
-                  isMaximized
-                    ? t("titlebar.restore", "Restore")
-                    : t("titlebar.maximize", "Maximize")
-                }
-              >
-                {isMaximized ? (
-                  <IconCopy size={14} />
-                ) : (
-                  <IconSquare size={14} />
-                )}
-              </UnstyledButton>
-              <UnstyledButton
-                className={`${classes.button} ${classes.closeButton}`}
-                onClick={handleClose}
-                title={t("titlebar.close", "Close")}
-              >
-                <IconX size={14} />
-              </UnstyledButton>
+                </Group>
+              )}
             </Group>
-          </Group>
-        </>
-      )}
-    </Group>
+          </>
+        ) : (
+          /* Windows/Linux Layout */
+          <>
+            {showSearch && isMobileSearchOpen ? (
+              <Group
+                className={classes.mobileSearchOverlay}
+                align="center"
+                wrap="nowrap"
+                style={{ width: "100%" }}
+              >
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="md"
+                  onClick={() => setIsMobileSearchOpen(false)}
+                >
+                  <IconChevronLeft size={16} />
+                </ActionIcon>
+                <TextInput
+                  placeholder={t(
+                    "titlebar.searchPlaceholder",
+                    "Tìm kiếm dữ liệu..."
+                  )}
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.currentTarget.value)}
+                  leftSection={<IconSearch size={14} />}
+                  rightSection={
+                    searchQuery ? (
+                      <ActionIcon
+                        variant="transparent"
+                        color="gray"
+                        onClick={() => handleSearchChange("")}
+                      >
+                        <IconX size={14} />
+                      </ActionIcon>
+                    ) : null
+                  }
+                  size="xs"
+                  style={{ flex: 1 }}
+                  autoFocus
+                />
+              </Group>
+            ) : (
+              <>
+                {/* Brand logo, mobile menu, and Title section on the left */}
+                <Group
+                  gap="xs"
+                  className={classes.logoSection}
+                  wrap="nowrap"
+                  style={{ overflow: "hidden", flex: "0 1 auto", minWidth: 0 }}
+                  data-tauri-drag-region
+                >
+                  {onMenuClick && status === "unlocked" && (
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      onClick={onMenuClick}
+                      size="md"
+                      className={classes.mobileMenuBtn}
+                    >
+                      <IconMenu2 size={20} />
+                    </ActionIcon>
+                  )}
+                  <Image
+                    src="/logo.svg"
+                    className={classes.logo}
+                    alt="logo"
+                    data-tauri-drag-region
+                  />
+
+                  {/* Custom Menu Bar inside Custom Titlebar */}
+                  {menuBar}
+                </Group>
+
+                {/* Central Searchbar */}
+                {showSearch && (
+                  <Box
+                    className={`${classes.searchContainer} ${classes.desktopSearch}`}
+                    data-tauri-drag-region
+                  >
+                    <TextInput
+                      placeholder={t(
+                        "titlebar.searchPlaceholder",
+                        "Tìm kiếm dữ liệu..."
+                      )}
+                      value={searchQuery}
+                      onChange={(e) =>
+                        handleSearchChange(e.currentTarget.value)
+                      }
+                      leftSection={<IconSearch size={14} />}
+                      size="xs"
+                      className={classes.searchInput}
+                    />
+                  </Box>
+                )}
+
+                {/* Action utility buttons and window controls on the right */}
+                <Group
+                  gap={0}
+                  className={classes.controls}
+                  wrap="nowrap"
+                  style={{ flexShrink: 0 }}
+                >
+                  {status === "unlocked" && (
+                    <Group gap="xs" mr="xs" wrap="nowrap">
+                      {showSearch && (
+                        <ActionIcon
+                          variant="subtle"
+                          color="gray"
+                          size="md"
+                          onClick={() => setIsMobileSearchOpen(true)}
+                          className={classes.mobileSearchIcon}
+                        >
+                          <IconSearch size={18} />
+                        </ActionIcon>
+                      )}
+                      <Box className={classes.langToggle}>
+                        <LanguageToggle />
+                      </Box>
+                      <ThemeToggle />
+                      <Box className={classes.githubToggle}>
+                        <Tooltip
+                          label={t("titlebar.githubLabel", "GitHub Project")}
+                          position="bottom"
+                          withArrow
+                        >
+                          <ActionIcon
+                            variant="subtle"
+                            color="gray"
+                            size="md"
+                            onClick={handleOpenGithub}
+                          >
+                            <IconBrandGithub size={18} />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Box>
+                    </Group>
+                  )}
+
+                  {windowsControls}
+                </Group>
+              </>
+            )}
+          </>
+        )}
+      </Group>
+
+      {/* About App Modal */}
+      <AboutModal opened={aboutOpened} onClose={() => setAboutOpened(false)} />
+    </>
   );
 }
 
