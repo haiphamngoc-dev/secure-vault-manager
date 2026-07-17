@@ -1,0 +1,294 @@
+/* popup.module.css — Extension Popup Component Styles (CSS Modules) */
+
+/* ===== Layout ===== */
+.container {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ===== Header ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.logoSection {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.logoIcon {
+  color: var(--color-brand-primary);
+}
+
+.logoText {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== Icon Buttons ===== */
+.iconBtn {
+  background: none;
+  border: none;
+  color: var(--color-neutral-medium);
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+
+.iconBtn:hover {
+  background-color: var(--color-neutral-light);
+  color: var(--color-neutral-dark);
+}
+
+.iconBtn:active {
+  transform: scale(0.92);
+}
+
+/* ===== Domain Badge ===== */
+.domainBadge {
+  background-color: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: var(--color-brand-primary-hover);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  align-self: flex-start;
+  margin-bottom: var(--space-4);
+}
+
+/* ===== Setup / Pairing View ===== */
+.setupView {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.setupTitle {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  margin: 0;
+  color: var(--color-neutral-dark);
+}
+
+.setupDesc {
+  font-size: 13px;
+  color: var(--color-neutral-medium);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ===== Input ===== */
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.inputLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-neutral-medium);
+}
+
+.textInput {
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: var(--space-3) var(--space-3);
+  color: var(--color-neutral-dark);
+  font-family: inherit;
+  font-size: 13px;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.textInput:focus {
+  outline: none;
+  border-color: var(--color-brand-primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* ===== Primary Button ===== */
+.primaryBtn {
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  padding: var(--space-3);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  transition:
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.primaryBtn:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #0891b2 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.primaryBtn:active {
+  transform: scale(0.98);
+}
+
+/* ===== Locked View ===== */
+.lockedView {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-10) 0;
+  text-align: center;
+}
+
+.lockedIcon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-brand-primary);
+  background: rgba(37, 99, 235, 0.12);
+  padding: var(--space-3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lockedTitle {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  margin: 0;
+}
+
+.lockedDesc {
+  font-size: 13px;
+  color: var(--color-neutral-medium);
+  margin: 0;
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+/* ===== Credentials List ===== */
+.credentialsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.credentialCard {
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 150ms ease;
+}
+
+.credentialCard:hover {
+  border-color: var(--color-neutral-medium);
+  background-color: var(--color-neutral-light);
+}
+
+.credentialInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.credentialTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-neutral-dark);
+}
+
+.credentialUsername {
+  font-size: 12px;
+  color: var(--color-neutral-medium);
+}
+
+/* ===== Autofill Button ===== */
+.autofillBtn {
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  color: var(--color-brand-primary-hover);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.autofillBtn:hover {
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  border-color: #2563eb;
+  color: white;
+}
+
+.autofillBtn:active {
+  transform: scale(0.98);
+}
+
+/* ===== Empty State ===== */
+.noAccounts {
+  text-align: center;
+  padding: var(--space-10) 0;
+  color: var(--color-neutral-medium);
+  font-size: 13px;
+}
+
+/* ===== Error Message ===== */
+.errorMessage {
+  color: var(--color-danger);
+  background-color: rgba(255, 77, 79, 0.08);
+  border: 1px solid rgba(255, 77, 79, 0.15);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: var(--space-3);
+}
+
+/* ===== Loading Spinner ===== */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}

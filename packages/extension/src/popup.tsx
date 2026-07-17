@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-import "./popup.css";
+import "./global.css";
+import classes from "./popup.module.css";
+import {
+  IconLock,
+  IconRefresh,
+  IconPlugConnectedX,
+  IconLoader2,
+} from "@tabler/icons-react";
 
 interface CredentialItem {
   id: string;
@@ -146,34 +153,20 @@ function Popup() {
   if (isChecking) {
     return (
       <div
-        className="container"
+        className={classes.container}
         style={{
           justifyContent: "center",
           alignItems: "center",
-          minHeight: "380px",
+          minHeight: "420px",
         }}
       >
-        <div
-          className="locked-icon"
-          style={{ animation: "spin 2s linear infinite" }}
-        >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-          </svg>
+        <div className={classes.lockedIcon}>
+          <IconLoader2 size={24} className={classes.spinner} />
         </div>
         <p
           style={{
             marginTop: "16px",
-            color: "var(--text-secondary)",
+            color: "var(--color-neutral-medium)",
             fontSize: "14px",
           }}
         >
@@ -184,101 +177,55 @@ function Popup() {
   }
 
   return (
-    <div className="container">
+    <div className={classes.container}>
       {/* Header */}
-      <div className="header">
-        <div className="logo-section">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="url(#logo-grad)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <defs>
-              <linearGradient
-                id="logo-grad"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="100%"
-              >
-                <stop offset="0%" stopColor="#6366f1" />
-                <stop offset="100%" stopColor="#a855f7" />
-              </linearGradient>
-            </defs>
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
-          <span className="logo-text">Secure Vault</span>
+      <div className={classes.header}>
+        <div className={classes.logoSection}>
+          <IconLock size={18} className={classes.logoIcon} />
+          <span className={classes.logoText}>Secure Vault Manager</span>
         </div>
-        <div style={{ display: "flex", gap: "6px" }}>
+        <div style={{ display: "flex", gap: "4px" }}>
           <button
-            className="icon-btn"
+            className={classes.iconBtn}
             onClick={checkStatus}
             title="Refresh status"
           >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-            </svg>
+            <IconRefresh size={15} />
           </button>
           {paired && (
             <button
-              className="icon-btn"
+              className={classes.iconBtn}
               onClick={handleUnpair}
               title="Disconnect vault"
-              style={{ color: "var(--danger-color)" }}
+              style={{ color: "var(--color-danger)" }}
             >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10" />
-              </svg>
+              <IconPlugConnectedX size={15} />
             </button>
           )}
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className={classes.errorMessage}>{error}</div>}
 
       {/* 1. Setup Pairing Mode */}
       {!paired && (
-        <div className="setup-view">
-          <h4 className="setup-title">Pair with Desktop App</h4>
-          <p className="setup-desc">
+        <div className={classes.setupView}>
+          <h4 className={classes.setupTitle}>Pair with Desktop App</h4>
+          <p className={classes.setupDesc}>
             Open the Secure Vault Desktop App, go to Settings, copy the
-            **Pairing Key**, and paste it below.
+            <strong> Pairing Key</strong>, and paste it below.
           </p>
-          <div className="input-group">
-            <label className="input-label">Pairing Key</label>
+          <div className={classes.inputGroup}>
+            <label className={classes.inputLabel}>Pairing Key</label>
             <input
               type="text"
-              className="text-input"
+              className={classes.textInput}
               placeholder="Paste pairing key here"
               value={pairingInput}
               onChange={(e) => setPairingInput(e.target.value)}
             />
           </div>
-          <button className="primary-btn" onClick={handleConnect}>
+          <button className={classes.primaryBtn} onClick={handleConnect}>
             Connect
           </button>
         </div>
@@ -286,31 +233,19 @@ function Popup() {
 
       {/* 2. Locked Mode */}
       {paired && locked && (
-        <div className="locked-view">
-          <div className="locked-icon">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
+        <div className={classes.lockedView}>
+          <div className={classes.lockedIcon}>
+            <IconLock size={24} />
           </div>
-          <h4 className="locked-title">Vault is Locked</h4>
-          <p className="locked-desc">
+          <h4 className={classes.lockedTitle}>Vault is Locked</h4>
+          <p className={classes.lockedDesc}>
             Please unlock your vault database in the Secure Vault Desktop
             Application to view credentials.
           </p>
           <button
-            className="primary-btn"
+            className={classes.primaryBtn}
             onClick={checkStatus}
-            style={{ width: "100%", marginTop: "10px" }}
+            style={{ width: "100%", marginTop: "8px" }}
           >
             Check Status
           </button>
@@ -320,33 +255,32 @@ function Popup() {
       {/* 3. Credentials list Mode */}
       {paired && !locked && (
         <>
-          {domain && <div className="domain-badge">{domain}</div>}
+          {domain && <div className={classes.domainBadge}>{domain}</div>}
 
           <input
             type="text"
-            className="text-input"
+            className={classes.textInput}
             placeholder="Search accounts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               marginBottom: "12px",
               width: "100%",
-              boxSizing: "border-box",
             }}
           />
 
-          <div className="credentials-list">
+          <div className={classes.credentialsList}>
             {filteredCredentials.length > 0 ? (
               filteredCredentials.map((cred) => (
-                <div key={cred.id} className="credential-card">
-                  <div className="credential-info">
-                    <span className="credential-title">{domain}</span>
-                    <span className="credential-username">
+                <div key={cred.id} className={classes.credentialCard}>
+                  <div className={classes.credentialInfo}>
+                    <span className={classes.credentialTitle}>{domain}</span>
+                    <span className={classes.credentialUsername}>
                       {cred.username || "No username"}
                     </span>
                   </div>
                   <button
-                    className="autofill-btn"
+                    className={classes.autofillBtn}
                     onClick={() => handleAutofill(cred)}
                   >
                     Autofill
@@ -354,7 +288,7 @@ function Popup() {
                 </div>
               ))
             ) : (
-              <div className="no-accounts">
+              <div className={classes.noAccounts}>
                 No accounts found for this site.
               </div>
             )}

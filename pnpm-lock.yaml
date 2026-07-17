@@ -116,6 +116,9 @@ importers:
       '@secure-vault/shared':
         specifier: workspace:*
         version: link:../shared
+      '@tabler/icons-react':
+        specifier: ^3.44.0
+        version: 3.44.0(react@19.2.7)
       react:
         specifier: ^19.1.0
         version: 19.2.7
