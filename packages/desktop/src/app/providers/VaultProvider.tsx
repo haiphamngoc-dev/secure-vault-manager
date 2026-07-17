@@ -198,9 +198,25 @@ export function VaultProvider({
       }
     });
 
+    // Listen to native vault-unlocked event (for extension unlock updates)
+    const unlistenUnlocked = listen("vault-unlocked", async () => {
+      if (active) {
+        try {
+          const activeId = await invoke<string | null>("get_current_vault_id");
+          setCurrentVaultId(activeId);
+          const loaded: VaultItem[] = await invoke("load_items");
+          setItems(loaded);
+          setStatus("unlocked");
+        } catch (err) {
+          console.error("Failed to load vault items after remote unlock:", err);
+        }
+      }
+    });
+
     return () => {
       active = false;
       unlistenLocked.then((fn) => fn());
+      unlistenUnlocked.then((fn) => fn());
     };
   }, []);
 

@@ -24,6 +24,53 @@ function Popup() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pairingInput, setPairingInput] = useState("");
   const [error, setError] = useState("");
+  const [unlockPassword, setUnlockPassword] = useState("");
+  const [unlockLoading, setUnlockLoading] = useState(false);
+
+  const handleUnlockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!unlockPassword) return;
+
+    setUnlockLoading(true);
+    setError("");
+
+    chrome.runtime.sendMessage(
+      { type: "UNLOCK_VAULT", password: unlockPassword },
+      (response) => {
+        setUnlockLoading(false);
+        if (!response || response.status === "error") {
+          setError(response?.message || "Failed to unlock vault.");
+        } else {
+          setUnlockPassword("");
+          setLocked(false);
+          if (domain) {
+            getCredentials(domain);
+          }
+        }
+      }
+    );
+  };
+
+  const handleTriggerBiometrics = () => {
+    setUnlockLoading(true);
+    setError("");
+    chrome.runtime.sendMessage({ type: "TRIGGER_BIOMETRICS" }, (response) => {
+      setUnlockLoading(false);
+      if (!response || response.status === "error") {
+        setError(response?.message || "Biometrics authentication failed.");
+      } else {
+        setLocked(false);
+        if (domain) {
+          getCredentials(domain);
+        }
+      }
+    });
+  };
+
+  const handleCancelUnlock = () => {
+    setUnlockPassword("");
+    setError("");
+  };
 
   const checkStatus = async () => {
     setError("");
@@ -231,25 +278,77 @@ function Popup() {
         </div>
       )}
 
-      {/* 2. Locked Mode */}
+      {/* 2. Locked Mode (Biometrics & Fallback Password UI) */}
       {paired && locked && (
-        <div className={classes.lockedView}>
+        <form onSubmit={handleUnlockSubmit} className={classes.unlockForm}>
           <div className={classes.lockedIcon}>
             <IconLock size={24} />
           </div>
-          <h4 className={classes.lockedTitle}>Vault is Locked</h4>
+          <h4 className={classes.lockedTitle}>Mở khóa để điền mật khẩu</h4>
           <p className={classes.lockedDesc}>
-            Please unlock your vault database in the Secure Vault Desktop
-            Application to view credentials.
+            Secure Vault Manager đang cố mở khóa extension trình duyệt.
           </p>
-          <button
-            className={classes.primaryBtn}
-            onClick={checkStatus}
-            style={{ width: "100%", marginTop: "8px" }}
+
+          <div className={classes.unlockInputContainer}>
+            <input
+              type="password"
+              className={classes.textInput}
+              placeholder="Nhập mật khẩu Master..."
+              value={unlockPassword}
+              onChange={(e) => setUnlockPassword(e.target.value)}
+              disabled={unlockLoading}
+              style={{ width: "100%", paddingRight: "40px" }}
+              autoFocus
+            />
+            <button
+              type="button"
+              className={classes.biometricsBtn}
+              title="Xác thực sinh trắc học"
+              onClick={handleTriggerBiometrics}
+              disabled={unlockLoading}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 2a10 10 0 0 0-10 10c0 5.522 4.478 10 10 10s10-4.478 10-10A10 10 0 0 0 12 2z" />
+                <path d="M12 6a6 6 0 0 0-6 6c0 2.2.8 4.2 2.1 5.7M12 18a6 6 0 0 0 6-6c0-2.2-.8-4.2-2.1-5.7" />
+                <path d="M12 10a2 2 0 0 0-2 2c0 .8.8 2 2 2s2-1.2 2-2a2 2 0 0 0-2-2z" />
+              </svg>
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              width: "100%",
+              marginTop: "12px",
+            }}
           >
-            Check Status
-          </button>
-        </div>
+            <button
+              type="button"
+              className={classes.secondaryBtn}
+              onClick={handleCancelUnlock}
+              disabled={unlockLoading}
+              style={{ flex: 1 }}
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              className={classes.primaryBtn}
+              disabled={unlockLoading || !unlockPassword}
+              style={{ flex: 2 }}
+            >
+              {unlockLoading ? "Đang mở khóa..." : "Mở khóa"}
+            </button>
+          </div>
+        </form>
       )}
 
       {/* 3. Credentials list Mode */}

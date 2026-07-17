@@ -60,6 +60,61 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     });
     return true;
   }
+
+  if (request.type === "UNLOCK_VAULT") {
+    getPairingToken().then((token) => {
+      if (!token) {
+        sendResponse({ status: "error", message: "Extension not paired." });
+        return;
+      }
+      chrome.runtime.sendNativeMessage(
+        HOST_NAME,
+        {
+          action: "unlock_vault",
+          password: request.password,
+          pairing_token: token,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            sendResponse({
+              status: "error",
+              message: chrome.runtime.lastError.message,
+            });
+          } else {
+            sendResponse(response);
+          }
+        }
+      );
+    });
+    return true;
+  }
+
+  if (request.type === "TRIGGER_BIOMETRICS") {
+    getPairingToken().then((token) => {
+      if (!token) {
+        sendResponse({ status: "error", message: "Extension not paired." });
+        return;
+      }
+      chrome.runtime.sendNativeMessage(
+        HOST_NAME,
+        {
+          action: "trigger_biometrics",
+          pairing_token: token,
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            sendResponse({
+              status: "error",
+              message: chrome.runtime.lastError.message,
+            });
+          } else {
+            sendResponse(response);
+          }
+        }
+      );
+    });
+    return true;
+  }
 });
 
 async function getPairingToken(): Promise<string | null> {

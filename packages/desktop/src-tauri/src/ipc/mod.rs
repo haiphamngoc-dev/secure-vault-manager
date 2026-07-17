@@ -4,13 +4,15 @@ pub mod pipe;
 pub mod socket;
 
 use serde::{Deserialize, Serialize};
-use tauri::Manager;
+use tauri::{Manager, Emitter};
 
 #[derive(Debug, Deserialize)]
 pub struct ProxyRequest {
     pub action: String,
     pub domain: Option<String>,
     pub pairing_token: Option<String>,
+    pub password: Option<String>,
+    pub vault_id: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -96,6 +98,92 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 data: None,
                 message: None,
                 locked: Some(!unlocked),
+                paired: Some(true),
+            }
+        }
+        "unlock_vault" => {
+            let password = match req.password.as_deref() {
+                Some(p) => p,
+                None => return ProxyResponse {
+                    status: "error".to_string(),
+                    data: None,
+                    message: Some("Password is required.".to_string()),
+                    locked: Some(true),
+                    paired: Some(true),
+                },
+            };
+
+            let registry = match crate::core::vault_registry::load_registry(app) {
+                Ok(r) => r,
+                Err(e) => return ProxyResponse {
+                    status: "error".to_string(),
+                    data: None,
+                    message: Some(format!("Failed to load registry: {}", e)),
+                    locked: Some(true),
+                    paired: Some(true),
+                },
+            };
+
+            let vault_id = req.vault_id.clone().or(registry.default_vault_id).or_else(|| {
+                registry.vaults.first().map(|v| v.id.clone())
+            });
+
+            let vault_id = match vault_id {
+                Some(id) => id,
+                None => return ProxyResponse {
+                    status: "error".to_string(),
+                    data: None,
+                    message: Some("No vaults configured in desktop app.".to_string()),
+                    locked: Some(true),
+                    paired: Some(true),
+                },
+            };
+
+            let profile = match registry.vaults.iter().find(|v| v.id == vault_id) {
+                Some(p) => p,
+                None => return ProxyResponse {
+                    status: "error".to_string(),
+                    data: None,
+                    message: Some("Vault profile not found.".to_string()),
+                    locked: Some(true),
+                    paired: Some(true),
+                },
+            };
+
+            match crate::core::storage::unlock_and_load_vault(app, password, &profile.file_name) {
+                Ok((_vault, key, salt)) => {
+                    let state = app.state::<crate::AppState>();
+                    *state.vault_key.lock().unwrap() = Some(key);
+                    *state.vault_salt.lock().unwrap() = Some(salt);
+                    *state.current_vault_file.lock().unwrap() = Some(profile.file_name.clone());
+
+                    // Broadcast unlock event to the desktop React frontend
+                    let _ = app.emit("vault-unlocked", ());
+
+                    ProxyResponse {
+                        status: "success".to_string(),
+                        data: None,
+                        message: Some("Vault unlocked successfully.".to_string()),
+                        locked: Some(false),
+                        paired: Some(true),
+                    }
+                }
+                Err(e) => ProxyResponse {
+                    status: "error".to_string(),
+                    data: None,
+                    message: Some(format!("Failed to unlock vault: {}", e)),
+                    locked: Some(true),
+                    paired: Some(true),
+                }
+            }
+        }
+        "trigger_biometrics" => {
+            println!("Biometrics request received from extension. (Mocking authentication...)");
+            ProxyResponse {
+                status: "success".to_string(),
+                data: None,
+                message: Some("Biometrics authentication successful (Mock).".to_string()),
+                locked: Some(false),
                 paired: Some(true),
             }
         }
