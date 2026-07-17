@@ -26,6 +26,7 @@ function Popup() {
   const [error, setError] = useState("");
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockLoading, setUnlockLoading] = useState(false);
+  const [desktopRunning, setDesktopRunning] = useState(true);
 
   const handleUnlockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,10 +87,21 @@ function Popup() {
           msg.includes("paired")
         ) {
           setPaired(false);
+          setDesktopRunning(true);
+        } else if (
+          msg.includes("not running") ||
+          msg.includes("lost") ||
+          msg.includes("closed") ||
+          msg.includes("Cannot connect")
+        ) {
+          setDesktopRunning(false);
+          setError(msg);
         } else {
           setError(msg);
+          setDesktopRunning(false);
         }
       } else {
+        setDesktopRunning(true);
         setPaired(response.paired !== false);
         setLocked(response.locked !== false);
       }
@@ -239,7 +251,7 @@ function Popup() {
           >
             <IconRefresh size={15} />
           </button>
-          {paired && (
+          {paired && desktopRunning && (
             <button
               className={classes.iconBtn}
               onClick={handleUnpair}
@@ -252,10 +264,37 @@ function Popup() {
         </div>
       </div>
 
-      {error && <div className={classes.errorMessage}>{error}</div>}
+      {error && desktopRunning && (
+        <div className={classes.errorMessage}>{error}</div>
+      )}
+
+      {/* 0. Desktop Offline Mode */}
+      {!desktopRunning && (
+        <div className={classes.offlineView}>
+          <div className={classes.offlineIcon}>
+            <IconPlugConnectedX size={24} />
+          </div>
+          <h4 className={classes.offlineTitle}>Ứng dụng Desktop chưa chạy</h4>
+          <p className={classes.offlineDesc}>
+            Vui lòng khởi chạy ứng dụng desktop{" "}
+            <strong>Secure Vault Manager</strong> trên máy tính của bạn để sử
+            dụng extension này.
+          </p>
+          <button
+            className={classes.primaryBtn}
+            onClick={() => {
+              setIsChecking(true);
+              checkStatus();
+            }}
+            style={{ width: "100%", marginTop: "8px" }}
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
 
       {/* 1. Setup Pairing Mode */}
-      {!paired && (
+      {desktopRunning && !paired && (
         <div className={classes.setupView}>
           <h4 className={classes.setupTitle}>Pair with Desktop App</h4>
           <p className={classes.setupDesc}>
@@ -279,7 +318,7 @@ function Popup() {
       )}
 
       {/* 2. Locked Mode (Biometrics & Fallback Password UI) */}
-      {paired && locked && (
+      {desktopRunning && paired && locked && (
         <form onSubmit={handleUnlockSubmit} className={classes.unlockForm}>
           <div className={classes.lockedIcon}>
             <IconLock size={24} />
@@ -352,7 +391,7 @@ function Popup() {
       )}
 
       {/* 3. Credentials list Mode */}
-      {paired && !locked && (
+      {desktopRunning && paired && !locked && (
         <>
           {domain && <div className={classes.domainBadge}>{domain}</div>}
 
