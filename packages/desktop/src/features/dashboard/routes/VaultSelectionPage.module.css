@@ -18,6 +18,19 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   width: 100%;
   max-width: 480px;
+  height: 420px; /* Fixed height to match sizes exactly and prevent shifts */
+  display: flex;
+  flex-direction: column;
+}
+
+.unlockButton {
+  background: var(--color-brand-primary) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
+}
+
+.unlockButton:hover {
+  background: var(--color-brand-primary-hover) !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
 }
 
 .titleText {

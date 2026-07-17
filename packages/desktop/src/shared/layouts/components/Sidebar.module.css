@@ -63,8 +63,8 @@
 }
 
 .drawerInner {
-  top: 48px !important;
-  height: calc(100vh - 48px) !important;
+  top: 40px !important;
+  height: calc(100vh - 40px) !important;
 }
 
 .drawerContent {
@@ -75,6 +75,6 @@
 }
 
 .drawerOverlay {
-  top: 48px !important;
-  height: calc(100vh - 48px) !important;
+  top: 40px !important;
+  height: calc(100vh - 40px) !important;
 }

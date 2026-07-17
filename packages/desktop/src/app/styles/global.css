@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap");
 @import "@mantine/core/styles.css";
 @import "@mantine/notifications/styles.css";
 
@@ -142,4 +143,46 @@ a {
 .mantine-InputWrapper-label,
 .mantine-Input-label {
   margin-bottom: 6px !important;
+}
+
+/* Premium Micro-interactions and Focus States */
+.mantine-Button-root {
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease !important;
+}
+
+.mantine-Button-root:active:not([data-disabled]) {
+  transform: scale(0.98);
+}
+
+.mantine-ActionIcon-root {
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease !important;
+}
+
+.mantine-ActionIcon-root:active:not([data-disabled]) {
+  transform: scale(0.92);
+}
+
+.mantine-TextInput-input,
+.mantine-PasswordInput-innerInput {
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease !important;
+}
+
+/* Gradient override for filled buttons */
+.mantine-Button-root[data-variant="filled"]:not([data-disabled]) {
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25) !important;
+}
+
+.mantine-Button-root[data-variant="filled"]:not([data-disabled]):hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #0891b2 100%) !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
 }

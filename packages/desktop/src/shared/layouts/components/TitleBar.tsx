@@ -379,52 +379,50 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
               wrap="nowrap"
               style={{ flexShrink: 0 }}
             >
-              {status === "unlocked" && (
-                <Group gap="xs" mr="xs" wrap="nowrap">
-                  {showSearch && (
-                    <>
-                      <TextInput
-                        placeholder={t(
-                          "titlebar.searchPlaceholder",
-                          "Tìm kiếm dữ liệu..."
-                        )}
-                        value={searchQuery}
-                        onChange={(e) =>
-                          handleSearchChange(e.currentTarget.value)
-                        }
-                        leftSection={<IconSearch size={14} />}
-                        size="xs"
-                        className={`${classes.searchInput} ${classes.desktopSearch}`}
-                      />
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        size="md"
-                        onClick={() => setIsMobileSearchOpen(true)}
-                        className={classes.mobileSearchIcon}
-                      >
-                        <IconSearch size={18} />
-                      </ActionIcon>
-                    </>
-                  )}
-                  <LanguageToggle />
-                  <ThemeToggle />
-                  <Tooltip
-                    label={t("titlebar.githubLabel", "GitHub Project")}
-                    position="bottom"
-                    withArrow
-                  >
+              <Group gap="xs" mr="xs" wrap="nowrap">
+                {showSearch && (
+                  <>
+                    <TextInput
+                      placeholder={t(
+                        "titlebar.searchPlaceholder",
+                        "Tìm kiếm dữ liệu..."
+                      )}
+                      value={searchQuery}
+                      onChange={(e) =>
+                        handleSearchChange(e.currentTarget.value)
+                      }
+                      leftSection={<IconSearch size={14} />}
+                      size="xs"
+                      className={`${classes.searchInput} ${classes.desktopSearch}`}
+                    />
                     <ActionIcon
                       variant="subtle"
                       color="gray"
                       size="md"
-                      onClick={handleOpenGithub}
+                      onClick={() => setIsMobileSearchOpen(true)}
+                      className={classes.mobileSearchIcon}
                     >
-                      <IconBrandGithub size={18} />
+                      <IconSearch size={18} />
                     </ActionIcon>
-                  </Tooltip>
-                </Group>
-              )}
+                  </>
+                )}
+                <LanguageToggle />
+                <ThemeToggle />
+                <Tooltip
+                  label={t("titlebar.githubLabel", "GitHub Project")}
+                  position="bottom"
+                  withArrow
+                >
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    size="md"
+                    onClick={handleOpenGithub}
+                  >
+                    <IconBrandGithub size={18} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
             </Group>
           </>
         ) : (
@@ -530,41 +528,39 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
                   wrap="nowrap"
                   style={{ flexShrink: 0 }}
                 >
-                  {status === "unlocked" && (
-                    <Group gap="xs" mr="xs" wrap="nowrap">
-                      {showSearch && (
+                  <Group gap="xs" mr="xs" wrap="nowrap">
+                    {showSearch && (
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        size="md"
+                        onClick={() => setIsMobileSearchOpen(true)}
+                        className={classes.mobileSearchIcon}
+                      >
+                        <IconSearch size={18} />
+                      </ActionIcon>
+                    )}
+                    <Box className={classes.langToggle}>
+                      <LanguageToggle />
+                    </Box>
+                    <ThemeToggle />
+                    <Box className={classes.githubToggle}>
+                      <Tooltip
+                        label={t("titlebar.githubLabel", "GitHub Project")}
+                        position="bottom"
+                        withArrow
+                      >
                         <ActionIcon
                           variant="subtle"
                           color="gray"
                           size="md"
-                          onClick={() => setIsMobileSearchOpen(true)}
-                          className={classes.mobileSearchIcon}
+                          onClick={handleOpenGithub}
                         >
-                          <IconSearch size={18} />
+                          <IconBrandGithub size={18} />
                         </ActionIcon>
-                      )}
-                      <Box className={classes.langToggle}>
-                        <LanguageToggle />
-                      </Box>
-                      <ThemeToggle />
-                      <Box className={classes.githubToggle}>
-                        <Tooltip
-                          label={t("titlebar.githubLabel", "GitHub Project")}
-                          position="bottom"
-                          withArrow
-                        >
-                          <ActionIcon
-                            variant="subtle"
-                            color="gray"
-                            size="md"
-                            onClick={handleOpenGithub}
-                          >
-                            <IconBrandGithub size={18} />
-                          </ActionIcon>
-                        </Tooltip>
-                      </Box>
-                    </Group>
-                  )}
+                      </Tooltip>
+                    </Box>
+                  </Group>
 
                   {windowsControls}
                 </Group>

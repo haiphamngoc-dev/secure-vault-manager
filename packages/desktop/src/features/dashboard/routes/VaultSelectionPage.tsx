@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Container,
   Paper,
   Title,
   Text,
@@ -157,236 +156,238 @@ export function VaultSelectionPage() {
 
   return (
     <div className={classes.container}>
-      <Container size="sm" py="xl">
-        {selectedVault ? (
-          /* UNLOCK SPECIFIC VAULT VIEW */
-          <Paper radius="lg" p="xl" withBorder className={classes.card}>
-            <Stack gap="md" align="center">
-              <ThemeIcon
-                size={64}
-                radius="xl"
-                variant="gradient"
-                gradient={{ from: "blue", to: "cyan", deg: 45 }}
-                className={classes.iconContainer}
-              >
-                <IconLock size={36} />
-              </ThemeIcon>
-
-              <Box style={{ textAlign: "center" }}>
-                <Title order={2} className={classes.titleText}>
-                  {selectedVault.name}
-                </Title>
-                <Text size="sm" c="dimmed" mt="xs">
-                  {t("unlockDesc", "Nhập Master Password để mở khoá.")}
-                </Text>
-              </Box>
-            </Stack>
-
-            <form
-              onSubmit={handleUnlock}
-              className={classes.form}
-              style={{ marginTop: "24px" }}
+      {selectedVault ? (
+        /* UNLOCK SPECIFIC VAULT VIEW */
+        <Paper radius="lg" p="xl" withBorder className={classes.card}>
+          <Stack gap="md" align="center">
+            <ThemeIcon
+              size={64}
+              radius="xl"
+              variant="filled"
+              color="blue"
+              className={classes.iconContainer}
             >
-              <Stack gap="md">
-                {error && (
-                  <Alert
-                    icon={<IconAlertTriangle size={16} />}
-                    title={t("unlockErrorTitle", "Lỗi mở khóa")}
-                    color="red"
-                    radius="md"
-                  >
-                    {error}
-                  </Alert>
-                )}
+              <IconLock size={36} />
+            </ThemeIcon>
 
-                <PasswordInput
-                  required
-                  label={t("unlockPasswordLabel", "Master Password")}
-                  placeholder={t(
-                    "unlockPasswordPlaceholder",
-                    "Nhập mật khẩu của bạn..."
-                  )}
-                  value={password}
-                  onChange={(e) => setPassword(e.currentTarget.value)}
-                  disabled={loading}
-                  radius="md"
-                  autoFocus
-                />
-
-                <Group gap="sm" mt="md" wrap="nowrap">
-                  <Button
-                    variant="subtle"
-                    color="gray"
-                    radius="md"
-                    size="md"
-                    onClick={() => {
-                      setSelectedVault(null);
-                      setPassword("");
-                      setError(null);
-                    }}
-                    disabled={loading}
-                    leftSection={<IconArrowLeft size={16} />}
-                    style={{ flex: 1 }}
-                  >
-                    {vaults.length > 1
-                      ? t("switchVault", "Chuyển vault")
-                      : t("back", "Quay lại")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    loading={loading}
-                    gradient={{ from: "blue", to: "cyan", deg: 45 }}
-                    variant="gradient"
-                    radius="md"
-                    size="sm"
-                    style={{ flex: 2 }}
-                  >
-                    {t("unlockSubmitBtn", "Mở khóa")}
-                  </Button>
-                </Group>
-              </Stack>
-            </form>
-          </Paper>
-        ) : (
-          /* VAULT LIST VIEW */
-          <Paper radius="lg" p="xl" withBorder className={classes.card}>
-            <Stack gap="xs" align="center" mb="lg">
-              <ThemeIcon size={54} radius="md" variant="light" color="blue">
-                <IconFolder size={28} />
-              </ThemeIcon>
+            <Box style={{ textAlign: "center" }}>
               <Title order={2} className={classes.titleText}>
-                {t("selectVaultTitle", "Chọn kho bảo mật")}
+                {selectedVault.name}
               </Title>
-              <Text size="sm" c="dimmed">
-                {t(
-                  "selectVaultDesc",
-                  "Chọn một Vault đã có để mở khoá hoặc tạo mới."
-                )}
+              <Text size="sm" c="dimmed" mt="xs">
+                {t("unlockDesc", "Nhập Master Password để mở khoá.")}
               </Text>
-            </Stack>
+            </Box>
+          </Stack>
 
-            <Stack gap="sm">
-              {vaults.map((vault) => (
-                <Card
-                  key={vault.id}
-                  withBorder
-                  padding="md"
+          <form
+            onSubmit={handleUnlock}
+            className={classes.form}
+            style={{ marginTop: "24px" }}
+          >
+            <Stack gap="md">
+              {error && (
+                <Alert
+                  icon={<IconAlertTriangle size={16} />}
+                  title={t("unlockErrorTitle", "Lỗi mở khóa")}
+                  color="red"
                   radius="md"
-                  className={classes.vaultItemCard}
-                  onClick={() => setSelectedVault(vault)}
                 >
-                  <Group justify="space-between" align="center" wrap="nowrap">
-                    <Group gap="md" style={{ flex: 1, overflow: "hidden" }}>
-                      <ThemeIcon
-                        variant="light"
-                        color="blue"
-                        radius="md"
-                        size="md"
-                      >
-                        <IconLock size={16} />
-                      </ThemeIcon>
-                      <Box style={{ flex: 1, overflow: "hidden" }}>
-                        <Group gap="xs" wrap="nowrap">
-                          <Text
-                            fw={700}
-                            c="var(--color-neutral-dark)"
-                            size="sm"
-                            style={{
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              maxWidth: "160px",
-                            }}
-                          >
-                            {vault.name}
-                          </Text>
-                          {defaultVaultId === vault.id && (
-                            <Tooltip label={t("defaultVault", "Mặc định")}>
-                              <Badge
-                                size="xs"
-                                variant="light"
-                                color="blue"
-                                radius="md"
-                              >
-                                {t("defaultBadge", "Mặc định")}
-                              </Badge>
-                            </Tooltip>
-                          )}
-                        </Group>
+                  {error}
+                </Alert>
+              )}
+
+              <PasswordInput
+                required
+                label={t("unlockPasswordLabel", "Master Password")}
+                placeholder={t(
+                  "unlockPasswordPlaceholder",
+                  "Nhập mật khẩu của bạn..."
+                )}
+                value={password}
+                onChange={(e) => setPassword(e.currentTarget.value)}
+                disabled={loading}
+                radius="md"
+                autoFocus
+              />
+
+              <Group gap="sm" mt="md" wrap="nowrap">
+                <Button
+                  variant="subtle"
+                  color="gray"
+                  radius="md"
+                  size="md"
+                  onClick={() => {
+                    setSelectedVault(null);
+                    setPassword("");
+                    setError(null);
+                  }}
+                  disabled={loading}
+                  leftSection={<IconArrowLeft size={16} />}
+                  style={{ flex: 1 }}
+                >
+                  {vaults.length > 1
+                    ? t("switchVault", "Chuyển vault")
+                    : t("back", "Quay lại")}
+                </Button>
+                <Button
+                  type="submit"
+                  loading={loading}
+                  variant="filled"
+                  color="blue"
+                  radius="md"
+                  size="sm"
+                  className={classes.unlockButton}
+                  style={{ flex: 2 }}
+                >
+                  {t("unlockSubmitBtn", "Mở khóa")}
+                </Button>
+              </Group>
+            </Stack>
+          </form>
+        </Paper>
+      ) : (
+        /* VAULT LIST VIEW */
+        <Paper radius="lg" p="xl" withBorder className={classes.card}>
+          <Stack gap="xs" align="center" mb="lg">
+            <ThemeIcon size={54} radius="md" variant="light" color="blue">
+              <IconFolder size={28} />
+            </ThemeIcon>
+            <Title order={2} className={classes.titleText}>
+              {t("selectVaultTitle", "Chọn kho bảo mật")}
+            </Title>
+            <Text size="sm" c="dimmed">
+              {t(
+                "selectVaultDesc",
+                "Chọn một Vault đã có để mở khoá hoặc tạo mới."
+              )}
+            </Text>
+          </Stack>
+
+          <Stack
+            gap="sm"
+            style={{ flex: 1, overflowY: "auto", paddingRight: "4px" }}
+          >
+            {vaults.map((vault) => (
+              <Card
+                key={vault.id}
+                withBorder
+                padding="md"
+                radius="md"
+                className={classes.vaultItemCard}
+                onClick={() => setSelectedVault(vault)}
+              >
+                <Group justify="space-between" align="center" wrap="nowrap">
+                  <Group gap="md" style={{ flex: 1, overflow: "hidden" }}>
+                    <ThemeIcon
+                      variant="light"
+                      color="blue"
+                      radius="md"
+                      size="md"
+                    >
+                      <IconLock size={16} />
+                    </ThemeIcon>
+                    <Box style={{ flex: 1, overflow: "hidden" }}>
+                      <Group gap="xs" wrap="nowrap">
                         <Text
-                          size="xs"
-                          c="dimmed"
+                          fw={700}
+                          c="var(--color-neutral-dark)"
+                          size="sm"
                           style={{
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",
+                            maxWidth: "160px",
                           }}
                         >
-                          {vault.file_name}
+                          {vault.name}
                         </Text>
-                      </Box>
-                    </Group>
-
-                    <Menu position="bottom-end" shadow="md" radius="md">
-                      <Menu.Target>
-                        <ActionIcon
-                          variant="subtle"
-                          color="gray"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <IconDotsVertical size={16} />
-                        </ActionIcon>
-                      </Menu.Target>
-
-                      <Menu.Dropdown>
-                        <Menu.Item
-                          leftSection={<IconStar size={14} />}
-                          onClick={() =>
-                            setDefaultVault(
-                              defaultVaultId === vault.id ? null : vault.id
-                            )
-                          }
-                        >
-                          {defaultVaultId === vault.id
-                            ? t("removeDefault", "Bỏ mặc định")
-                            : t("setAsDefault", "Đặt làm mặc định")}
-                        </Menu.Item>
-
-                        <Menu.Item
-                          color="red"
-                          leftSection={<IconTrash size={14} />}
-                          onClick={() => {
-                            setVaultToDelete(vault);
-                            setDeleteFile(false);
-                            setDeleteOpened(true);
-                          }}
-                        >
-                          {t("delete", "Xóa")}
-                        </Menu.Item>
-                      </Menu.Dropdown>
-                    </Menu>
+                        {defaultVaultId === vault.id && (
+                          <Tooltip label={t("defaultVault", "Mặc định")}>
+                            <Badge
+                              size="xs"
+                              variant="light"
+                              color="blue"
+                              radius="md"
+                            >
+                              {t("defaultBadge", "Mặc định")}
+                            </Badge>
+                          </Tooltip>
+                        )}
+                      </Group>
+                      <Text
+                        size="xs"
+                        c="dimmed"
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {vault.file_name}
+                      </Text>
+                    </Box>
                   </Group>
-                </Card>
-              ))}
 
-              <Card
-                withBorder
-                padding="md"
-                radius="md"
-                className={classes.createVaultCard}
-                onClick={() => setNewVaultOpened(true)}
-              >
-                <Group justify="center" gap="xs">
-                  <IconPlus size={16} color="var(--color-brand-primary)" />
-                  <Text fw={600} size="sm" c="blue.6">
-                    {t("createNewVaultBtn", "Tạo Vault mới")}
-                  </Text>
+                  <Menu position="bottom-end" shadow="md" radius="md">
+                    <Menu.Target>
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <IconDotsVertical size={16} />
+                      </ActionIcon>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                      <Menu.Item
+                        leftSection={<IconStar size={14} />}
+                        onClick={() =>
+                          setDefaultVault(
+                            defaultVaultId === vault.id ? null : vault.id
+                          )
+                        }
+                      >
+                        {defaultVaultId === vault.id
+                          ? t("removeDefault", "Bỏ mặc định")
+                          : t("setAsDefault", "Đặt làm mặc định")}
+                      </Menu.Item>
+
+                      <Menu.Item
+                        color="red"
+                        leftSection={<IconTrash size={14} />}
+                        onClick={() => {
+                          setVaultToDelete(vault);
+                          setDeleteFile(false);
+                          setDeleteOpened(true);
+                        }}
+                      >
+                        {t("delete", "Xóa")}
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
                 </Group>
               </Card>
-            </Stack>
-          </Paper>
-        )}
-      </Container>
+            ))}
+
+            <Card
+              withBorder
+              padding="md"
+              radius="md"
+              className={classes.createVaultCard}
+              onClick={() => setNewVaultOpened(true)}
+            >
+              <Group justify="center" gap="xs">
+                <IconPlus size={16} color="var(--color-brand-primary)" />
+                <Text fw={600} size="sm" c="blue.6">
+                  {t("createNewVaultBtn", "Tạo Vault mới")}
+                </Text>
+              </Group>
+            </Card>
+          </Stack>
+        </Paper>
+      )}
 
       {/* CREATE NEW VAULT MODAL */}
       <Modal
