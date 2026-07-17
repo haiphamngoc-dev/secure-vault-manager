@@ -25,5 +25,7 @@
   "statusDisconnected": "Disconnected",
   "systemSection": "System Settings",
   "minimizeToTrayLabel": "Minimize to system tray on close",
-  "minimizeToTrayDesc": "If disabled, closing the window will exit the program completely."
+  "minimizeToTrayDesc": "If disabled, closing the window will exit the program completely.",
+  "autostartLabel": "Launch automatically on system boot",
+  "autostartDesc": "Start Secure Vault Manager automatically in the system tray when you log into your computer."
 }

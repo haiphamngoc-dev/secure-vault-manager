@@ -23,5 +23,7 @@
   "statusDisconnected": "Chưa kết nối",
   "systemSection": "Cài đặt hệ thống",
   "minimizeToTrayLabel": "Thu nhỏ về khay hệ thống khi đóng cửa sổ",
-  "minimizeToTrayDesc": "Nếu không được bật, đóng cửa sổ sẽ thoát hoàn toàn chương trình."
+  "minimizeToTrayDesc": "Nếu không được bật, đóng cửa sổ sẽ thoát hoàn toàn chương trình.",
+  "autostartLabel": "Tự động khởi động cùng hệ thống",
+  "autostartDesc": "Tự động mở Secure Vault Manager chạy ngầm ở khay hệ thống khi đăng nhập máy tính."
 }

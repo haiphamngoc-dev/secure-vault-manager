@@ -15,6 +15,8 @@ pub struct AppSettings {
     pub extension_id: Option<String>,
     #[serde(default = "default_true")]
     pub minimize_to_tray: bool,
+    #[serde(default)]
+    pub autostart: bool,
     pub pairing_token: Option<String>,
 }
 
@@ -25,6 +27,7 @@ impl Default for AppSettings {
             auto_lock_interval: "15m".to_string(),
             extension_id: None,
             minimize_to_tray: true,
+            autostart: false,
             pairing_token: None,
         }
     }
@@ -61,5 +64,15 @@ pub fn save_settings(app: tauri::AppHandle, settings: AppSettings) -> Result<(),
 
     // Synchronize language with tray menu dynamically
     crate::sync_tray_menu_lang(&app, &settings.lang);
+
+    // Synchronize autostart configuration with system
+    use tauri_plugin_autostart::ManagerExt;
+    let autostart_manager = app.autolaunch();
+    if settings.autostart {
+        let _ = autostart_manager.enable();
+    } else {
+        let _ = autostart_manager.disable();
+    }
+
     Ok(())
 }

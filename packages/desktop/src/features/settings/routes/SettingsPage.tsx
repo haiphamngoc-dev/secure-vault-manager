@@ -31,6 +31,7 @@ interface AppSettings {
   auto_lock_interval: string;
   extension_id: string | null;
   minimize_to_tray: boolean;
+  autostart: boolean;
 }
 
 export function SettingsPage() {
@@ -42,6 +43,7 @@ export function SettingsPage() {
     auto_lock_interval: "15m",
     extension_id: "",
     minimize_to_tray: true,
+    autostart: false,
   });
 
   const [pairingKey, setPairingKey] = useState<string>("");
@@ -56,6 +58,7 @@ export function SettingsPage() {
           ...res,
           extension_id: res.extension_id || "",
           minimize_to_tray: res.minimize_to_tray !== false,
+          autostart: res.autostart === true,
         });
       } catch (err) {
         console.error("Failed to load settings from Rust:", err);
@@ -182,6 +185,16 @@ export function SettingsPage() {
                 updateSetting("minimize_to_tray", event.currentTarget.checked)
               }
               color="blue"
+            />
+            <Switch
+              label={t("autostartLabel")}
+              description={t("autostartDesc")}
+              checked={settings.autostart}
+              onChange={(event) =>
+                updateSetting("autostart", event.currentTarget.checked)
+              }
+              color="blue"
+              mt="xs"
             />
           </Stack>
         </Box>

@@ -186,11 +186,15 @@ pub fn run() {
                 update_tray_menu(app);
             }
         }))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--minimized"]),
+        ))
         .manage(AppState {
             vault_key: std::sync::Mutex::new(None),
             vault_salt: std::sync::Mutex::new(None),
             lang: std::sync::Mutex::new(AppLang::Vi),
-            is_visible: std::sync::Mutex::new(true),
+            is_visible: std::sync::Mutex::new(false), // Starts false, updated in setup
             current_vault_file: std::sync::Mutex::new(None),
         })
         .setup(|app| {
@@ -225,10 +229,37 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Load initial settings to update tray language
+            // Load initial settings to update tray language and sync autostart
             let app_handle = app.app_handle();
+            let mut autostart_active = false;
             if let Ok(settings) = commands::settings::get_settings(app_handle.clone()) {
                 sync_tray_menu_lang(app_handle, &settings.lang);
+                autostart_active = settings.autostart;
+            }
+
+            // Check CLI arguments to handle minimized start
+            let args: Vec<String> = std::env::args().collect();
+            let start_minimized = args.contains(&"--minimized".to_string());
+
+            if let Some(window) = app.get_webview_window("main") {
+                let state = app.state::<AppState>();
+                if start_minimized {
+                    let _ = window.hide();
+                    *state.is_visible.lock().unwrap() = false;
+                } else {
+                    let _ = window.show();
+                    let _ = window.set_focus();
+                    *state.is_visible.lock().unwrap() = true;
+                }
+            }
+
+            // Sync autostart configuration with system
+            use tauri_plugin_autostart::ManagerExt;
+            let autostart_manager = app.autolaunch();
+            if autostart_active {
+                let _ = autostart_manager.enable();
+            } else {
+                let _ = autostart_manager.disable();
             }
 
             // Populate initial tray menu
