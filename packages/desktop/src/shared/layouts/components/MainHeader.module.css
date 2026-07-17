@@ -1,33 +1,24 @@
 .headerContainer {
-  height: 70px;
+  height: 48px;
   width: 100%;
-  border-bottom: 1px solid var(--mantine-color-dark-5);
-  background-color: rgba(20, 21, 23, 0.4);
+  border-bottom: 1px solid var(--color-neutral-light);
+  background-color: transparent;
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 10;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-left: var(--mantine-spacing-xl);
-  padding-right: var(--mantine-spacing-xl);
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
 }
 
 .title {
   font-family: "Outfit", "Inter", sans-serif;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 18px;
   letter-spacing: -0.3px;
-  color: var(--mantine-color-white);
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.description {
-  font-size: 13px;
-  color: var(--mantine-color-dark-2);
+  color: var(--color-neutral-dark);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
