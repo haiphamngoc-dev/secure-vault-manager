@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Container,
   Paper,
   Title,
   Text,
@@ -86,107 +85,105 @@ export function OnboardingPage({ onSuccess }: Readonly<OnboardingPageProps>) {
 
   return (
     <div className={classes.container}>
-      <Container size="xs" py="xl">
-        <Paper radius="lg" p="xl" withBorder className={classes.card}>
-          <Stack gap="md" align="center">
-            <ThemeIcon
-              size={64}
-              radius="xl"
-              variant="gradient"
-              gradient={{ from: "blue", to: "cyan", deg: 45 }}
-              className={classes.iconContainer}
-            >
-              <IconLock size={36} />
-            </ThemeIcon>
+      <Paper radius="lg" p="xl" withBorder className={classes.card}>
+        <Stack gap="md" align="center">
+          <ThemeIcon
+            size={64}
+            radius="xl"
+            variant="gradient"
+            gradient={{ from: "blue", to: "cyan", deg: 45 }}
+            className={classes.iconContainer}
+          >
+            <IconLock size={36} />
+          </ThemeIcon>
 
-            <Box style={{ textAlign: "center" }}>
-              <Title order={2} className={classes.titleText}>
-                {t("onboardingTitle")}
-              </Title>
-              <Text size="sm" c="dimmed" mt="xs">
-                {t("onboardingDesc")}
-              </Text>
-            </Box>
-          </Stack>
+          <Box style={{ textAlign: "center" }}>
+            <Title order={2} className={classes.titleText}>
+              {t("onboardingTitle")}
+            </Title>
+            <Text size="sm" c="dimmed" mt="xs">
+              {t("onboardingDesc")}
+            </Text>
+          </Box>
+        </Stack>
 
-          <form onSubmit={handleInit} className={classes.form}>
-            <Stack gap="md">
-              {error && (
-                <Alert
-                  icon={<IconAlertTriangle size={16} />}
-                  title={t("onboardingErrorTitle")}
-                  color="red"
-                  radius="md"
-                >
-                  {error}
-                </Alert>
-              )}
-
-              <TextInput
-                required
-                label={t("vaultNameLabel", "Tên hiển thị")}
-                placeholder={t(
-                  "vaultNamePlaceholder",
-                  "Ví dụ: Kho cá nhân, Kho công việc"
-                )}
-                value={vaultName}
-                onChange={(e) => setVaultName(e.currentTarget.value)}
-                disabled={loading}
-              />
-
-              <PasswordInput
-                required
-                label={t("onboardingMasterLabel")}
-                placeholder={t("onboardingMasterPlaceholder")}
-                value={password}
-                onChange={(e) => setPassword(e.currentTarget.value)}
-                disabled={loading}
-              />
-
-              {password && (
-                <Box>
-                  <Group justify="space-between" mb={5}>
-                    <Text size="xs" c="dimmed">
-                      {t("passwordStrength", "Password Strength")}
-                    </Text>
-                    <Text size="xs" color={strength.color} fw={700}>
-                      {strength.label}
-                    </Text>
-                  </Group>
-                  <Progress
-                    value={strength.value}
-                    color={strength.color}
-                    size="xs"
-                    radius="xs"
-                  />
-                </Box>
-              )}
-
-              <PasswordInput
-                required
-                label={t("onboardingConfirmLabel")}
-                placeholder={t("onboardingConfirmPlaceholder")}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.currentTarget.value)}
-                disabled={loading}
-              />
-
-              <Button
-                type="submit"
-                fullWidth
-                loading={loading}
-                gradient={{ from: "blue", to: "cyan", deg: 45 }}
-                variant="gradient"
-                size="sm"
-                mt="md"
-                className={classes.button}
+        <form onSubmit={handleInit} className={classes.form}>
+          <Stack gap="md">
+            {error && (
+              <Alert
+                icon={<IconAlertTriangle size={16} />}
+                title={t("onboardingErrorTitle")}
+                color="red"
+                radius="md"
               >
-                {t("onboardingSubmitBtn")}
-              </Button>
-            </Stack>
-          </form>
-        </Paper>
-      </Container>
+                {error}
+              </Alert>
+            )}
+
+            <TextInput
+              required
+              label={t("vaultNameLabel", "Tên hiển thị")}
+              placeholder={t(
+                "vaultNamePlaceholder",
+                "Ví dụ: Kho cá nhân, Kho công việc"
+              )}
+              value={vaultName}
+              onChange={(e) => setVaultName(e.currentTarget.value)}
+              disabled={loading}
+            />
+
+            <PasswordInput
+              required
+              label={t("onboardingMasterLabel")}
+              placeholder={t("onboardingMasterPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.currentTarget.value)}
+              disabled={loading}
+            />
+
+            {password && (
+              <Box>
+                <Group justify="space-between" mb={5}>
+                  <Text size="xs" c="dimmed">
+                    {t("passwordStrength", "Password Strength")}
+                  </Text>
+                  <Text size="xs" color={strength.color} fw={700}>
+                    {strength.label}
+                  </Text>
+                </Group>
+                <Progress
+                  value={strength.value}
+                  color={strength.color}
+                  size="xs"
+                  radius="xs"
+                />
+              </Box>
+            )}
+
+            <PasswordInput
+              required
+              label={t("onboardingConfirmLabel")}
+              placeholder={t("onboardingConfirmPlaceholder")}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+              disabled={loading}
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              loading={loading}
+              gradient={{ from: "blue", to: "cyan", deg: 45 }}
+              variant="gradient"
+              size="sm"
+              mt="md"
+              className={classes.button}
+            >
+              {t("onboardingSubmitBtn")}
+            </Button>
+          </Stack>
+        </form>
+      </Paper>
     </div>
   );
 }

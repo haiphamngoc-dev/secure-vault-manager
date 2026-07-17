@@ -12,5 +12,8 @@
   "passwordStrength": "Password Strength",
   "strengthWeak": "Weak",
   "strengthMedium": "Medium",
-  "strengthStrong": "Strong"
+  "strengthStrong": "Strong",
+  "defaultVaultName": "Personal Vault",
+  "vaultNameLabel": "Display Name",
+  "vaultNamePlaceholder": "e.g. Personal Vault, Work Vault"
 }

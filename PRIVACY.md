@@ -1,7 +1,7 @@
 # Privacy Policy / Chính sách Bảo mật
 
-*This Privacy Policy applies to the **Secure Vault Manager Extension**.*
-*Chính sách Bảo mật này áp dụng cho **Secure Vault Manager Extension**.*
+_This Privacy Policy applies to the **Secure Vault Manager Extension**._
+_Chính sách Bảo mật này áp dụng cho **Secure Vault Manager Extension**._
 
 ---
 

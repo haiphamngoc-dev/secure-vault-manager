@@ -12,5 +12,8 @@
   "passwordStrength": "Độ mạnh mật khẩu",
   "strengthWeak": "Yếu",
   "strengthMedium": "Trung bình",
-  "strengthStrong": "Mạnh"
+  "strengthStrong": "Mạnh",
+  "defaultVaultName": "Kho cá nhân",
+  "vaultNameLabel": "Tên hiển thị",
+  "vaultNamePlaceholder": "Ví dụ: Kho cá nhân, Kho công việc"
 }

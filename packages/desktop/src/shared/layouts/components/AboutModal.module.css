@@ -1,11 +1,38 @@
 .titleGradient {
+  font-family: "Outfit", "Inter", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   background: linear-gradient(
     135deg,
-    var(--color-brand-primary) 0%,
-    var(--color-brand-primary-hover) 100%
+    var(--mantine-color-indigo-5) 0%,
+    var(--mantine-color-cyan-5) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-weight: 700;
+}
+
+.modalContent {
+  background-color: light-dark(
+    rgba(255, 255, 255, 0.75),
+    rgba(26, 27, 30, 0.65)
+  ) !important;
+  border: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08)) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: light-dark(
+    0 20px 40px rgba(0, 0, 0, 0.06),
+    0 20px 40px rgba(0, 0, 0, 0.4)
+  ) !important;
+  border-radius: var(--mantine-radius-lg);
+  color: var(--color-neutral-dark);
+}
+
+.modalHeader {
+  background-color: transparent !important;
+}
+
+.modalBody {
+  background-color: transparent !important;
 }

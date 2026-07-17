@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Container,
   Paper,
   Title,
   Text,
@@ -49,69 +48,67 @@ export function UnlockPage({ onSuccess, onUnlock }: Readonly<UnlockPageProps>) {
 
   return (
     <div className={classes.container}>
-      <Container size="xs" py="xl">
-        <Paper radius="lg" p="xl" withBorder className={classes.card}>
-          <Stack gap="md" align="center">
-            <ThemeIcon
-              size={64}
-              radius="xl"
-              variant="gradient"
-              gradient={{ from: "blue", to: "cyan", deg: 45 }}
-              className={classes.iconContainer}
-            >
-              <IconLock size={36} />
-            </ThemeIcon>
+      <Paper radius="lg" p="xl" withBorder className={classes.card}>
+        <Stack gap="md" align="center">
+          <ThemeIcon
+            size={64}
+            radius="xl"
+            variant="gradient"
+            gradient={{ from: "blue", to: "cyan", deg: 45 }}
+            className={classes.iconContainer}
+          >
+            <IconLock size={36} />
+          </ThemeIcon>
 
-            <Box style={{ textAlign: "center" }}>
-              <Title order={2} className={classes.titleText}>
-                {t("unlockTitle")}
-              </Title>
-              <Text size="sm" c="dimmed" mt="xs">
-                {t("unlockDesc")}
-              </Text>
-            </Box>
-          </Stack>
+          <Box style={{ textAlign: "center" }}>
+            <Title order={2} className={classes.titleText}>
+              {t("unlockTitle")}
+            </Title>
+            <Text size="sm" c="dimmed" mt="xs">
+              {t("unlockDesc")}
+            </Text>
+          </Box>
+        </Stack>
 
-          <form onSubmit={handleUnlock} className={classes.form}>
-            <Stack gap="md">
-              {error && (
-                <Alert
-                  icon={<IconAlertTriangle size={16} />}
-                  title={t("unlockErrorTitle")}
-                  color="red"
-                  radius="md"
-                >
-                  {error}
-                </Alert>
-              )}
-
-              <PasswordInput
-                required
-                label={t("unlockPasswordLabel")}
-                placeholder={t("unlockPasswordPlaceholder")}
-                value={password}
-                onChange={(e) => setPassword(e.currentTarget.value)}
-                disabled={loading}
+        <form onSubmit={handleUnlock} className={classes.form}>
+          <Stack gap="md">
+            {error && (
+              <Alert
+                icon={<IconAlertTriangle size={16} />}
+                title={t("unlockErrorTitle")}
+                color="red"
                 radius="md"
-              />
-
-              <Button
-                type="submit"
-                fullWidth
-                loading={loading}
-                gradient={{ from: "blue", to: "cyan", deg: 45 }}
-                variant="gradient"
-                radius="md"
-                size="md"
-                mt="md"
-                className={classes.button}
               >
-                {t("unlockSubmitBtn")}
-              </Button>
-            </Stack>
-          </form>
-        </Paper>
-      </Container>
+                {error}
+              </Alert>
+            )}
+
+            <PasswordInput
+              required
+              label={t("unlockPasswordLabel")}
+              placeholder={t("unlockPasswordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.currentTarget.value)}
+              disabled={loading}
+              radius="md"
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              loading={loading}
+              gradient={{ from: "blue", to: "cyan", deg: 45 }}
+              variant="gradient"
+              radius="md"
+              size="md"
+              mt="md"
+              className={classes.button}
+            >
+              {t("unlockSubmitBtn")}
+            </Button>
+          </Stack>
+        </form>
+      </Paper>
     </div>
   );
 }

@@ -21,20 +21,10 @@ export function AboutModal({ opened, onClose }: Readonly<AboutModalProps>) {
         backgroundOpacity: 0.35,
         blur: 8,
       }}
-      styles={{
-        content: {
-          backgroundColor: "var(--color-neutral-card)",
-          border: "1px solid var(--color-neutral-light)",
-          color: "var(--color-neutral-dark)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-        },
-        header: {
-          backgroundColor: "transparent",
-        },
-        body: {
-          backgroundColor: "transparent",
-        },
+      classNames={{
+        content: classes.modalContent,
+        header: classes.modalHeader,
+        body: classes.modalBody,
       }}
     >
       <Stack align="center" gap="md" p="md">

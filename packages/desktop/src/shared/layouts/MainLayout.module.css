@@ -22,6 +22,39 @@
   transition: background-color 0.2s ease;
 }
 
+/* Ambient glowing backgrounds behind the main content (only in dark mode) */
+.mainContent::before {
+  content: "";
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    light-dark(rgba(0, 0, 0, 0), rgba(99, 102, 241, 0.1)) 0%,
+    rgba(99, 102, 241, 0) 70%
+  );
+  top: -100px;
+  left: -100px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.mainContent::after {
+  content: "";
+  position: absolute;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(
+    circle,
+    light-dark(rgba(0, 0, 0, 0), rgba(6, 182, 212, 0.1)) 0%,
+    rgba(6, 182, 212, 0) 70%
+  );
+  bottom: -150px;
+  right: -150px;
+  z-index: 1;
+  pointer-events: none;
+}
+
 @media (max-width: 767px) {
   .dashboardContainer {
     flex-direction: column;
