@@ -59,14 +59,18 @@
   transform: translateY(-2px);
   box-shadow:
     0 25px 50px rgba(0, 0, 0, 0.2),
-    0 0 30px rgba(37, 99, 235, 0.08);
+    0 0 30px rgba(12, 125, 240, 0.08);
 }
 
 .titleText {
   font-family: "Outfit", "Inter", sans-serif;
   font-weight: 800;
   letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-primary) 0%,
+    var(--color-brand-primary-hover) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -80,7 +84,7 @@
 .button {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
-  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 4px 15px rgba(12, 125, 240, 0.2);
 }
 
 .button:hover:not(:disabled) {

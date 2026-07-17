@@ -576,12 +576,12 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
       }}
       styles={{
         overlay: {
-          top: 48,
-          height: "calc(100vh - 48px)",
+          top: 40,
+          height: "calc(100vh - 40px)",
         },
         inner: {
-          top: 48,
-          height: "calc(100vh - 48px)",
+          top: 40,
+          height: "calc(100vh - 40px)",
         },
         content: {
           backgroundColor: "var(--color-neutral-card)",

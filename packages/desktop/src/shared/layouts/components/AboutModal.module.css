@@ -1,8 +1,8 @@
 .titleGradient {
   background: linear-gradient(
     135deg,
-    var(--mantine-color-indigo-4) 0%,
-    var(--mantine-color-indigo-7) 100%
+    var(--color-brand-primary) 0%,
+    var(--color-brand-primary-hover) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;

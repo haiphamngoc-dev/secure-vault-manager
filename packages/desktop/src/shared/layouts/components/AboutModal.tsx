@@ -16,9 +16,25 @@ export function AboutModal({ opened, onClose }: Readonly<AboutModalProps>) {
       onClose={onClose}
       title={t("titlebar.about", "About")}
       centered
+      radius="lg"
       overlayProps={{
-        backgroundOpacity: 0.55,
-        blur: 3,
+        backgroundOpacity: 0.35,
+        blur: 8,
+      }}
+      styles={{
+        content: {
+          backgroundColor: "var(--color-neutral-card)",
+          border: "1px solid var(--color-neutral-light)",
+          color: "var(--color-neutral-dark)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+        },
+        header: {
+          backgroundColor: "transparent",
+        },
+        body: {
+          backgroundColor: "transparent",
+        },
       }}
     >
       <Stack align="center" gap="md" p="md">

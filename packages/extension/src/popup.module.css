@@ -32,7 +32,11 @@
   font-size: 15px;
   font-weight: 700;
   font-family: var(--font-heading);
-  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-primary) 0%,
+    var(--color-brand-primary-hover) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -126,12 +130,12 @@
 .textInput:focus {
   outline: none;
   border-color: var(--color-brand-primary);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 0 0 2px rgba(12, 125, 240, 0.2);
 }
 
 /* ===== Primary Button ===== */
 .primaryBtn {
-  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  background: var(--color-brand-primary);
   border: none;
   border-radius: 8px;
   color: white;
@@ -140,7 +144,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 2px 8px rgba(12, 125, 240, 0.2);
   transition:
     background 150ms ease,
     box-shadow 150ms ease,
@@ -238,9 +242,9 @@
 
 /* ===== Autofill Button ===== */
 .autofillBtn {
-  background: rgba(37, 99, 235, 0.1);
-  border: 1px solid rgba(37, 99, 235, 0.2);
-  color: var(--color-brand-primary-hover);
+  background: var(--color-brand-primary-highlight);
+  border: 1px solid rgba(12, 125, 240, 0.2);
+  color: var(--color-brand-primary);
   padding: var(--space-2) var(--space-3);
   border-radius: 8px;
   font-size: 12px;
@@ -251,8 +255,8 @@
 }
 
 .autofillBtn:hover {
-  background: linear-gradient(135deg, #2563eb, #06b6d4);
-  border-color: #2563eb;
+  background: var(--color-brand-primary);
+  border-color: var(--color-brand-primary);
   color: white;
 }
 

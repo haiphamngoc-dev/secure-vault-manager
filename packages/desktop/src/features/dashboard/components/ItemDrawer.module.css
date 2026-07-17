@@ -135,7 +135,11 @@
   color: white;
 }
 .bgCard {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-brand-primary) 0%,
+    var(--color-brand-primary-active) 100%
+  );
   color: white;
 }
 .bgIdentity {

@@ -10,32 +10,32 @@ import { createTheme, MantineColorsTuple } from "@mantine/core";
  * Dark color palette overrides for consistent dark mode aesthetics.
  */
 const darkColors: MantineColorsTuple = [
-  "#ffffff", // text
-  "rgba(255, 255, 255, 0.9)",
-  "rgba(255, 255, 255, 0.65)", // subtext
-  "#555555",
-  "#444444", // borders
-  "#333333", // card bg (index 5)
-  "#2d2d2d",
-  "#262626", // body bg (index 7)
-  "#1c1c1c",
-  "#121212",
+  "#f8fafc", // index 0 (Chữ chính - Tuyết nhạt)
+  "rgba(248, 250, 252, 0.8)",
+  "#94a3b8", // index 2 (Chữ phụ/Muted)
+  "#475569",
+  "#1e293b", // index 4 (Borders mặc định)
+  "#171e35", // index 5 (Card bg - Steel Shield)
+  "#0e1324", // index 6 (Sidebar bg - Midnight Navy)
+  "#070a13", // index 7 (Body bg - Deep Abyss)
+  "#030712",
+  "#02040a",
 ];
 
 /**
- * Custom Sky Blue color palette aligned with brand specs (#0c7df0).
+ * Custom Cobalt Blue color palette aligned with brand specs (#2563eb).
  */
 const brandBlueColors: MantineColorsTuple = [
-  "#ebf5ff", // index 0 (Highlight / bg tint)
-  "#d1e9ff",
-  "#a3d3ff",
-  "#75bdff",
-  "#47a7ff",
-  "#2490ff", // Hover style
-  "#0c7df0", // Main primary brand color (index 6)
-  "#0067cc", // Active/pressed style (index 7)
-  "#00509e",
-  "#003870",
+  "#eff6ff", // index 0
+  "#dbeafe",
+  "#bfdbfe",
+  "#93c5fd",
+  "#60a5fa",
+  "#3b82f6", // Hover style (index 5)
+  "#2563eb", // Main primary brand color (index 6)
+  "#1d4ed8", // Active/pressed style (index 7)
+  "#1e40af",
+  "#1e3a8a",
 ];
 
 /**

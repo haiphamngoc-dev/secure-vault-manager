@@ -19,24 +19,24 @@
 
 /* ===== Design Tokens — Light Mode (Default) ===== */
 :root {
-  /* Brand Colors (Sky Blue — synced with desktop) */
-  --color-brand-primary: #0c7df0;
-  --color-brand-primary-hover: #2490ff;
-  --color-brand-primary-active: #0067cc;
-  --color-brand-secondary: #47a7ff;
+  /* Brand Colors (Cobalt Blue — synced with desktop) */
+  --color-brand-primary: #2563eb;
+  --color-brand-primary-hover: #3b82f6;
+  --color-brand-primary-active: #1d4ed8;
+  --color-brand-secondary: #60a5fa;
 
   /* State Colors */
-  --color-danger: #ff4d4f;
-  --color-danger-hover: #ff7875;
+  --color-danger: #f43f5e;
+  --color-danger-hover: #e11d48;
   --color-success: #10b981;
 
   /* Neutral — Light Theme */
-  --color-neutral-dark: #262626;
-  --color-neutral-medium: rgba(0, 0, 0, 0.55);
-  --color-neutral-light: rgba(0, 0, 0, 0.08);
-  --color-neutral-bg: #f7f7f7;
+  --color-neutral-dark: #0f172a;
+  --color-neutral-medium: #475569;
+  --color-neutral-light: rgba(15, 23, 42, 0.08);
+  --color-neutral-bg: #f4f6fa;
   --color-neutral-card: #ffffff;
-  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border: rgba(15, 23, 42, 0.08);
 
   /* Spacing Scale (4px base) */
   --space-1: 4px;
@@ -55,15 +55,15 @@
 
 /* ===== Design Tokens — Dark Mode ===== */
 body[data-theme="dark"] {
-  --color-brand-primary: #85c2ff;
-  --color-brand-primary-hover: #a8d4ff;
-  --color-brand-primary-active: #5caaff;
-  --color-neutral-dark: #ffffff;
-  --color-neutral-medium: rgba(255, 255, 255, 0.65);
-  --color-neutral-light: rgba(255, 255, 255, 0.12);
-  --color-neutral-bg: #262626;
-  --color-neutral-card: #333333;
-  --color-border: rgba(255, 255, 255, 0.12);
+  --color-brand-primary: #38bdf8;
+  --color-brand-primary-hover: #7dd3fc;
+  --color-brand-primary-active: #0ea5e9;
+  --color-neutral-dark: #f8fafc;
+  --color-neutral-medium: #94a3b8;
+  --color-neutral-light: rgba(255, 255, 255, 0.08);
+  --color-neutral-bg: #070a13;
+  --color-neutral-card: #0e1324;
+  --color-border: rgba(255, 255, 255, 0.08);
 }
 
 /* ===== Base Resets ===== */

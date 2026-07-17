@@ -3,10 +3,13 @@
   flex-direction: column;
   height: 100%;
   width: 270px;
-  background-color: var(--color-neutral-card);
+  background-color: light-dark(
+    rgba(255, 255, 255, 0.7),
+    rgba(14, 19, 36, 0.75)
+  );
   border-right: 1px solid var(--color-neutral-light);
-  backdrop-filter: blur(20px); /* Tấm kính mờ bên trái */
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(12px); /* Tấm kính mờ bên trái */
+  -webkit-backdrop-filter: blur(12px);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   position: relative;
@@ -31,11 +34,7 @@
 }
 
 .sidebarNavlinkActive {
-  background: linear-gradient(
-    135deg,
-    rgba(37, 99, 235, 0.08) 0%,
-    rgba(6, 182, 212, 0.08) 100%
-  ) !important;
+  background: var(--color-brand-primary-highlight) !important;
   color: var(--color-brand-primary) !important;
   font-weight: var(--font-weight-semibold);
   position: relative;
