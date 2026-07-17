@@ -4,11 +4,18 @@
   right: 0;
   width: 450px;
   height: 100%;
-  background-color: var(--color-neutral-card);
-  border-left: 1px solid var(--color-neutral-light);
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background-color: light-dark(
+    rgba(255, 255, 255, 0.75),
+    rgba(15, 20, 38, 0.7)
+  ) !important;
+  border-left: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08)) !important;
+  box-shadow: light-dark(
+    -8px 0 32px rgba(0, 0, 0, 0.05),
+    -8px 0 32px rgba(0, 0, 0, 0.3)
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -75,8 +82,9 @@
 }
 
 .section {
-  background-color: var(--color-neutral-bg);
-  border: 1px solid var(--color-neutral-light);
+  background-color: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03));
+  border: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08));
   border-radius: var(--mantine-radius-md);
   padding: var(--mantine-spacing-md);
   display: flex;

@@ -574,22 +574,10 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
         blur: 8,
         backgroundOpacity: 0.35,
       }}
-      styles={{
-        overlay: {
-          top: 40,
-          height: "calc(100vh - 40px)",
-        },
-        inner: {
-          top: 40,
-          height: "calc(100vh - 40px)",
-        },
-        content: {
-          backgroundColor: "var(--color-neutral-card)",
-          border: "1px solid var(--color-neutral-light)",
-          color: "var(--color-neutral-dark)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-        },
+      classNames={{
+        content: classes.modalContent,
+        overlay: classes.modalOverlay,
+        inner: classes.modalInner,
       }}
     >
       {/* Dynamic Modal Body */}

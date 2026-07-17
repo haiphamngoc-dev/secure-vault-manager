@@ -24,26 +24,37 @@
 }
 
 .itemCard {
-  background-color: var(--color-neutral-card);
-  border: 1px solid var(--color-neutral-light);
+  background-color: light-dark(
+    rgba(255, 255, 255, 0.75),
+    rgba(15, 20, 38, 0.7)
+  ) !important;
+  border: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08)) !important;
   color: var(--color-neutral-dark);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  box-shadow: light-dark(
+    0 8px 30px rgba(0, 0, 0, 0.03),
+    0 8px 30px rgba(0, 0, 0, 0.2)
+  );
 }
 
 .itemCard:hover {
   transform: translateY(-4px); /* Nhấc card lên tạo độ nổi */
   background-color: light-dark(
     rgba(255, 255, 255, 0.85),
-    rgba(25, 27, 34, 0.75)
-  );
-  border-color: var(--color-brand-primary);
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.12); /* Phát sáng Royal Blue huyền ảo */
+    rgba(35, 37, 44, 0.75)
+  ) !important;
+  border-color: var(--color-brand-primary) !important;
+  box-shadow: light-dark(
+    0 15px 35px rgba(37, 99, 235, 0.1),
+    0 15px 35px rgba(56, 189, 248, 0.15)
+  ) !important; /* Phát sáng Cobalt Blue/Cyan đồng nhất */
 }
 
 .cardIconWrapper {
@@ -66,8 +77,9 @@
   width: 100%;
   height: 100%;
   z-index: 90;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
+  background-color: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   animation: fadeIn 0.2s ease-out forwards;
 }
 
@@ -81,13 +93,21 @@
 }
 
 .tableScroll {
-  background-color: var(--color-neutral-card);
-  border: 1px solid var(--color-neutral-light);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background-color: light-dark(
+    rgba(255, 255, 255, 0.75),
+    rgba(15, 20, 38, 0.7)
+  ) !important;
+  border: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08)) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: var(--mantine-radius-lg); /* Bo góc 12px chuẩn card lớn */
   padding: var(--space-5);
   margin-bottom: var(--space-5);
+  box-shadow: light-dark(
+    0 20px 40px rgba(0, 0, 0, 0.04),
+    0 20px 40px rgba(0, 0, 0, 0.3)
+  );
 }
 
 .tableRow {
