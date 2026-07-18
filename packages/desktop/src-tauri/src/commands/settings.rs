@@ -225,7 +225,7 @@ pub fn register_extension_proxy(
             "description": "Secure Vault Manager Native Messaging Proxy Host",
             "path": source_path.to_string_lossy(),
             "type": "stdio",
-            "allowed_extensions": ["secure-vault-manager@haiphamngoc.dev"]
+            "allowed_extensions": ["secure-vault-manager-ext@haiphamngoc.dev"]
         });
         let manifest_json = serde_json::to_string_pretty(&manifest).unwrap();
 

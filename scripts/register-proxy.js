@@ -71,7 +71,7 @@ const firefoxManifest = {
   description: "Secure Vault Manager Native Messaging Proxy Host",
   path: binaryPath,
   type: "stdio",
-  allowed_extensions: ["secure-vault-manager@haiphamngoc.dev"],
+  allowed_extensions: ["secure-vault-manager-ext@haiphamngoc.dev"],
 };
 
 const chromeManifestJson = JSON.stringify(chromeManifest, null, 2);

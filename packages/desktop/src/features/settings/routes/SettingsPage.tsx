@@ -154,7 +154,7 @@ export function SettingsPage() {
       const extId =
         browser === "chrome"
           ? (settings.chrome_extension_id?.trim() ?? "")
-          : "secure-vault-manager@haiphamngoc.dev";
+          : "secure-vault-manager-ext@haiphamngoc.dev";
 
       await invoke("register_extension_proxy", {
         browser,
@@ -409,7 +409,7 @@ export function SettingsPage() {
                       "firefoxExtensionIdLabel",
                       "Firefox Extension ID (Cố định)"
                     )}
-                    value="secure-vault-manager@haiphamngoc.dev"
+                    value="secure-vault-manager-ext@haiphamngoc.dev"
                     readOnly
                     styles={{
                       input: {

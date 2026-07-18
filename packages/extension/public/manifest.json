@@ -35,8 +35,11 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "secure-vault-manager@haiphamngoc.dev",
-      "strict_min_version": "109.0"
+      "id": "secure-vault-manager-ext@haiphamngoc.dev",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   }
 }
