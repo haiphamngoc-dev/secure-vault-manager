@@ -305,6 +305,7 @@ pub fn run() {
             exit_app,
             commands::settings::get_settings,
             commands::settings::save_settings,
+            commands::settings::register_extension_proxy,
             commands::vault::check_vault_initialized,
             commands::vault::check_is_unlocked,
             commands::vault::initialize_vault,

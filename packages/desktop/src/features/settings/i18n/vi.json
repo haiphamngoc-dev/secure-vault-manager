@@ -25,5 +25,16 @@
   "minimizeToTrayLabel": "Thu nhỏ về khay hệ thống khi đóng cửa sổ",
   "minimizeToTrayDesc": "Nếu không được bật, đóng cửa sổ sẽ thoát hoàn toàn chương trình.",
   "autostartLabel": "Tự động khởi động cùng hệ thống",
-  "autostartDesc": "Tự động mở Secure Vault Manager chạy ngầm ở khay hệ thống khi đăng nhập máy tính."
+  "autostartDesc": "Tự động mở Secure Vault Manager chạy ngầm ở khay hệ thống khi đăng nhập máy tính.",
+  "extensionPairingDesc": "Để kết nối tiện ích mở rộng với ứng dụng Desktop, bạn cần tạo khóa ghép đôi và dán vào tiện ích trên trình duyệt.",
+  "browserIntegrationTitle": "Đăng ký tích hợp trình duyệt (Native Messaging)",
+  "chromeExtensionIdLabel": "Chrome Extension ID",
+  "registerChromeBtn": "Đăng ký kết nối Chrome",
+  "firefoxExtensionIdLabel": "Firefox Extension ID (Cố định)",
+  "registerFirefoxBtn": "Đăng ký kết nối Firefox",
+  "chromeIdRequired": "Vui lòng nhập Chrome Extension ID.",
+  "registerProxySuccess": "Đăng ký kết nối trình duyệt thành công!",
+  "registerProxyError": "Đăng ký kết nối trình duyệt thất bại.",
+  "error": "Lỗi",
+  "success": "Thành công"
 }

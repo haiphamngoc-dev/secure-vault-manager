@@ -27,5 +27,16 @@
   "minimizeToTrayLabel": "Minimize to system tray on close",
   "minimizeToTrayDesc": "If disabled, closing the window will exit the program completely.",
   "autostartLabel": "Launch automatically on system boot",
-  "autostartDesc": "Start Secure Vault Manager automatically in the system tray when you log into your computer."
+  "autostartDesc": "Start Secure Vault Manager automatically in the system tray when you log into your computer.",
+  "extensionPairingDesc": "To connect the extension to the Desktop app, you need to generate a pairing key and paste it into the browser extension settings.",
+  "browserIntegrationTitle": "Register Browser Integration (Native Messaging)",
+  "chromeExtensionIdLabel": "Chrome Extension ID",
+  "registerChromeBtn": "Register Chrome Integration",
+  "firefoxExtensionIdLabel": "Firefox Extension ID (Fixed)",
+  "registerFirefoxBtn": "Register Firefox Integration",
+  "chromeIdRequired": "Please enter the Chrome Extension ID.",
+  "registerProxySuccess": "Browser integration registered successfully!",
+  "registerProxyError": "Failed to register browser integration.",
+  "error": "Error",
+  "success": "Success"
 }

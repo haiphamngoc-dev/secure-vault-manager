@@ -58,7 +58,7 @@ if (!fs.existsSync(binaryPath)) {
   process.exit(1);
 }
 
-const manifest = {
+const chromeManifest = {
   name: "com.haiphamngoc_dev.secure_vault_manager_proxy",
   description: "Secure Vault Manager Native Messaging Proxy Host",
   path: binaryPath,
@@ -66,8 +66,19 @@ const manifest = {
   allowed_origins: [`chrome-extension://${extId}/`],
 };
 
-const manifestJson = JSON.stringify(manifest, null, 2);
+const firefoxManifest = {
+  name: "com.haiphamngoc_dev.secure_vault_manager_proxy",
+  description: "Secure Vault Manager Native Messaging Proxy Host",
+  path: binaryPath,
+  type: "stdio",
+  allowed_extensions: ["secure-vault-manager@haiphamngoc.dev"],
+};
+
+const chromeManifestJson = JSON.stringify(chromeManifest, null, 2);
+const firefoxManifestJson = JSON.stringify(firefoxManifest, null, 2);
 const hostName = "com.haiphamngoc_dev.secure_vault_manager_proxy.json";
+const firefoxHostNameWin =
+  "com.haiphamngoc_dev.secure_vault_manager_proxy_firefox.json";
 
 function register() {
   const homeDir = os.homedir();
@@ -86,19 +97,27 @@ function register() {
       "chromium",
       "NativeMessagingHosts"
     );
+    const firefoxDir = path.join(homeDir, ".mozilla", "native-messaging-hosts");
 
     // Register for Google Chrome
     fs.mkdirSync(chromeDir, { recursive: true });
-    fs.writeFileSync(path.join(chromeDir, hostName), manifestJson);
+    fs.writeFileSync(path.join(chromeDir, hostName), chromeManifestJson);
     console.log(
       `Registered Chrome Native Messaging Host at: ${path.join(chromeDir, hostName)}`
     );
 
     // Register for Chromium
     fs.mkdirSync(chromiumDir, { recursive: true });
-    fs.writeFileSync(path.join(chromiumDir, hostName), manifestJson);
+    fs.writeFileSync(path.join(chromiumDir, hostName), chromeManifestJson);
     console.log(
       `Registered Chromium Native Messaging Host at: ${path.join(chromiumDir, hostName)}`
+    );
+
+    // Register for Mozilla Firefox
+    fs.mkdirSync(firefoxDir, { recursive: true });
+    fs.writeFileSync(path.join(firefoxDir, hostName), firefoxManifestJson);
+    console.log(
+      `Registered Firefox Native Messaging Host at: ${path.join(firefoxDir, hostName)}`
     );
   } else if (platform === "darwin") {
     const chromeDir = path.join(
@@ -109,14 +128,30 @@ function register() {
       "Chrome",
       "NativeMessagingHosts"
     );
+    const firefoxDir = path.join(
+      homeDir,
+      "Library",
+      "Application Support",
+      "Mozilla",
+      "NativeMessagingHosts"
+    );
+
+    // Chrome macOS
     fs.mkdirSync(chromeDir, { recursive: true });
-    fs.writeFileSync(path.join(chromeDir, hostName), manifestJson);
+    fs.writeFileSync(path.join(chromeDir, hostName), chromeManifestJson);
     console.log(
       `Registered macOS Chrome Native Messaging Host at: ${path.join(chromeDir, hostName)}`
     );
+
+    // Firefox macOS
+    fs.mkdirSync(firefoxDir, { recursive: true });
+    fs.writeFileSync(path.join(firefoxDir, hostName), firefoxManifestJson);
+    console.log(
+      `Registered macOS Firefox Native Messaging Host at: ${path.join(firefoxDir, hostName)}`
+    );
   } else if (platform === "win32") {
-    // On Windows, save the JSON in the sidecar folder
-    const jsonPath = path.join(
+    // Save Chrome JSON
+    const chromeJsonPath = path.join(
       rootDir,
       "packages",
       "desktop",
@@ -124,19 +159,45 @@ function register() {
       "binaries",
       hostName
     );
-    fs.writeFileSync(jsonPath, manifestJson);
-    console.log(`Created JSON configuration file at: ${jsonPath}`);
+    fs.writeFileSync(chromeJsonPath, chromeManifestJson);
+    console.log(`Created Chrome JSON configuration file at: ${chromeJsonPath}`);
 
-    // Create Registry key trashing the JSON path
-    const regKey = `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.haiphamngoc_dev.secure_vault_manager_proxy`;
+    // Save Firefox JSON
+    const firefoxJsonPath = path.join(
+      rootDir,
+      "packages",
+      "desktop",
+      "src-tauri",
+      "binaries",
+      firefoxHostNameWin
+    );
+    fs.writeFileSync(firefoxJsonPath, firefoxManifestJson);
+    console.log(
+      `Created Firefox JSON configuration file at: ${firefoxJsonPath}`
+    );
+
+    // Create Registry keys
+    const chromeRegKey = `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.haiphamngoc_dev.secure_vault_manager_proxy`;
+    const firefoxRegKey = `HKCU\\Software\\Mozilla\\NativeMessagingHosts\\com.haiphamngoc_dev.secure_vault_manager_proxy`;
+
     try {
-      execSync(`reg add "${regKey}" /ve /t REG_SZ /d "${jsonPath}" /f`);
-      console.log(`Registered Windows Registry key: ${regKey}`);
-    } catch (err) {
-      console.error(
-        "Error adding Registry key. Please run this script with Administrator privileges:",
-        err.message
+      execSync(
+        `reg add "${chromeRegKey}" /ve /t REG_SZ /d "${chromeJsonPath}" /f`
       );
+      console.log(`Registered Windows Registry key (Chrome): ${chromeRegKey}`);
+    } catch (err) {
+      console.error("Error adding Chrome Registry key:", err.message);
+    }
+
+    try {
+      execSync(
+        `reg add "${firefoxRegKey}" /ve /t REG_SZ /d "${firefoxJsonPath}" /f`
+      );
+      console.log(
+        `Registered Windows Registry key (Firefox): ${firefoxRegKey}`
+      );
+    } catch (err) {
+      console.error("Error adding Firefox Registry key:", err.message);
     }
   } else {
     console.error(

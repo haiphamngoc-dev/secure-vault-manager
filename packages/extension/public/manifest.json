@@ -32,5 +32,11 @@
   "permissions": ["activeTab", "storage", "nativeMessaging"],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "secure-vault-manager@haiphamngoc.dev",
+      "strict_min_version": "109.0"
+    }
   }
 }

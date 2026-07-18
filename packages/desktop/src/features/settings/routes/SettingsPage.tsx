@@ -9,7 +9,6 @@ import {
   Button,
   Group,
   ActionIcon,
-  Badge,
   Switch,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
@@ -29,7 +28,8 @@ import classes from "./SettingsPage.module.css";
 interface AppSettings {
   lang: string;
   auto_lock_interval: string;
-  extension_id: string | null;
+  chrome_extension_id: string | null;
+  extension_id?: string | null;
   minimize_to_tray: boolean;
   autostart: boolean;
 }
@@ -41,13 +41,17 @@ export function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>({
     lang: "vi",
     auto_lock_interval: "15m",
-    extension_id: "",
+    chrome_extension_id: "",
     minimize_to_tray: true,
     autostart: false,
   });
 
   const [pairingKey, setPairingKey] = useState<string>("");
   const [isPairing, setIsPairing] = useState<boolean>(false);
+  const [isRegisteringChrome, setIsRegisteringChrome] =
+    useState<boolean>(false);
+  const [isRegisteringFirefox, setIsRegisteringFirefox] =
+    useState<boolean>(false);
 
   // Load settings on mount
   useEffect(() => {
@@ -56,7 +60,8 @@ export function SettingsPage() {
         const res = await invoke<AppSettings>("get_settings");
         setSettings({
           ...res,
-          extension_id: res.extension_id || "",
+          chrome_extension_id:
+            res.chrome_extension_id || res.extension_id || "",
           minimize_to_tray: res.minimize_to_tray !== false,
           autostart: res.autostart === true,
         });
@@ -130,6 +135,59 @@ export function SettingsPage() {
     }
   };
 
+  const handleRegisterProxy = async (browser: "chrome" | "firefox") => {
+    if (browser === "chrome") {
+      if (!settings.chrome_extension_id?.trim()) {
+        notifications.show({
+          title: t("error", "Lỗi"),
+          message: t("chromeIdRequired", "Vui lòng nhập Chrome Extension ID."),
+          color: "red",
+        });
+        return;
+      }
+      setIsRegisteringChrome(true);
+    } else {
+      setIsRegisteringFirefox(true);
+    }
+
+    try {
+      const extId =
+        browser === "chrome"
+          ? (settings.chrome_extension_id?.trim() ?? "")
+          : "secure-vault-manager@haiphamngoc.dev";
+
+      await invoke("register_extension_proxy", {
+        browser,
+        extensionId: extId,
+      });
+
+      notifications.show({
+        title: t("success", "Thành công"),
+        message: t(
+          "registerProxySuccess",
+          "Đăng ký kết nối trình duyệt thành công!"
+        ),
+        color: "green",
+      });
+    } catch (err) {
+      console.error(`Failed to register proxy for ${browser}:`, err);
+      notifications.show({
+        title: t("error", "Lỗi"),
+        message: t(
+          "registerProxyError",
+          "Đăng ký kết nối trình duyệt thất bại."
+        ),
+        color: "red",
+      });
+    } finally {
+      if (browser === "chrome") {
+        setIsRegisteringChrome(false);
+      } else {
+        setIsRegisteringFirefox(false);
+      }
+    }
+  };
+
   const autoLockOptions = [
     { value: "immediate", label: t("autoLockImmediate") },
     { value: "1m", label: t("autoLockMinutes", { count: 1 }) },
@@ -163,7 +221,7 @@ export function SettingsPage() {
                 { label: "English", value: "en" },
               ]}
               color="blue"
-              style={{ alignSelf: "flex-start" }}
+              className={classes.alignStart}
             />
           </Stack>
         </Box>
@@ -207,7 +265,7 @@ export function SettingsPage() {
             </span>
             <Text>{t("securitySection")}</Text>
           </div>
-          <Stack gap="sm" style={{ maxWidth: "400px" }}>
+          <Stack gap="sm" className={classes.securityStack}>
             <Select
               label={t("autoLockLabel")}
               value={settings.auto_lock_interval}
@@ -243,39 +301,28 @@ export function SettingsPage() {
             </span>
             <Text>{t("extensionSection")}</Text>
           </div>
-          <Stack gap="md">
-            <Group justify="space-between">
-              <Text size="sm" c="dimmed">
-                {t("statusLabel")}:
-              </Text>
-              <Badge
-                color={settings.extension_id ? "green" : "gray"}
-                variant="dot"
-              >
-                {settings.extension_id
-                  ? t("statusConnected")
-                  : t("statusDisconnected")}
-              </Badge>
+          <Stack gap="lg">
+            <Group justify="space-between" align="flex-start">
+              <Stack gap="xs" className={classes.flex1}>
+                <Text size="sm" c="dimmed">
+                  {t(
+                    "extensionPairingDesc",
+                    "Để kết nối tiện ích mở rộng với ứng dụng Desktop, bạn cần tạo khóa ghép đôi và dán vào tiện ích trên trình duyệt."
+                  )}
+                </Text>
+                <Button
+                  color="blue"
+                  onClick={handlePair}
+                  loading={isPairing}
+                  className={classes.alignStart}
+                >
+                  {t("pairBtn")}
+                </Button>
+              </Stack>
             </Group>
 
-            <TextInput
-              label={t("extensionIdLabel")}
-              placeholder={t("extensionIdPlaceholder")}
-              value={settings.extension_id || ""}
-              onChange={(e) => updateSetting("extension_id", e.target.value)}
-            />
-
-            <Button
-              color="blue"
-              onClick={handlePair}
-              loading={isPairing}
-              style={{ alignSelf: "flex-start" }}
-            >
-              {t("pairBtn")}
-            </Button>
-
             {pairingKey && (
-              <Stack gap="xs" mt="xs">
+              <Stack gap="xs" p="xs" className={classes.pairingKeyBox}>
                 <Text size="sm" fw={600}>
                   {t("pairingKeyLabel")}
                 </Text>
@@ -288,7 +335,7 @@ export function SettingsPage() {
                         fontFamily: "var(--mantine-font-family-monospace)",
                       },
                     }}
-                    style={{ flex: 1 }}
+                    className={classes.flex1}
                   />
                   <ActionIcon
                     variant="light"
@@ -314,6 +361,75 @@ export function SettingsPage() {
                 </Text>
               </Stack>
             )}
+
+            <hr className={classes.divider} />
+
+            <Text size="sm" fw={600}>
+              {t(
+                "browserIntegrationTitle",
+                "Đăng ký tích hợp trình duyệt (Native Messaging)"
+              )}
+            </Text>
+
+            <Box className={classes.integrationGrid}>
+              {/* Chrome Card */}
+              <Box p="md" className={classes.integrationCard}>
+                <Text fw={600} size="sm" mb="xs">
+                  Google Chrome / Chromium
+                </Text>
+                <Stack gap="sm">
+                  <TextInput
+                    label={t("chromeExtensionIdLabel", "Chrome Extension ID")}
+                    placeholder="e.g., gkdjgnbkoongjmehhdecofdhlcajgggj"
+                    value={settings.chrome_extension_id || ""}
+                    onChange={(e) =>
+                      updateSetting("chrome_extension_id", e.target.value)
+                    }
+                  />
+                  <Button
+                    variant="light"
+                    color="blue"
+                    onClick={() => handleRegisterProxy("chrome")}
+                    loading={isRegisteringChrome}
+                    fullWidth
+                  >
+                    {t("registerChromeBtn", "Đăng ký kết nối Chrome")}
+                  </Button>
+                </Stack>
+              </Box>
+
+              {/* Firefox Card */}
+              <Box p="md" className={classes.integrationCard}>
+                <Text fw={600} size="sm" mb="xs">
+                  Mozilla Firefox
+                </Text>
+                <Stack gap="sm">
+                  <TextInput
+                    label={t(
+                      "firefoxExtensionIdLabel",
+                      "Firefox Extension ID (Cố định)"
+                    )}
+                    value="secure-vault-manager@haiphamngoc.dev"
+                    readOnly
+                    styles={{
+                      input: {
+                        fontFamily: "var(--mantine-font-family-monospace)",
+                        opacity: 0.7,
+                      },
+                    }}
+                  />
+                  <Button
+                    variant="light"
+                    color="blue"
+                    onClick={() => handleRegisterProxy("firefox")}
+                    loading={isRegisteringFirefox}
+                    fullWidth
+                  >
+                    {t("registerFirefoxBtn", "Đăng ký kết nối Firefox")}
+                  </Button>
+                </Stack>
+              </Box>
+            </Box>
           </Stack>
         </Box>
       </Stack>
