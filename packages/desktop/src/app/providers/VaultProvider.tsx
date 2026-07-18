@@ -21,6 +21,7 @@ export interface VaultItem {
   updatedAt: number;
   customFields?: { id: string; label: string; value: string; type: string }[];
   tags?: string[];
+  icon?: string;
 }
 
 export interface VaultProfile {

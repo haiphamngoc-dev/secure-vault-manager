@@ -12,6 +12,10 @@ import {
   Menu,
   Badge,
   PasswordInput,
+  Loader,
+  Avatar,
+  FileButton,
+  Stack,
 } from "@mantine/core";
 import {
   IconKey,
@@ -43,10 +47,13 @@ import {
   IconChevronDown,
   IconSearch,
   IconGlobe,
+  IconUpload,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { notifications } from "@mantine/notifications";
 import { useVault } from "@/app/providers/VaultProvider";
+import { invoke } from "@tauri-apps/api/core";
+import { resizeImageToBase64 } from "@/shared/utils/image";
 import classes from "./AddItemModal.module.css";
 
 // Interface definitions
@@ -345,6 +352,10 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
   const [notes, setNotes] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [icon, setIcon] = useState<string | undefined>(undefined);
+  const [isFetchingIcon, setIsFetchingIcon] = useState(false);
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [inputUrl, setInputUrl] = useState("");
 
   const activeType = ITEM_TYPES.find((type) => type.id === selectedType);
 
@@ -358,6 +369,32 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     setNotes("");
     setTags([]);
     setTagInput("");
+    setIcon(undefined);
+    setIsFetchingIcon(false);
+    setIsUrlModalOpen(false);
+    setInputUrl("");
+  };
+
+  const handleUrlBlur = async (urlVal: string) => {
+    if (!urlVal || !urlVal.trim() || icon) {
+      return;
+    }
+
+    let domain = urlVal.trim();
+    domain = domain.replace(/^(https?:\/\/)?(www\.)?/i, "");
+    domain = domain.split("/")[0].split(":")[0];
+
+    if (!domain) return;
+
+    setIsFetchingIcon(true);
+    try {
+      const b64 = await invoke<string>("download_favicon", { domain });
+      setIcon(b64);
+    } catch (err) {
+      console.error("Failed to download favicon:", err);
+    } finally {
+      setIsFetchingIcon(false);
+    }
   };
 
   const handleClose = () => {
@@ -524,6 +561,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
       customFields:
         customFieldsToSave.length > 0 ? customFieldsToSave : undefined,
       tags: tags.length > 0 ? tags : undefined,
+      icon: icon || undefined,
     });
 
     notifications.show({
@@ -548,6 +586,16 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
       onChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
       ) => handleFieldValueChange(field.id, e.currentTarget.value),
+      onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const isUrlField =
+          field.id === "url" ||
+          field.id === "productUrl" ||
+          field.id === "endpoint" ||
+          field.type === "url";
+        if (isUrlField) {
+          handleUrlBlur(e.currentTarget.value);
+        }
+      },
       radius: "md" as const,
       size: "sm" as const,
     };
@@ -603,11 +651,83 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
 
           {/* Form Header details */}
           <Box className={classes.formHeader}>
-            <div
-              className={`${classes.iconWrapperLarge} ${activeType?.bgClass}`}
-            >
-              {activeType && React.createElement(activeType.icon, { size: 30 })}
-            </div>
+            <Menu shadow="md" width={220} position="bottom-start" withArrow>
+              <Menu.Target>
+                <div
+                  className={`${classes.iconWrapperLarge} ${!icon ? activeType?.bgClass : ""}`}
+                  style={{
+                    cursor: "pointer",
+                    background: icon ? "transparent" : undefined,
+                  }}
+                >
+                  {isFetchingIcon ? (
+                    <Loader size="xs" color="white" />
+                  ) : icon ? (
+                    <Avatar src={icon} size={54} radius="lg" />
+                  ) : (
+                    activeType &&
+                    React.createElement(activeType.icon, { size: 30 })
+                  )}
+                </div>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>
+                  {t("iconOptions", "Tùy chọn biểu tượng")}
+                </Menu.Label>
+
+                <FileButton
+                  onChange={async (file) => {
+                    if (file) {
+                      try {
+                        const b64 = await resizeImageToBase64(file);
+                        setIcon(b64);
+                      } catch (err) {
+                        console.error("Failed to resize image:", err);
+                        notifications.show({
+                          title: t("errorUpload", "Lỗi tải ảnh"),
+                          message: t(
+                            "errorUploadDesc",
+                            "Không thể nén ảnh này."
+                          ),
+                          color: "red",
+                        });
+                      }
+                    }
+                  }}
+                  accept="image/png,image/jpeg,image/webp"
+                >
+                  {(props) => (
+                    <Menu.Item
+                      {...props}
+                      leftSection={<IconUpload size={14} />}
+                    >
+                      {t("uploadFromComputer", "Tải lên từ máy tính")}
+                    </Menu.Item>
+                  )}
+                </FileButton>
+
+                <Menu.Item
+                  leftSection={<IconGlobe size={14} />}
+                  onClick={() => setIsUrlModalOpen(true)}
+                >
+                  {t("fetchFromUrl", "Tải logo từ địa chỉ web")}
+                </Menu.Item>
+
+                {icon && (
+                  <>
+                    <Menu.Divider />
+                    <Menu.Item
+                      color="red"
+                      leftSection={<IconX size={14} />}
+                      onClick={() => setIcon(undefined)}
+                    >
+                      {t("deleteIcon", "Xóa biểu tượng tùy chỉnh")}
+                    </Menu.Item>
+                  </>
+                )}
+              </Menu.Dropdown>
+            </Menu>
+
             <TextInput
               placeholder={t("enterTitle")}
               value={title}
@@ -709,6 +829,11 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
                     onChange={(e) =>
                       handleWebsiteChange(idx, e.currentTarget.value)
                     }
+                    onBlur={(e) => {
+                      if (idx === 0) {
+                        handleUrlBlur(e.currentTarget.value);
+                      }
+                    }}
                     leftSection={<IconGlobe size={16} />}
                     radius="md"
                     size="sm"
@@ -956,6 +1081,67 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
           )}
         </Box>
       )}
+
+      {/* Sub-modal to enter website URL for fetching logo */}
+      <Modal
+        opened={isUrlModalOpen}
+        onClose={() => {
+          setIsUrlModalOpen(false);
+          setInputUrl("");
+        }}
+        title={t("fetchFromUrl", "Tải logo từ địa chỉ web")}
+        centered
+        radius="md"
+        size="sm"
+        styles={{
+          content: {
+            backgroundColor:
+              "light-dark(var(--mantine-color-white), rgba(26, 27, 30, 0.98))",
+            border:
+              "1px solid light-dark(var(--color-neutral-light), var(--mantine-color-dark-4))",
+            color: "var(--color-neutral-dark)",
+          },
+        }}
+      >
+        <Stack gap="md">
+          <TextInput
+            label={t("websiteUrlLabel", "Nhập link trang web hoặc tên miền")}
+            placeholder="google.com"
+            value={inputUrl}
+            onChange={(e) => setInputUrl(e.currentTarget.value)}
+            radius="md"
+            size="sm"
+            autoFocus
+          />
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              radius="md"
+              size="xs"
+              onClick={() => {
+                setIsUrlModalOpen(false);
+                setInputUrl("");
+              }}
+            >
+              {t("cancelBtn")}
+            </Button>
+            <Button
+              color="indigo"
+              radius="md"
+              size="xs"
+              onClick={async () => {
+                if (inputUrl.trim()) {
+                  setIsUrlModalOpen(false);
+                  await handleUrlBlur(inputUrl);
+                  setInputUrl("");
+                }
+              }}
+            >
+              {t("fetchBtn", "Tải về")}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Modal>
   );
 }

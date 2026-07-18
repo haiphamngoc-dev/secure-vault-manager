@@ -34,6 +34,8 @@ pub struct VaultItem {
     pub custom_fields: Option<Vec<CustomField>>,
     /// Multi-tag groups.
     pub tags: Option<Vec<String>>,
+    /// Custom base64 icon data.
+    pub icon: Option<String>,
 }
 
 /// Represents the complete structure of the decrypted vault database file.

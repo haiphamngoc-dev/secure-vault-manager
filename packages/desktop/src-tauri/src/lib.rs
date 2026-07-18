@@ -318,6 +318,7 @@ pub fn run() {
             commands::vault::delete_vault,
             commands::vault::get_current_vault_id,
             commands::pairing::start_pairing,
+            commands::icon::download_favicon,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

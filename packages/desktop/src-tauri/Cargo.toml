@@ -28,4 +28,6 @@ chacha20poly1305 = "0.10"
 argon2 = "0.5"
 rand = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util"] }
+reqwest = { version = "0.13" }
+base64 = "0.22"
 

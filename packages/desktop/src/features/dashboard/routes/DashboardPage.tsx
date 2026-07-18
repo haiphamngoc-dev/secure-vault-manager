@@ -14,6 +14,7 @@ import {
   Tooltip,
   Checkbox,
   Menu,
+  Avatar,
 } from "@mantine/core";
 import {
   IconCopy,
@@ -255,9 +256,13 @@ export function DashboardPage() {
                             onChange={() => toggleSelect(item.id)}
                             onClick={(e) => e.stopPropagation()}
                           />
-                          <div className={classes.cardIconWrapper}>
-                            {getCategoryIcon(item.category)}
-                          </div>
+                          {item.icon ? (
+                            <Avatar src={item.icon} size={32} radius="md" />
+                          ) : (
+                            <div className={classes.cardIconWrapper}>
+                              {getCategoryIcon(item.category)}
+                            </div>
+                          )}
 
                           <Stack
                             gap={0}
@@ -459,9 +464,13 @@ export function DashboardPage() {
                           </Table.Td>
                           <Table.Td>
                             <Group gap="xs" wrap="nowrap">
-                              <div className={classes.cardIconWrapper}>
-                                {getCategoryIcon(item.category)}
-                              </div>
+                              {item.icon ? (
+                                <Avatar src={item.icon} size={32} radius="md" />
+                              ) : (
+                                <div className={classes.cardIconWrapper}>
+                                  {getCategoryIcon(item.category)}
+                                </div>
+                              )}
                               <Text
                                 fw={700}
                                 size="sm"
