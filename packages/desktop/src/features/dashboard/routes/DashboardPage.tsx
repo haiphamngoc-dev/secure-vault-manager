@@ -21,7 +21,6 @@ import {
   IconShield,
   IconKey,
   IconPlus,
-  IconDownload,
   IconDotsVertical,
 } from "@tabler/icons-react";
 import { useSearchParams, useOutletContext } from "react-router-dom";
@@ -41,8 +40,10 @@ export function DashboardPage() {
   const clipboard = useClipboard();
 
   const [searchParams] = useSearchParams();
-  const { onOpenAdd } = useOutletContext<{
+  const { onOpenAdd, selectedIds, setSelectedIds } = useOutletContext<{
     onOpenAdd: () => void;
+    selectedIds: Set<string>;
+    setSelectedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   }>();
 
   const activeCategory = searchParams.get("category") || "all";
@@ -52,8 +53,6 @@ export function DashboardPage() {
   const searchQuery = searchParams.get("q") || "";
   const [currentPage, setCurrentPage] = useState(1);
   const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   // Sync category changes and clear selection during render
   const [prevCategory, setPrevCategory] = useState(activeCategory);
@@ -232,58 +231,6 @@ export function DashboardPage() {
                 flex: 1,
               }}
             >
-              {selectedIds.size > 0 && (
-                <Box
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    backgroundColor:
-                      "light-dark(rgba(240, 243, 246, 0.95), rgba(36, 37, 41, 0.85))",
-                    border: "1px solid var(--color-neutral-light)",
-                    borderRadius: "var(--mantine-radius-md)",
-                    padding: "12px 16px",
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 10,
-                    backdropFilter: "blur(12px)",
-                    boxShadow: "0 4px 20px rgba(0, 0, 0, 0.2)",
-                  }}
-                >
-                  <Group gap="xs">
-                    <Badge variant="filled" color="blue" radius="md">
-                      {selectedIds.size}
-                    </Badge>
-                    <Text size="sm" fw={600}>
-                      {t("selectedItemsCount", { count: selectedIds.size })}
-                    </Text>
-                  </Group>
-                  <Group gap="sm">
-                    <Button
-                      variant="subtle"
-                      color="gray"
-                      size="xs"
-                      leftSection={<IconDownload size={14} />}
-                      onClick={() => {
-                        // Export functionality will be wired here
-                      }}
-                    >
-                      {t("exportSelected")}
-                    </Button>
-                    <Button
-                      color="red"
-                      variant="light"
-                      size="xs"
-                      radius="md"
-                      leftSection={<IconTrash size={14} />}
-                      onClick={() => setConfirmBulkDelete(true)}
-                    >
-                      {t("deleteSelected")}
-                    </Button>
-                  </Group>
-                </Box>
-              )}
-
               {showCards ? (
                 <Box className={classes.itemsGrid}>
                   {paginatedItems.map((item) => (
@@ -706,53 +653,6 @@ export function DashboardPage() {
                   }
                   setItemToDeleteId(null);
                 }
-              }}
-            >
-              {t("delete", "Xóa")}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-
-      {/* Bulk Delete Confirmation Modal */}
-      <Modal
-        opened={confirmBulkDelete}
-        onClose={() => setConfirmBulkDelete(false)}
-        title={t("confirmBulkDeleteTitle", "Xác nhận xóa hàng loạt")}
-        centered
-        radius="md"
-        size="sm"
-        styles={{
-          content: {
-            backgroundColor: "rgba(26, 27, 30, 0.98)",
-            border: "1px solid var(--mantine-color-dark-4)",
-            color: "white",
-          },
-        }}
-      >
-        <Stack gap="md">
-          <Text size="sm">
-            {t("confirmBulkDeleteDesc", { count: selectedIds.size })}
-          </Text>
-          <Group justify="flex-end" gap="sm">
-            <Button
-              variant="default"
-              radius="md"
-              size="xs"
-              onClick={() => setConfirmBulkDelete(false)}
-            >
-              {t("cancelBtn")}
-            </Button>
-            <Button
-              color="red"
-              radius="md"
-              size="xs"
-              onClick={() => {
-                for (const id of selectedIds) {
-                  deleteItem(id);
-                }
-                setSelectedIds(new Set());
-                setConfirmBulkDelete(false);
               }}
             >
               {t("delete", "Xóa")}

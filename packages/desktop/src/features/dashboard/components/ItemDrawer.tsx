@@ -33,6 +33,7 @@ import { useVault, VaultItem } from "@/app/providers/VaultProvider";
 import { ITEM_TYPES } from "./AddItemModal";
 import classes from "./ItemDrawer.module.css";
 import { useClipboard } from "@mantine/hooks";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 interface ItemDrawerProps {
   item: VaultItem;
@@ -51,6 +52,26 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
   const { t } = useTranslation();
   const { updateItem, deleteItem } = useVault();
   const clipboard = useClipboard();
+
+  const [copiedFieldId, setCopiedFieldId] = useState<string | null>(null);
+
+  const handleCopy = (id: string, value: string) => {
+    clipboard.copy(value);
+    setCopiedFieldId(id);
+    setTimeout(() => {
+      setCopiedFieldId(null);
+    }, 2000);
+  };
+
+  const handleOpenWebsite = (url: string) => {
+    let targetUrl = url.trim();
+    if (!/^https?:\/\//i.test(targetUrl)) {
+      targetUrl = `https://${targetUrl}`;
+    }
+    openUrl(targetUrl).catch((err) => {
+      console.error("Failed to open URL:", err);
+    });
+  };
 
   const getInitialFormFields = (): FormField[] => {
     const parsedFields: FormField[] = [];
@@ -565,7 +586,7 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
                           {field.value && (
                             <Tooltip
                               label={
-                                clipboard.copied
+                                copiedFieldId === field.id
                                   ? t("copied", "Copied")
                                   : t("copy", "Copy")
                               }
@@ -575,9 +596,11 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
                                 variant="subtle"
                                 color="gray"
                                 size="sm"
-                                onClick={() => clipboard.copy(field.value)}
+                                onClick={() =>
+                                  handleCopy(field.id, field.value)
+                                }
                               >
-                                {clipboard.copied ? (
+                                {copiedFieldId === field.id ? (
                                   <IconCheck size={14} color="teal" />
                                 ) : (
                                   <IconCopy size={14} />
@@ -604,13 +627,13 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
                       cursor: "pointer",
                       color: "var(--color-brand-primary)",
                     }}
-                    onClick={() => window.open(item.url, "_blank")}
+                    onClick={() => handleOpenWebsite(item.url!)}
                   >
                     {item.url}
                   </Text>
                   <Tooltip
                     label={
-                      clipboard.copied
+                      copiedFieldId === "website"
                         ? t("copied", "Copied")
                         : t("copy", "Copy")
                     }
@@ -620,9 +643,9 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
                       variant="subtle"
                       color="gray"
                       size="sm"
-                      onClick={() => clipboard.copy(item.url)}
+                      onClick={() => handleCopy("website", item.url!)}
                     >
-                      {clipboard.copied ? (
+                      {copiedFieldId === "website" ? (
                         <IconCheck size={14} color="teal" />
                       ) : (
                         <IconCopy size={14} />
