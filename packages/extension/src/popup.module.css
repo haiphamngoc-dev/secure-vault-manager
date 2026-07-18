@@ -152,11 +152,12 @@
 }
 
 .primaryBtn:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #0891b2 100%);
+  background: var(--color-brand-primary-hover);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
 .primaryBtn:active {
+  background: var(--color-brand-primary-active);
   transform: scale(0.98);
 }
 
