@@ -50,28 +50,73 @@ async fn write_msg<W: AsyncWriteExt + Unpin>(writer: &mut W, msg: &[u8]) -> std:
 
 #[cfg(unix)]
 async fn connect_to_desktop() -> std::io::Result<AppStream> {
-    use std::path::{Path, PathBuf};
-    let home = std::env::var("HOME")
+    use std::path::PathBuf;
+
+    let raw_home = std::env::var("HOME")
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::NotFound, e))?;
-    let home_path = Path::new(&home);
 
-    #[cfg(target_os = "macos")]
-    let socket_path = home_path
-        .join("Library")
-        .join("Application Support")
-        .join("secure-vault-manager")
-        .join("secure-vault-manager.sock");
+    let mut candidate_homes = Vec::new();
 
-    #[cfg(not(target_os = "macos"))]
-    let socket_path = {
-        let xdg = std::env::var("XDG_DATA_HOME")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| home_path.join(".local").join("share"));
-        xdg.join("secure-vault-manager").join("secure-vault-manager.sock")
-    };
+    // 1. If running inside a Snap environment (e.g. HOME=/home/user/snap/firefox/common),
+    // extract the real user home directory (/home/user)
+    if let Some(snap_index) = raw_home.find("/snap/") {
+        let real_home = &raw_home[..snap_index];
+        candidate_homes.push(PathBuf::from(real_home));
+    }
 
-    let stream = tokio::net::UnixStream::connect(socket_path).await?;
-    Ok(AppStream::Unix(stream))
+    // 2. Standard HOME directory
+    candidate_homes.push(PathBuf::from(&raw_home));
+
+    let mut candidate_sockets = Vec::new();
+
+    // Add XDG_DATA_HOME if explicitly set
+    if let Ok(xdg) = std::env::var("XDG_DATA_HOME") {
+        candidate_sockets.push(
+            PathBuf::from(xdg)
+                .join("secure-vault-manager")
+                .join("secure-vault-manager.sock"),
+        );
+    }
+
+    for home in candidate_homes {
+        #[cfg(target_os = "macos")]
+        {
+            candidate_sockets.push(
+                home.join("Library")
+                    .join("Application Support")
+                    .join("secure-vault-manager")
+                    .join("secure-vault-manager.sock"),
+            );
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            candidate_sockets.push(
+                home.join(".local")
+                    .join("share")
+                    .join("secure-vault-manager")
+                    .join("secure-vault-manager.sock"),
+            );
+        }
+    }
+
+    // Try connecting to candidate socket locations in order of priority
+    let mut last_err = None;
+    for socket_path in candidate_sockets {
+        if socket_path.exists() {
+            match tokio::net::UnixStream::connect(&socket_path).await {
+                Ok(stream) => return Ok(AppStream::Unix(stream)),
+                Err(e) => last_err = Some(e),
+            }
+        }
+    }
+
+    Err(last_err.unwrap_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Could not connect to desktop application socket",
+        )
+    }))
 }
 
 #[cfg(windows)]
