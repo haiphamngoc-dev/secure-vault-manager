@@ -242,6 +242,9 @@ pub fn run() {
             let start_minimized = args.contains(&"--minimized".to_string());
 
             if let Some(window) = app.get_webview_window("main") {
+                #[cfg(feature = "devtools")]
+                window.open_devtools();
+
                 let state = app.state::<AppState>();
                 if start_minimized {
                     let _ = window.hide();

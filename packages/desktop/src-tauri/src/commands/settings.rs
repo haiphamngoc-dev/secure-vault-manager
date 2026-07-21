@@ -111,75 +111,68 @@ pub fn register_extension_proxy(
 
     let triple = get_target_triple();
     let ext = if cfg!(windows) { ".exe" } else { "" };
-    let proxy_filename_triple = format!("proxy-{}{}", triple, ext);
-    let proxy_filename_std = format!("proxy{}", ext);
 
-    let mut candidate_paths = Vec::new();
+    let possible_filenames = vec![
+        format!("proxy{}", ext),
+        format!("proxy-{}{}", triple, ext),
+        format!("secure-vault-manager-proxy{}", ext),
+        format!("secure-vault-manager-proxy-{}{}", triple, ext),
+    ];
 
-    #[cfg(not(debug_assertions))]
-    {
-        // 1. Production: Executable Directory (where Tauri packages sidecars without target triple)
-        if let Ok(exe_dir) = app.path().executable_dir() {
-            candidate_paths.push(exe_dir.join(&proxy_filename_std));
-            candidate_paths.push(exe_dir.join(&proxy_filename_triple));
-        }
+    let mut search_dirs = Vec::new();
 
-        // 2. Production: Resource Directory
-        candidate_paths.push(resource_dir.join("binaries").join(&proxy_filename_std));
-        candidate_paths.push(resource_dir.join("binaries").join(&proxy_filename_triple));
-
-        // 3. Fallback: Dev workspace paths if running production build locally
-        if let Ok(curr) = std::env::current_dir() {
-            candidate_paths.push(curr.join("binaries").join(&proxy_filename_triple));
-            candidate_paths.push(
-                curr.join("packages")
-                    .join("desktop")
-                    .join("src-tauri")
-                    .join("binaries")
-                    .join(&proxy_filename_triple),
-            );
-            candidate_paths.push(
-                curr.join("src-tauri")
-                    .join("binaries")
-                    .join(&proxy_filename_triple),
-            );
+    // 1. Directory containing the currently running application executable (e.g. /usr/bin or target/release)
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            search_dirs.push(exe_dir.to_path_buf());
         }
     }
 
-    #[cfg(debug_assertions)]
-    {
-        // 1. Dev mode: Dev workspace paths
-        if let Ok(curr) = std::env::current_dir() {
-            candidate_paths.push(curr.join("binaries").join(&proxy_filename_triple));
-            candidate_paths.push(
-                curr.join("packages")
-                    .join("desktop")
-                    .join("src-tauri")
-                    .join("binaries")
-                    .join(&proxy_filename_triple),
-            );
-            candidate_paths.push(
-                curr.join("src-tauri")
-                    .join("binaries")
-                    .join(&proxy_filename_triple),
-            );
-            candidate_paths.push(curr.join("binaries").join(&proxy_filename_std));
+    // 2. Executable dir from Tauri path resolver (if available)
+    if let Ok(exe_dir) = app.path().executable_dir() {
+        if !search_dirs.contains(&exe_dir) {
+            search_dirs.push(exe_dir);
         }
+    }
 
-        // 2. Dev mode fallback: Executable Dir / Resource Dir
-        if let Ok(exe_dir) = app.path().executable_dir() {
-            candidate_paths.push(exe_dir.join(&proxy_filename_std));
-            candidate_paths.push(exe_dir.join(&proxy_filename_triple));
+    // 3. Linux / System standard binary directories
+    #[cfg(target_os = "linux")]
+    {
+        let usr_bin = PathBuf::from("/usr/bin");
+        if !search_dirs.contains(&usr_bin) {
+            search_dirs.push(usr_bin);
         }
-        candidate_paths.push(resource_dir.join("binaries").join(&proxy_filename_std));
-        candidate_paths.push(resource_dir.join("binaries").join(&proxy_filename_triple));
+        let usr_local_bin = PathBuf::from("/usr/local/bin");
+        if !search_dirs.contains(&usr_local_bin) {
+            search_dirs.push(usr_local_bin);
+        }
+    }
+
+    // 4. Tauri Resource Directory
+    search_dirs.push(resource_dir.clone());
+    search_dirs.push(resource_dir.join("binaries"));
+
+    // 5. Current working directory and workspace dev paths
+    if let Ok(curr) = std::env::current_dir() {
+        search_dirs.push(curr.clone());
+        search_dirs.push(curr.join("binaries"));
+        search_dirs.push(
+            curr.join("packages")
+                .join("desktop")
+                .join("src-tauri")
+                .join("binaries"),
+        );
+        search_dirs.push(curr.join("src-tauri").join("binaries"));
     }
 
     let mut source_path = None;
-    for path in candidate_paths {
-        if path.exists() && path.is_file() {
-            source_path = Some(path);
-            break;
+    'outer: for dir in &search_dirs {
+        for filename in &possible_filenames {
+            let candidate = dir.join(filename);
+            if candidate.exists() && candidate.is_file() {
+                source_path = Some(candidate);
+                break 'outer;
+            }
         }
     }
 
@@ -187,11 +180,8 @@ pub fn register_extension_proxy(
         Some(p) => p,
         None => {
             return Err(format!(
-                "Proxy binary sidecar not found. Looked at resource dir: {}",
-                resource_dir
-                    .join("binaries")
-                    .join(&proxy_filename_triple)
-                    .display()
+                "Proxy binary sidecar not found. Checked directories: {:?}",
+                search_dirs
             ));
         }
     };
