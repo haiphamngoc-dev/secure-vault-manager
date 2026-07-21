@@ -43,6 +43,39 @@ pub fn start_unix_socket_listener(app: tauri::AppHandle) {
 
         println!("UDS IPC listener started at {:?}", socket_path);
 
+        // Create Snap compatibility symlinks for Firefox and Chromium
+        if let Ok(home) = std::env::var("HOME") {
+            let home_path = std::path::Path::new(&home);
+
+            // 1. Firefox Snap path
+            let snap_firefox_dir = home_path
+                .join("snap")
+                .join("firefox")
+                .join("common")
+                .join(".local")
+                .join("share")
+                .join("secure-vault-manager");
+            if std::fs::create_dir_all(&snap_firefox_dir).is_ok() {
+                let snap_socket = snap_firefox_dir.join("secure-vault-manager.sock");
+                let _ = std::fs::remove_file(&snap_socket);
+                let _ = std::os::unix::fs::symlink(&socket_path, &snap_socket);
+            }
+
+            // 2. Chromium Snap path
+            let snap_chromium_dir = home_path
+                .join("snap")
+                .join("chromium")
+                .join("common")
+                .join(".local")
+                .join("share")
+                .join("secure-vault-manager");
+            if std::fs::create_dir_all(&snap_chromium_dir).is_ok() {
+                let snap_socket = snap_chromium_dir.join("secure-vault-manager.sock");
+                let _ = std::fs::remove_file(&snap_socket);
+                let _ = std::os::unix::fs::symlink(&socket_path, &snap_socket);
+            }
+        }
+
         loop {
             match listener.accept().await {
                 Ok((mut stream, _)) => {

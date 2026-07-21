@@ -281,7 +281,19 @@ pub fn register_extension_proxy(
 
             for dir in linux_dirs {
                 if std::fs::create_dir_all(&dir).is_ok() {
-                    let _ = std::fs::write(dir.join(host_name), &manifest_json);
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::PermissionsExt;
+                        let _ = std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755));
+                    }
+                    let file_path = dir.join(host_name);
+                    if std::fs::write(&file_path, &manifest_json).is_ok() {
+                        #[cfg(unix)]
+                        {
+                            use std::os::unix::fs::PermissionsExt;
+                            let _ = std::fs::set_permissions(&file_path, std::fs::Permissions::from_mode(0o644));
+                        }
+                    }
                 }
             }
         }
@@ -325,12 +337,17 @@ pub fn register_extension_proxy(
             }
         }
     } else if browser_lower == "firefox" {
+        let mut allowed = vec!["secure-vault-manager-ext@haiphamngoc.dev".to_string()];
+        if !extension_id.trim().is_empty() && !allowed.contains(&extension_id) {
+            allowed.push(extension_id.trim().to_string());
+        }
+
         let manifest = serde_json::json!({
             "name": "com.haiphamngoc_dev.secure_vault_manager_proxy",
             "description": "Secure Vault Manager Native Messaging Proxy Host",
             "path": source_path.to_string_lossy(),
             "type": "stdio",
-            "allowed_extensions": ["secure-vault-manager-ext@haiphamngoc.dev"]
+            "allowed_extensions": allowed
         });
         let manifest_json = serde_json::to_string_pretty(&manifest).unwrap();
 
@@ -338,6 +355,7 @@ pub fn register_extension_proxy(
         {
             let firefox_dirs = vec![
                 home_dir.join(".mozilla").join("native-messaging-hosts"),
+                home_dir.join(".mozilla").join("NativeMessagingHosts"),
                 home_dir
                     .join(".var")
                     .join("app")
@@ -345,16 +363,52 @@ pub fn register_extension_proxy(
                     .join(".mozilla")
                     .join("native-messaging-hosts"),
                 home_dir
+                    .join(".var")
+                    .join("app")
+                    .join("org.mozilla.firefox")
+                    .join(".mozilla")
+                    .join("NativeMessagingHosts"),
+                home_dir
                     .join("snap")
                     .join("firefox")
                     .join("common")
                     .join(".mozilla")
                     .join("native-messaging-hosts"),
+                home_dir
+                    .join("snap")
+                    .join("firefox")
+                    .join("common")
+                    .join(".mozilla")
+                    .join("NativeMessagingHosts"),
+                home_dir
+                    .join("snap")
+                    .join("firefox")
+                    .join("current")
+                    .join(".mozilla")
+                    .join("native-messaging-hosts"),
+                home_dir
+                    .join("snap")
+                    .join("firefox")
+                    .join("current")
+                    .join(".mozilla")
+                    .join("NativeMessagingHosts"),
             ];
 
             for dir in firefox_dirs {
                 if std::fs::create_dir_all(&dir).is_ok() {
-                    let _ = std::fs::write(dir.join(host_name), &manifest_json);
+                    #[cfg(unix)]
+                    {
+                        use std::os::unix::fs::PermissionsExt;
+                        let _ = std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o755));
+                    }
+                    let file_path = dir.join(host_name);
+                    if std::fs::write(&file_path, &manifest_json).is_ok() {
+                        #[cfg(unix)]
+                        {
+                            use std::os::unix::fs::PermissionsExt;
+                            let _ = std::fs::set_permissions(&file_path, std::fs::Permissions::from_mode(0o644));
+                        }
+                    }
                 }
             }
         }

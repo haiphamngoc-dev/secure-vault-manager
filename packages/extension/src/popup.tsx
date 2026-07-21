@@ -292,6 +292,14 @@ function Popup() {
             <strong>Secure Vault Manager</strong> trên máy tính của bạn để sử
             dụng extension này.
           </p>
+          {error && (
+            <div
+              className={classes.errorMessage}
+              style={{ marginTop: "8px", fontSize: "12px" }}
+            >
+              {error}
+            </div>
+          )}
           <button
             className={classes.primaryBtn}
             onClick={() => {

@@ -100,23 +100,42 @@ async fn connect_to_desktop() -> std::io::Result<AppStream> {
         }
     }
 
-    // Try connecting to candidate socket locations in order of priority
+    let mut attempts_log = Vec::new();
     let mut last_err = None;
-    for socket_path in candidate_sockets {
-        if socket_path.exists() {
-            match tokio::net::UnixStream::connect(&socket_path).await {
-                Ok(stream) => return Ok(AppStream::Unix(stream)),
-                Err(e) => last_err = Some(e),
+
+    for socket_path in &candidate_sockets {
+        let exists = socket_path.exists();
+        match tokio::net::UnixStream::connect(socket_path).await {
+            Ok(stream) => {
+                let log_entry = format!("SUCCESS: Connected to socket at {:?}\n", socket_path);
+                let _ = std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open("/tmp/secure-vault-manager-proxy.log")
+                    .and_then(|mut f| std::io::Write::write_all(&mut f, log_entry.as_bytes()));
+                return Ok(AppStream::Unix(stream));
+            }
+            Err(e) => {
+                attempts_log.push(format!("path: {:?}, exists: {}, error: {}", socket_path, exists, e));
+                last_err = Some(e);
             }
         }
     }
 
-    Err(last_err.unwrap_or_else(|| {
-        std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "Could not connect to desktop application socket",
-        )
-    }))
+    let err_msg = format!(
+        "Failed to connect to desktop IPC socket. Checked paths: [{}]. Last error: {:?}",
+        attempts_log.join("; "),
+        last_err
+    );
+
+    let log_entry = format!("ERROR: {}\n", err_msg);
+    let _ = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("/tmp/secure-vault-manager-proxy.log")
+        .and_then(|mut f| std::io::Write::write_all(&mut f, log_entry.as_bytes()));
+
+    Err(std::io::Error::new(std::io::ErrorKind::NotFound, err_msg))
 }
 
 #[cfg(windows)]
@@ -144,10 +163,10 @@ async fn main() {
         // Try to connect to the Desktop App IPC
         let mut stream = match connect_to_desktop().await {
             Ok(s) => s,
-            Err(_) => {
+            Err(err) => {
                 let err_resp = serde_json::json!({
                     "status": "error",
-                    "message": "Desktop application is not running."
+                    "message": format!("Desktop application connection failed: {}", err)
                 });
                 let err_bytes = serde_json::to_vec(&err_resp).unwrap();
                 let _ = write_msg(&mut stdout, &err_bytes).await;
