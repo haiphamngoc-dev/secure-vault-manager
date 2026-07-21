@@ -1,6 +1,6 @@
+use super::{process_request, read_msg, write_msg, ProxyRequest};
 use tauri::Manager;
 use tokio::net::UnixListener;
-use super::{read_msg, write_msg, process_request, ProxyRequest};
 
 pub fn get_socket_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     let app_dir = app
@@ -33,7 +33,10 @@ pub fn start_unix_socket_listener(app: tauri::AppHandle) {
         let listener = match UnixListener::bind(&socket_path) {
             Ok(l) => l,
             Err(e) => {
-                eprintln!("UDS IPC listener failed to bind to {:?}: {}", socket_path, e);
+                eprintln!(
+                    "UDS IPC listener failed to bind to {:?}: {}",
+                    socket_path, e
+                );
                 return;
             }
         };
@@ -54,11 +57,18 @@ pub fn start_unix_socket_listener(app: tauri::AppHandle) {
                                             let resp = super::ProxyResponse {
                                                 status: "error".to_string(),
                                                 data: None,
-                                                message: Some(format!("Invalid request JSON: {}", e)),
+                                                message: Some(format!(
+                                                    "Invalid request JSON: {}",
+                                                    e
+                                                )),
                                                 locked: None,
                                                 paired: None,
                                             };
-                                            let _ = write_msg(&mut stream, &serde_json::to_vec(&resp).unwrap()).await;
+                                            let _ = write_msg(
+                                                &mut stream,
+                                                &serde_json::to_vec(&resp).unwrap(),
+                                            )
+                                            .await;
                                             continue;
                                         }
                                     };

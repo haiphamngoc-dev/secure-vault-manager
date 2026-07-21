@@ -1,8 +1,8 @@
+use super::storage::write_atomic;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
-use serde::{Deserialize, Serialize};
-use super::storage::write_atomic;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VaultProfile {
@@ -31,8 +31,8 @@ pub fn load_registry(app: &tauri::AppHandle) -> Result<VaultRegistry, String> {
     if !path.exists() {
         return Ok(VaultRegistry::default());
     }
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read vaults registry: {}", e))?;
+    let content =
+        fs::read_to_string(&path).map_err(|e| format!("Failed to read vaults registry: {}", e))?;
     let registry: VaultRegistry = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse vaults JSON: {}", e))?;
     Ok(registry)

@@ -1,14 +1,12 @@
-use tauri::State;
 use std::fs;
+use tauri::State;
 
 use crate::core::storage::{
-    initialize_new_vault, load_vault_with_key, save_existing_vault, unlock_and_load_vault,
-    vault_exists, get_vault_path,
+    get_vault_path, initialize_new_vault, load_vault_with_key, save_existing_vault,
+    unlock_and_load_vault, vault_exists,
 };
 use crate::core::vault::{Vault, VaultItem};
-use crate::core::vault_registry::{
-    load_registry, save_registry, VaultRegistry, VaultProfile
-};
+use crate::core::vault_registry::{load_registry, save_registry, VaultProfile, VaultRegistry};
 use crate::AppState;
 
 /// Command to check if the vault database has been initialized on the system.
@@ -143,10 +141,7 @@ pub fn save_items(
     let file_guard = state.current_vault_file.lock().unwrap();
     let file_name = file_guard.as_ref().ok_or("Vault is locked.")?;
 
-    let vault = Vault {
-        version: 1,
-        items,
-    };
+    let vault = Vault { version: 1, items };
 
     save_existing_vault(&app, key, salt, &vault, file_name)?;
     Ok(())
@@ -177,10 +172,7 @@ pub fn rename_vault(
 
 /// Command to set a vault as the default.
 #[tauri::command]
-pub fn set_default_vault(
-    app: tauri::AppHandle,
-    vault_id: Option<String>,
-) -> Result<(), String> {
+pub fn set_default_vault(app: tauri::AppHandle, vault_id: Option<String>) -> Result<(), String> {
     let mut registry = load_registry(&app)?;
     if let Some(ref id) = vault_id {
         if !registry.vaults.iter().any(|v| v.id == *id) {

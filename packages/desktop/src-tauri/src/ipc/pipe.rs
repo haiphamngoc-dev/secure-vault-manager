@@ -45,7 +45,11 @@ pub fn start_named_pipe_listener(app: tauri::AppHandle) {
                                         locked: None,
                                         paired: None,
                                     };
-                                    let _ = super::write_msg(&mut server, &serde_json::to_vec(&resp).unwrap()).await;
+                                    let _ = super::write_msg(
+                                        &mut server,
+                                        &serde_json::to_vec(&resp).unwrap(),
+                                    )
+                                    .await;
                                     continue;
                                 }
                             };

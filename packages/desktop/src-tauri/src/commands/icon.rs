@@ -5,7 +5,10 @@ use reqwest::header::CONTENT_TYPE;
 /// and returns it as a base64 encoded data URL.
 #[tauri::command]
 pub async fn download_favicon(domain: String) -> Result<String, String> {
-    let url = format!("https://www.google.com/s2/favicons?domain={}&sz=128", domain);
+    let url = format!(
+        "https://www.google.com/s2/favicons?domain={}&sz=128",
+        domain
+    );
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
@@ -19,7 +22,10 @@ pub async fn download_favicon(domain: String) -> Result<String, String> {
         .map_err(|e| e.to_string())?;
 
     if !response.status().is_success() {
-        return Err(format!("Failed to download favicon: HTTP {}", response.status()));
+        return Err(format!(
+            "Failed to download favicon: HTTP {}",
+            response.status()
+        ));
     }
 
     let content_type = response
@@ -30,7 +36,7 @@ pub async fn download_favicon(domain: String) -> Result<String, String> {
         .to_string();
 
     let bytes = response.bytes().await.map_err(|e| e.to_string())?;
-    
+
     let base64_data = general_purpose::STANDARD.encode(&bytes);
     Ok(format!("data:{};base64,{}", content_type, base64_data))
 }

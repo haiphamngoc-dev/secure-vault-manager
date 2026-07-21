@@ -4,7 +4,7 @@ pub mod pipe;
 pub mod socket;
 
 use serde::{Deserialize, Serialize};
-use tauri::{Manager, Emitter};
+use tauri::{Emitter, Manager};
 
 #[derive(Debug, Deserialize)]
 pub struct ProxyRequest {
@@ -35,7 +35,9 @@ pub struct ProxyCredential {
     pub password: Option<String>,
 }
 
-pub async fn read_msg<R: tokio::io::AsyncReadExt + Unpin>(reader: &mut R) -> Result<Option<Vec<u8>>, String> {
+pub async fn read_msg<R: tokio::io::AsyncReadExt + Unpin>(
+    reader: &mut R,
+) -> Result<Option<Vec<u8>>, String> {
     let mut len_bytes = [0u8; 4];
     match reader.read_exact(&mut len_bytes).await {
         Ok(_) => {}
@@ -44,13 +46,22 @@ pub async fn read_msg<R: tokio::io::AsyncReadExt + Unpin>(reader: &mut R) -> Res
     }
     let len = u32::from_ne_bytes(len_bytes) as usize;
     let mut buf = vec![0u8; len];
-    reader.read_exact(&mut buf).await.map_err(|e| e.to_string())?;
+    reader
+        .read_exact(&mut buf)
+        .await
+        .map_err(|e| e.to_string())?;
     Ok(Some(buf))
 }
 
-pub async fn write_msg<W: tokio::io::AsyncWriteExt + Unpin>(writer: &mut W, msg: &[u8]) -> Result<(), String> {
+pub async fn write_msg<W: tokio::io::AsyncWriteExt + Unpin>(
+    writer: &mut W,
+    msg: &[u8],
+) -> Result<(), String> {
     let len = msg.len() as u32;
-    writer.write_all(&len.to_ne_bytes()).await.map_err(|e| e.to_string())?;
+    writer
+        .write_all(&len.to_ne_bytes())
+        .await
+        .map_err(|e| e.to_string())?;
     writer.write_all(msg).await.map_err(|e| e.to_string())?;
     writer.flush().await.map_err(|e| e.to_string())?;
     Ok(())
@@ -59,24 +70,28 @@ pub async fn write_msg<W: tokio::io::AsyncWriteExt + Unpin>(writer: &mut W, msg:
 pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> ProxyResponse {
     let settings = match crate::commands::settings::get_settings(app.clone()) {
         Ok(s) => s,
-        Err(e) => return ProxyResponse {
-            status: "error".to_string(),
-            data: None,
-            message: Some(format!("Failed to read settings: {}", e)),
-            locked: None,
-            paired: None,
-        },
+        Err(e) => {
+            return ProxyResponse {
+                status: "error".to_string(),
+                data: None,
+                message: Some(format!("Failed to read settings: {}", e)),
+                locked: None,
+                paired: None,
+            }
+        }
     };
 
     let pairing_token = match settings.pairing_token {
         Some(t) => t,
-        None => return ProxyResponse {
-            status: "error".to_string(),
-            data: None,
-            message: Some("App is not paired with any extension.".to_string()),
-            locked: None,
-            paired: Some(false),
-        },
+        None => {
+            return ProxyResponse {
+                status: "error".to_string(),
+                data: None,
+                message: Some("App is not paired with any extension.".to_string()),
+                locked: None,
+                paired: Some(false),
+            }
+        }
     };
 
     if req.pairing_token.as_deref() != Some(&pairing_token) {
@@ -104,50 +119,60 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
         "unlock_vault" => {
             let password = match req.password.as_deref() {
                 Some(p) => p,
-                None => return ProxyResponse {
-                    status: "error".to_string(),
-                    data: None,
-                    message: Some("Password is required.".to_string()),
-                    locked: Some(true),
-                    paired: Some(true),
-                },
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("Password is required.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
             };
 
             let registry = match crate::core::vault_registry::load_registry(app) {
                 Ok(r) => r,
-                Err(e) => return ProxyResponse {
-                    status: "error".to_string(),
-                    data: None,
-                    message: Some(format!("Failed to load registry: {}", e)),
-                    locked: Some(true),
-                    paired: Some(true),
-                },
+                Err(e) => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some(format!("Failed to load registry: {}", e)),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
             };
 
-            let vault_id = req.vault_id.clone().or(registry.default_vault_id).or_else(|| {
-                registry.vaults.first().map(|v| v.id.clone())
-            });
+            let vault_id = req
+                .vault_id
+                .clone()
+                .or(registry.default_vault_id)
+                .or_else(|| registry.vaults.first().map(|v| v.id.clone()));
 
             let vault_id = match vault_id {
                 Some(id) => id,
-                None => return ProxyResponse {
-                    status: "error".to_string(),
-                    data: None,
-                    message: Some("No vaults configured in desktop app.".to_string()),
-                    locked: Some(true),
-                    paired: Some(true),
-                },
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("No vaults configured in desktop app.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
             };
 
             let profile = match registry.vaults.iter().find(|v| v.id == vault_id) {
                 Some(p) => p,
-                None => return ProxyResponse {
-                    status: "error".to_string(),
-                    data: None,
-                    message: Some("Vault profile not found.".to_string()),
-                    locked: Some(true),
-                    paired: Some(true),
-                },
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("Vault profile not found.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
             };
 
             match crate::core::storage::unlock_and_load_vault(app, password, &profile.file_name) {
@@ -174,7 +199,7 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                     message: Some(format!("Failed to unlock vault: {}", e)),
                     locked: Some(true),
                     paired: Some(true),
-                }
+                },
             }
         }
         "trigger_biometrics" => {
@@ -192,38 +217,44 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
             let key_guard = state.vault_key.lock().unwrap();
             let key = match key_guard.as_ref() {
                 Some(k) => *k,
-                None => return ProxyResponse {
-                    status: "error".to_string(),
-                    data: None,
-                    message: Some("Vault is locked.".to_string()),
-                    locked: Some(true),
-                    paired: Some(true),
-                },
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("Vault is locked.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
             };
             drop(key_guard);
 
             let file_guard = state.current_vault_file.lock().unwrap();
             let file_name = match file_guard.as_ref() {
                 Some(f) => f.clone(),
-                None => return ProxyResponse {
-                    status: "error".to_string(),
-                    data: None,
-                    message: Some("No vault selected.".to_string()),
-                    locked: Some(true),
-                    paired: Some(true),
-                },
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("No vault selected.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
             };
             drop(file_guard);
 
             let vault = match crate::core::storage::load_vault_with_key(app, &key, &file_name) {
                 Ok(v) => v,
-                Err(e) => return ProxyResponse {
-                    status: "error".to_string(),
-                    data: None,
-                    message: Some(format!("Failed to load vault: {}", e)),
-                    locked: None,
-                    paired: None,
-                },
+                Err(e) => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some(format!("Failed to load vault: {}", e)),
+                        locked: None,
+                        paired: None,
+                    }
+                }
             };
 
             let domain = req.domain.unwrap_or_default().to_lowercase();
@@ -237,7 +268,8 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 };
             }
 
-            let matching: Vec<ProxyCredential> = vault.items
+            let matching: Vec<ProxyCredential> = vault
+                .items
                 .into_iter()
                 .filter(|item| {
                     if let Some(ref url) = item.url {
@@ -267,6 +299,6 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
             message: Some(format!("Unknown action: {}", req.action)),
             locked: None,
             paired: None,
-        }
+        },
     }
 }

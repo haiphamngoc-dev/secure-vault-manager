@@ -34,13 +34,12 @@ pub fn write_atomic(path: &Path, data: &[u8]) -> Result<(), String> {
     let dir = path
         .parent()
         .ok_or_else(|| "Invalid vault path: no parent directory".to_string())?;
-    fs::create_dir_all(dir)
-        .map_err(|e| format!("Failed to create directories: {}", e))?;
+    fs::create_dir_all(dir).map_err(|e| format!("Failed to create directories: {}", e))?;
 
     let tmp_path = path.with_extension("tmp");
     {
-        let mut file = File::create(&tmp_path)
-            .map_err(|e| format!("Failed to create temp file: {}", e))?;
+        let mut file =
+            File::create(&tmp_path).map_err(|e| format!("Failed to create temp file: {}", e))?;
         file.write_all(data)
             .map_err(|e| format!("Failed to write to temp file: {}", e))?;
         file.sync_all()
@@ -73,8 +72,8 @@ pub fn initialize_new_vault(
         version: 1,
         items: Vec::new(),
     };
-    let json_bytes = serde_json::to_vec(&vault)
-        .map_err(|e| format!("Serialization failed: {}", e))?;
+    let json_bytes =
+        serde_json::to_vec(&vault).map_err(|e| format!("Serialization failed: {}", e))?;
 
     // 4. Encrypt empty vault with derived key and random nonce
     let (ciphertext, nonce) = encrypt(&key, &json_bytes)?;
@@ -146,8 +145,8 @@ pub fn save_existing_vault(
     let path = get_vault_path(app, filename)?;
 
     // 1. Serialize vault JSON
-    let json_bytes = serde_json::to_vec(vault)
-        .map_err(|e| format!("Serialization failed: {}", e))?;
+    let json_bytes =
+        serde_json::to_vec(vault).map_err(|e| format!("Serialization failed: {}", e))?;
 
     // 2. Encrypt with existing key and a new random nonce
     let (ciphertext, nonce) = encrypt(key, &json_bytes)?;

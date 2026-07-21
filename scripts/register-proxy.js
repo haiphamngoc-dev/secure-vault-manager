@@ -84,41 +84,112 @@ function register() {
   const homeDir = os.homedir();
   const platform = process.platform;
 
+  // Ensure executable permissions on Unix
+  if (platform === "linux" || platform === "darwin") {
+    try {
+      fs.chmodSync(binaryPath, 0o755);
+    } catch {
+      // Ignore if chmod fails
+    }
+  }
+
   if (platform === "linux") {
-    const chromeDir = path.join(
-      homeDir,
-      ".config",
-      "google-chrome",
-      "NativeMessagingHosts"
-    );
-    const chromiumDir = path.join(
-      homeDir,
-      ".config",
-      "chromium",
-      "NativeMessagingHosts"
-    );
-    const firefoxDir = path.join(homeDir, ".mozilla", "native-messaging-hosts");
+    const chromeDirs = [
+      path.join(homeDir, ".config", "google-chrome", "NativeMessagingHosts"),
+      path.join(homeDir, ".config", "chromium", "NativeMessagingHosts"),
+      path.join(
+        homeDir,
+        ".config",
+        "BraveSoftware",
+        "Brave-Browser",
+        "NativeMessagingHosts"
+      ),
+      path.join(homeDir, ".config", "microsoft-edge", "NativeMessagingHosts"),
+      path.join(homeDir, ".config", "vivaldi", "NativeMessagingHosts"),
+      path.join(
+        homeDir,
+        ".var",
+        "app",
+        "com.google.Chrome",
+        "config",
+        "google-chrome",
+        "NativeMessagingHosts"
+      ),
+      path.join(
+        homeDir,
+        ".var",
+        "app",
+        "org.chromium.Chromium",
+        "config",
+        "chromium",
+        "NativeMessagingHosts"
+      ),
+      path.join(
+        homeDir,
+        ".var",
+        "app",
+        "com.brave.Browser",
+        "config",
+        "BraveSoftware",
+        "Brave-Browser",
+        "NativeMessagingHosts"
+      ),
+      path.join(
+        homeDir,
+        "snap",
+        "google-chrome",
+        "current",
+        ".config",
+        "google-chrome",
+        "NativeMessagingHosts"
+      ),
+    ];
 
-    // Register for Google Chrome
-    fs.mkdirSync(chromeDir, { recursive: true });
-    fs.writeFileSync(path.join(chromeDir, hostName), chromeManifestJson);
-    console.log(
-      `Registered Chrome Native Messaging Host at: ${path.join(chromeDir, hostName)}`
-    );
+    const firefoxDirs = [
+      path.join(homeDir, ".mozilla", "native-messaging-hosts"),
+      path.join(
+        homeDir,
+        ".var",
+        "app",
+        "org.mozilla.firefox",
+        ".mozilla",
+        "native-messaging-hosts"
+      ),
+      path.join(
+        homeDir,
+        "snap",
+        "firefox",
+        "common",
+        ".mozilla",
+        "native-messaging-hosts"
+      ),
+    ];
 
-    // Register for Chromium
-    fs.mkdirSync(chromiumDir, { recursive: true });
-    fs.writeFileSync(path.join(chromiumDir, hostName), chromeManifestJson);
-    console.log(
-      `Registered Chromium Native Messaging Host at: ${path.join(chromiumDir, hostName)}`
-    );
+    // Register Chromium-based browsers
+    for (const chromeDir of chromeDirs) {
+      try {
+        fs.mkdirSync(chromeDir, { recursive: true });
+        fs.writeFileSync(path.join(chromeDir, hostName), chromeManifestJson);
+        console.log(
+          `Registered Chrome Native Messaging Host at: ${path.join(chromeDir, hostName)}`
+        );
+      } catch (err) {
+        // Ignore individual browser dir errors
+      }
+    }
 
-    // Register for Mozilla Firefox
-    fs.mkdirSync(firefoxDir, { recursive: true });
-    fs.writeFileSync(path.join(firefoxDir, hostName), firefoxManifestJson);
-    console.log(
-      `Registered Firefox Native Messaging Host at: ${path.join(firefoxDir, hostName)}`
-    );
+    // Register Firefox browsers
+    for (const firefoxDir of firefoxDirs) {
+      try {
+        fs.mkdirSync(firefoxDir, { recursive: true });
+        fs.writeFileSync(path.join(firefoxDir, hostName), firefoxManifestJson);
+        console.log(
+          `Registered Firefox Native Messaging Host at: ${path.join(firefoxDir, hostName)}`
+        );
+      } catch (err) {
+        // Ignore individual browser dir errors
+      }
+    }
   } else if (platform === "darwin") {
     const chromeDir = path.join(
       homeDir,
