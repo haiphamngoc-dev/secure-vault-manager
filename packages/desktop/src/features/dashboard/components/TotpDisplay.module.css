@@ -1,0 +1,46 @@
+.totpCard {
+  background-color: rgba(34, 139, 230, 0.06);
+  border: 1px solid rgba(34, 139, 230, 0.25);
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+.totpCard:hover {
+  background-color: rgba(34, 139, 230, 0.12);
+  border-color: var(--mantine-color-blue-5);
+}
+
+.totpCode {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--mantine-color-blue-4);
+}
+
+.progressTrack {
+  height: 4px;
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 2px;
+  transition:
+    width 1s linear,
+    background-color 0.3s ease;
+}
+
+.secretPreview {
+  font-family: var(--mantine-font-family-monospace);
+  font-size: 0.75rem;
+  color: var(--mantine-color-dark-2);
+}

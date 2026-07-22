@@ -6,6 +6,7 @@ import {
   SegmentedControl,
   Select,
   TextInput,
+  PasswordInput,
   Button,
   Group,
   ActionIcon,
@@ -20,9 +21,16 @@ import {
   IconCopy,
   IconCheck,
   IconDeviceDesktop,
+  IconDatabase,
+  IconUpload,
+  IconDownload,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { invoke } from "@tauri-apps/api/core";
+import { ImportModal } from "@/features/dashboard/components/ImportModal";
+import { ExportModal } from "@/features/dashboard/components/ExportModal";
+import { useOutletContext } from "react-router-dom";
+import { MainHeader } from "@/shared/layouts/components/MainHeader";
 import classes from "./SettingsPage.module.css";
 
 interface AppSettings {
@@ -32,6 +40,7 @@ interface AppSettings {
   extension_id?: string | null;
   minimize_to_tray: boolean;
   autostart: boolean;
+  pairing_token?: string | null;
 }
 
 export function SettingsPage() {
@@ -52,6 +61,8 @@ export function SettingsPage() {
     useState<boolean>(false);
   const [isRegisteringFirefox, setIsRegisteringFirefox] =
     useState<boolean>(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
 
   // Load settings on mount
   useEffect(() => {
@@ -65,6 +76,14 @@ export function SettingsPage() {
           minimize_to_tray: res.minimize_to_tray !== false,
           autostart: res.autostart === true,
         });
+
+        if (res.pairing_token) {
+          setPairingKey(res.pairing_token);
+        } else {
+          // If no pairing token exists yet, automatically create one so key is always available
+          const token = await invoke<string>("start_pairing");
+          setPairingKey(token);
+        }
       } catch (err) {
         console.error("Failed to load settings from Rust:", err);
       }
@@ -198,241 +217,332 @@ export function SettingsPage() {
     { value: "never", label: t("autoLockNever") },
   ];
 
+  const { headerTitle } = useOutletContext<{ headerTitle?: string }>() || {};
+
   return (
-    <Box className={classes.scrollContainer}>
-      <Stack gap="md" className={classes.settingsContainer} p="md">
-        {/* General Section */}
-        <Box className={classes.sectionCard}>
-          <div className={classes.sectionTitle}>
-            <span className={classes.sectionIcon}>
-              <IconLanguage size={20} />
-            </span>
-            <Text>{t("generalSection")}</Text>
-          </div>
-          <Stack gap="sm">
-            <Text size="sm" fw={600}>
-              {t("languageLabel")}
-            </Text>
-            <SegmentedControl
-              value={settings.lang}
-              onChange={(val) => updateSetting("lang", val)}
-              data={[
-                { label: "Tiếng Việt", value: "vi" },
-                { label: "English", value: "en" },
-              ]}
-              color="blue"
-              className={classes.alignStart}
-            />
-          </Stack>
-        </Box>
+    <Box
+      style={{
+        flex: 1,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {headerTitle && <MainHeader title={headerTitle} />}
+      <Box className={classes.scrollContainer}>
+        <Stack gap="md" className={classes.settingsContainer} p="md">
+          {/* General Section */}
+          <Box className={classes.sectionCard}>
+            <div className={classes.sectionTitle}>
+              <span className={classes.sectionIcon}>
+                <IconLanguage size={20} />
+              </span>
+              <Text>{t("generalSection")}</Text>
+            </div>
+            <Stack gap="sm">
+              <Text size="sm" fw={600}>
+                {t("languageLabel")}
+              </Text>
+              <SegmentedControl
+                value={settings.lang}
+                onChange={(val) => updateSetting("lang", val)}
+                data={[
+                  { label: "Tiếng Việt", value: "vi" },
+                  { label: "English", value: "en" },
+                ]}
+                color="blue"
+                className={classes.alignStart}
+              />
+            </Stack>
+          </Box>
 
-        {/* System Section */}
-        <Box className={classes.sectionCard}>
-          <div className={classes.sectionTitle}>
-            <span className={classes.sectionIcon}>
-              <IconDeviceDesktop size={20} />
-            </span>
-            <Text>{t("systemSection")}</Text>
-          </div>
-          <Stack gap="xs">
-            <Switch
-              label={t("minimizeToTrayLabel")}
-              description={t("minimizeToTrayDesc")}
-              checked={settings.minimize_to_tray}
-              onChange={(event) =>
-                updateSetting("minimize_to_tray", event.currentTarget.checked)
-              }
-              color="blue"
-            />
-            <Switch
-              label={t("autostartLabel")}
-              description={t("autostartDesc")}
-              checked={settings.autostart}
-              onChange={(event) =>
-                updateSetting("autostart", event.currentTarget.checked)
-              }
-              color="blue"
-              mt="xs"
-            />
-          </Stack>
-        </Box>
+          {/* System Section */}
+          <Box className={classes.sectionCard}>
+            <div className={classes.sectionTitle}>
+              <span className={classes.sectionIcon}>
+                <IconDeviceDesktop size={20} />
+              </span>
+              <Text>{t("systemSection")}</Text>
+            </div>
+            <Stack gap="xs">
+              <Switch
+                label={t("minimizeToTrayLabel")}
+                description={t("minimizeToTrayDesc")}
+                checked={settings.minimize_to_tray}
+                onChange={(event) =>
+                  updateSetting("minimize_to_tray", event.currentTarget.checked)
+                }
+                color="blue"
+              />
+              <Switch
+                label={t("autostartLabel")}
+                description={t("autostartDesc")}
+                checked={settings.autostart}
+                onChange={(event) =>
+                  updateSetting("autostart", event.currentTarget.checked)
+                }
+                color="blue"
+                mt="xs"
+              />
+            </Stack>
+          </Box>
 
-        {/* Security Section */}
-        <Box className={classes.sectionCard}>
-          <div className={classes.sectionTitle}>
-            <span className={classes.sectionIcon}>
-              <IconLock size={20} />
-            </span>
-            <Text>{t("securitySection")}</Text>
-          </div>
-          <Stack gap="sm" className={classes.securityStack}>
-            <Select
-              label={t("autoLockLabel")}
-              value={settings.auto_lock_interval}
-              onChange={(val) => updateSetting("auto_lock_interval", val)}
-              data={autoLockOptions}
-              allowDeselect={false}
-              styles={{
-                dropdown: {
-                  backgroundColor: "var(--color-neutral-card)",
-                  border: "1px solid var(--color-neutral-light)",
-                  color: "var(--color-neutral-dark)",
-                },
-                option: {
-                  color: "var(--color-neutral-dark)",
-                  "&[data-hovered]": {
-                    backgroundColor: "var(--color-brand-primary-highlight)",
+          {/* Security Section */}
+          <Box className={classes.sectionCard}>
+            <div className={classes.sectionTitle}>
+              <span className={classes.sectionIcon}>
+                <IconLock size={20} />
+              </span>
+              <Text>{t("securitySection")}</Text>
+            </div>
+            <Stack gap="sm" className={classes.securityStack}>
+              <Select
+                label={t("autoLockLabel")}
+                value={settings.auto_lock_interval}
+                onChange={(val) => updateSetting("auto_lock_interval", val)}
+                data={autoLockOptions}
+                allowDeselect={false}
+                styles={{
+                  dropdown: {
+                    backgroundColor: "var(--color-neutral-card)",
+                    border: "1px solid var(--color-neutral-light)",
+                    color: "var(--color-neutral-dark)",
                   },
-                  "&[data-selected]": {
-                    backgroundColor: "var(--color-brand-primary)",
-                    color: "white",
+                  option: {
+                    color: "var(--color-neutral-dark)",
+                    "&[data-hovered]": {
+                      backgroundColor: "var(--color-brand-primary-highlight)",
+                    },
+                    "&[data-selected]": {
+                      backgroundColor: "var(--color-brand-primary)",
+                      color: "white",
+                    },
                   },
-                },
-              }}
-            />
-          </Stack>
-        </Box>
+                }}
+              />
+            </Stack>
+          </Box>
 
-        {/* Extension Section */}
-        <Box className={classes.sectionCard}>
-          <div className={classes.sectionTitle}>
-            <span className={classes.sectionIcon}>
-              <IconLink size={20} />
-            </span>
-            <Text>{t("extensionSection")}</Text>
-          </div>
-          <Stack gap="lg">
-            <Group justify="space-between" align="flex-start">
-              <Stack gap="xs" className={classes.flex1}>
-                <Text size="sm" c="dimmed">
+          {/* Data Management Section */}
+          <Box className={classes.sectionCard}>
+            <div className={classes.sectionTitle}>
+              <span className={classes.sectionIcon}>
+                <IconDatabase size={20} />
+              </span>
+              <Text>
+                {t("dataSection", "Quản lý dữ liệu Vault (Import & Export)")}
+              </Text>
+            </div>
+            <Group justify="space-between" align="center" wrap="wrap" gap="md">
+              <Stack gap={2} style={{ flex: 1, minWidth: "240px" }}>
+                <Text size="sm" fw={600}>
+                  {t("importDataLabel", "Nhập dữ liệu (Import)")}
+                </Text>
+                <Text size="xs" c="dimmed">
                   {t(
-                    "extensionPairingDesc",
-                    "Để kết nối tiện ích mở rộng với ứng dụng Desktop, bạn cần tạo khóa ghép đôi và dán vào tiện ích trên trình duyệt."
+                    "importDataDesc",
+                    "Hỗ trợ tệp xuất từ 1Password (.1pux), tệp JSON và tệp CSV."
                   )}
                 </Text>
-                <Button
-                  color="blue"
-                  onClick={handlePair}
-                  loading={isPairing}
-                  className={classes.alignStart}
-                >
-                  {t("pairBtn")}
-                </Button>
               </Stack>
+              <Button
+                variant="light"
+                color="blue"
+                leftSection={<IconUpload size={16} />}
+                onClick={() => setIsImportModalOpen(true)}
+              >
+                {t("importBtn", "Nhập dữ liệu (Import)")}
+              </Button>
             </Group>
 
-            {pairingKey && (
-              <Stack gap="xs" p="xs" className={classes.pairingKeyBox}>
+            <hr className={classes.divider} style={{ margin: "16px 0" }} />
+
+            <Group justify="space-between" align="center" wrap="wrap" gap="md">
+              <Stack gap={2} style={{ flex: 1, minWidth: "240px" }}>
                 <Text size="sm" fw={600}>
-                  {t("pairingKeyLabel")}
+                  {t("exportDataLabel", "Xuất dữ liệu (Export)")}
                 </Text>
-                <Group gap="xs" wrap="nowrap">
-                  <TextInput
-                    readOnly
-                    value={pairingKey}
-                    styles={{
-                      input: {
-                        fontFamily: "var(--mantine-font-family-monospace)",
-                      },
-                    }}
-                    className={classes.flex1}
-                  />
-                  <ActionIcon
-                    variant="light"
-                    color="blue"
-                    size="lg"
-                    onClick={() => {
-                      clipboard.copy(pairingKey);
-                      notifications.show({
-                        message: "Copied!",
-                        autoClose: 1000,
-                      });
-                    }}
-                  >
-                    {clipboard.copied ? (
-                      <IconCheck size={18} />
-                    ) : (
-                      <IconCopy size={18} />
-                    )}
-                  </ActionIcon>
-                </Group>
                 <Text size="xs" c="dimmed">
-                  {t("pairingKeyDesc")}
+                  {t(
+                    "exportDataDesc",
+                    "Xuất dữ liệu Vault thành tệp JSON hoặc CSV."
+                  )}
                 </Text>
               </Stack>
-            )}
+              <Button
+                variant="outline"
+                color="blue"
+                leftSection={<IconDownload size={16} />}
+                onClick={() => setIsExportModalOpen(true)}
+              >
+                {t("exportBtn", "Xuất dữ liệu (Export)")}
+              </Button>
+            </Group>
+          </Box>
 
-            <hr className={classes.divider} />
+          {/* Extension Section */}
+          <Box className={classes.sectionCard}>
+            <div className={classes.sectionTitle}>
+              <span className={classes.sectionIcon}>
+                <IconLink size={20} />
+              </span>
+              <Text>{t("extensionSection")}</Text>
+            </div>
+            <Stack gap="md">
+              <Text size="sm" c="dimmed">
+                {t(
+                  "extensionPairingDesc",
+                  "Mã kết nối (Pairing Key) được sử dụng để ghép đôi ứng dụng Desktop với tiện ích trình duyệt. Mã này luôn được giữ nguyên trừ khi bạn chủ động sinh lại mã mới."
+                )}
+              </Text>
 
-            <Text size="sm" fw={600}>
-              {t(
-                "browserIntegrationTitle",
-                "Đăng ký tích hợp trình duyệt (Native Messaging)"
-              )}
-            </Text>
-
-            <Box className={classes.integrationGrid}>
-              {/* Chrome Card */}
-              <Box p="md" className={classes.integrationCard}>
-                <Text fw={600} size="sm" mb="xs">
-                  Google Chrome / Chromium
-                </Text>
-                <Stack gap="sm">
-                  <TextInput
-                    label={t("chromeExtensionIdLabel", "Chrome Extension ID")}
-                    placeholder="e.g., gkdjgnbkoongjmehhdecofdhlcajgggj"
-                    value={settings.chrome_extension_id || ""}
-                    onChange={(e) =>
-                      updateSetting("chrome_extension_id", e.target.value)
-                    }
-                  />
-                  <Button
-                    variant="light"
-                    color="blue"
-                    onClick={() => handleRegisterProxy("chrome")}
-                    loading={isRegisteringChrome}
-                    fullWidth
-                  >
-                    {t("registerChromeBtn", "Đăng ký kết nối Chrome")}
-                  </Button>
-                </Stack>
-              </Box>
-
-              {/* Firefox Card */}
-              <Box p="md" className={classes.integrationCard}>
-                <Text fw={600} size="sm" mb="xs">
-                  Mozilla Firefox
-                </Text>
-                <Stack gap="sm">
-                  <TextInput
-                    label={t(
-                      "firefoxExtensionIdLabel",
-                      "Firefox Extension ID (Cố định)"
+              {pairingKey && (
+                <Stack gap="xs" p="xs" className={classes.pairingKeyBox}>
+                  <Text size="sm" fw={600}>
+                    {t("pairingKeyLabel", "Mã kết nối (Pairing Key)")}
+                  </Text>
+                  <Group gap="xs" wrap="nowrap">
+                    <PasswordInput
+                      readOnly
+                      value={pairingKey}
+                      radius="md"
+                      size="sm"
+                      styles={{
+                        input: {
+                          fontFamily: "var(--mantine-font-family-monospace)",
+                        },
+                      }}
+                      className={classes.flex1}
+                    />
+                    <ActionIcon
+                      variant="light"
+                      color="blue"
+                      size="lg"
+                      radius="md"
+                      onClick={() => {
+                        clipboard.copy(pairingKey);
+                        notifications.show({
+                          message: t(
+                            "copiedPairingKey",
+                            "Đã sao chép mã kết nối vào Clipboard!"
+                          ),
+                          color: "green",
+                          autoClose: 1500,
+                        });
+                      }}
+                    >
+                      {clipboard.copied ? (
+                        <IconCheck size={18} />
+                      ) : (
+                        <IconCopy size={18} />
+                      )}
+                    </ActionIcon>
+                  </Group>
+                  <Text size="xs" c="dimmed">
+                    {t(
+                      "pairingKeyMaskDesc",
+                      "Mã được ẩn mặc định. Nhấn biểu tượng mắt để xem mã hoặc bấm nút sao chép để dán vào Extension."
                     )}
-                    value="secure-vault-manager-ext@haiphamngoc.dev"
-                    readOnly
-                    styles={{
-                      input: {
-                        fontFamily: "var(--mantine-font-family-monospace)",
-                        opacity: 0.7,
-                      },
-                    }}
-                  />
-                  <Button
-                    variant="light"
-                    color="blue"
-                    onClick={() => handleRegisterProxy("firefox")}
-                    loading={isRegisteringFirefox}
-                    fullWidth
-                  >
-                    {t("registerFirefoxBtn", "Đăng ký kết nối Firefox")}
-                  </Button>
+                  </Text>
                 </Stack>
+              )}
+
+              <Group justify="flex-start">
+                <Button
+                  variant="outline"
+                  color="blue"
+                  size="xs"
+                  radius="md"
+                  onClick={handlePair}
+                  loading={isPairing}
+                >
+                  {t("regeneratePairKeyBtn", "Sinh lại mã kết nối mới")}
+                </Button>
+              </Group>
+
+              <hr className={classes.divider} />
+
+              <Text size="sm" fw={600}>
+                {t(
+                  "browserIntegrationTitle",
+                  "Đăng ký tích hợp trình duyệt (Native Messaging)"
+                )}
+              </Text>
+
+              <Box className={classes.integrationGrid}>
+                {/* Chrome Card */}
+                <Box p="md" className={classes.integrationCard}>
+                  <Text fw={600} size="sm" mb="xs">
+                    Google Chrome / Chromium
+                  </Text>
+                  <Stack gap="sm">
+                    <TextInput
+                      label={t("chromeExtensionIdLabel", "Chrome Extension ID")}
+                      placeholder="e.g., gkdjgnbkoongjmehhdecofdhlcajgggj"
+                      value={settings.chrome_extension_id || ""}
+                      onChange={(e) =>
+                        updateSetting("chrome_extension_id", e.target.value)
+                      }
+                    />
+                    <Button
+                      variant="light"
+                      color="blue"
+                      onClick={() => handleRegisterProxy("chrome")}
+                      loading={isRegisteringChrome}
+                      fullWidth
+                    >
+                      {t("registerChromeBtn", "Đăng ký kết nối Chrome")}
+                    </Button>
+                  </Stack>
+                </Box>
+
+                {/* Firefox Card */}
+                <Box p="md" className={classes.integrationCard}>
+                  <Text fw={600} size="sm" mb="xs">
+                    Mozilla Firefox
+                  </Text>
+                  <Stack gap="sm">
+                    <TextInput
+                      label={t(
+                        "firefoxExtensionIdLabel",
+                        "Firefox Extension ID (Cố định)"
+                      )}
+                      value="secure-vault-manager-ext@haiphamngoc.dev"
+                      readOnly
+                      styles={{
+                        input: {
+                          fontFamily: "var(--mantine-font-family-monospace)",
+                          opacity: 0.7,
+                        },
+                      }}
+                    />
+                    <Button
+                      variant="light"
+                      color="blue"
+                      onClick={() => handleRegisterProxy("firefox")}
+                      loading={isRegisteringFirefox}
+                      fullWidth
+                    >
+                      {t("registerFirefoxBtn", "Đăng ký kết nối Firefox")}
+                    </Button>
+                  </Stack>
+                </Box>
               </Box>
-            </Box>
-          </Stack>
-        </Box>
-      </Stack>
+            </Stack>
+          </Box>
+        </Stack>
+
+        {/* Import & Export Modals */}
+        <ImportModal
+          opened={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+        />
+        <ExportModal
+          opened={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+        />
+      </Box>
     </Box>
   );
 }

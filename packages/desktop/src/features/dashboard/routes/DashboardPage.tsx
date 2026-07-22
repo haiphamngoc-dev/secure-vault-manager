@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -8,7 +8,6 @@ import {
   ActionIcon,
   Stack,
   Button,
-  Pagination,
   Modal,
   Table,
   Tooltip,
@@ -23,14 +22,17 @@ import {
   IconKey,
   IconPlus,
   IconDotsVertical,
+  IconShieldLock,
 } from "@tabler/icons-react";
 import { useSearchParams, useOutletContext } from "react-router-dom";
 import { ITEM_TYPES } from "../components/AddItemModal";
 import { ItemDrawer } from "../components/ItemDrawer";
 import { useVault, VaultItem } from "@/app/providers/VaultProvider";
+import { generateTotpCode } from "@/shared/utils/totp";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery, useClipboard } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { MainHeader } from "@/shared/layouts/components/MainHeader";
 
 import classes from "./DashboardPage.module.css";
 
@@ -41,10 +43,20 @@ export function DashboardPage() {
   const clipboard = useClipboard();
 
   const [searchParams] = useSearchParams();
-  const { onOpenAdd, selectedIds, setSelectedIds } = useOutletContext<{
+  const {
+    onOpenAdd,
+    onExport,
+    onDelete,
+    selectedIds,
+    setSelectedIds,
+    headerTitle,
+  } = useOutletContext<{
     onOpenAdd: () => void;
+    onExport?: () => void;
+    onDelete?: () => void;
     selectedIds: Set<string>;
     setSelectedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+    headerTitle?: string;
   }>();
 
   const activeCategory = searchParams.get("category") || "all";
@@ -52,7 +64,6 @@ export function DashboardPage() {
   // State controls
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const searchQuery = searchParams.get("q") || "";
-  const [currentPage, setCurrentPage] = useState(1);
   const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
 
   // Sync category changes and clear selection during render
@@ -120,12 +131,44 @@ export function DashboardPage() {
     return "-";
   };
 
-  const itemsPerPage = showCards ? 9 : 15;
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const paginatedItems = filteredItems.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const isDrawerOpen = selectedItemId !== null;
+
+  // Keyboard ArrowUp / ArrowDown navigation between items
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isInputFocused = ["INPUT", "TEXTAREA"].includes(
+        (document.activeElement as HTMLElement)?.tagName || ""
+      );
+      if (isInputFocused || filteredItems.length === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!selectedItemId) {
+          setSelectedItemId(filteredItems[0].id);
+        } else {
+          const currentIndex = filteredItems.findIndex(
+            (item) => item.id === selectedItemId
+          );
+          if (currentIndex < filteredItems.length - 1) {
+            setSelectedItemId(filteredItems[currentIndex + 1].id);
+          }
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (selectedItemId) {
+          const currentIndex = filteredItems.findIndex(
+            (item) => item.id === selectedItemId
+          );
+          if (currentIndex > 0) {
+            setSelectedItemId(filteredItems[currentIndex - 1].id);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedItemId, filteredItems]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -139,22 +182,20 @@ export function DashboardPage() {
     });
   };
 
-  const isAllPageSelected =
-    paginatedItems.length > 0 &&
-    paginatedItems.every((item) => selectedIds.has(item.id));
-  const isSomePageSelected = paginatedItems.some((item) =>
-    selectedIds.has(item.id)
-  );
+  const isAllSelected =
+    filteredItems.length > 0 &&
+    filteredItems.every((item) => selectedIds.has(item.id));
+  const isSomeSelected = filteredItems.some((item) => selectedIds.has(item.id));
 
-  const toggleSelectAllPage = () => {
+  const toggleSelectAll = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (isAllPageSelected) {
-        for (const item of paginatedItems) {
+      if (isAllSelected) {
+        for (const item of filteredItems) {
           next.delete(item.id);
         }
       } else {
-        for (const item of paginatedItems) {
+        for (const item of filteredItems) {
           next.add(item.id);
         }
       }
@@ -181,300 +222,115 @@ export function DashboardPage() {
   const selectedItem = items.find((item) => item.id === selectedItemId);
 
   return (
-    <>
-      <Box className={classes.scrollContainer}>
-        {filteredItems.length === 0 ? (
-          // Premium Empty State
-          <Box
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              flex: 1,
-              minHeight: "350px",
-              textAlign: "center",
-            }}
-            px="md"
-          >
-            <IconShield
-              size={64}
-              color="var(--color-brand-primary)"
-              style={{ marginBottom: "16px", opacity: 0.8 }}
-            />
-            <Text fw={700} size="lg" mb={4}>
-              {t("noItemsFound")}
-            </Text>
-            <Text size="sm" c="dimmed" mb="lg" style={{ maxWidth: 350 }}>
-              {t("noItemsDesc")}
-            </Text>
-            <Button
-              leftSection={<IconPlus size={16} />}
-              color="blue"
-              onClick={onOpenAdd}
-            >
-              {t("createItem")}
-            </Button>
-          </Box>
-        ) : (
-          <Box
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              minHeight: "100%",
-            }}
-          >
+    <Box className={classes.masterDetailContainer}>
+      <Box className={classes.masterColumn}>
+        {headerTitle && (
+          <MainHeader
+            title={headerTitle}
+            selectedCount={selectedIds.size}
+            onExport={onExport}
+            onDelete={onDelete}
+          />
+        )}
+        <Box className={classes.scrollContainer}>
+          {filteredItems.length === 0 ? (
+            // Premium Empty State
             <Box
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "16px",
+                alignItems: "center",
+                justifyContent: "center",
                 flex: 1,
+                minHeight: "350px",
+                textAlign: "center",
+              }}
+              px="md"
+            >
+              <IconShield
+                size={64}
+                color="var(--color-brand-primary)"
+                style={{ marginBottom: "16px", opacity: 0.8 }}
+              />
+              <Text fw={700} size="lg" mb={4}>
+                {t("noItemsFound")}
+              </Text>
+              <Text size="sm" c="dimmed" mb="lg" style={{ maxWidth: 350 }}>
+                {t("noItemsDesc")}
+              </Text>
+              <Button
+                leftSection={<IconPlus size={16} />}
+                color="blue"
+                onClick={onOpenAdd}
+              >
+                {t("createItem")}
+              </Button>
+            </Box>
+          ) : (
+            <Box
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                minHeight: "100%",
               }}
             >
-              {showCards ? (
-                <Box className={classes.itemsGrid}>
-                  {paginatedItems.map((item) => (
-                    <Card
-                      key={item.id}
-                      withBorder
-                      className={classes.itemCard}
-                      onClick={() => setSelectedItemId(item.id)}
-                    >
-                      <Group
-                        justify="space-between"
-                        align="center"
-                        wrap="nowrap"
+              <Box
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                  flex: 1,
+                }}
+              >
+                {showCards ? (
+                  <Box className={classes.itemsGrid}>
+                    {filteredItems.map((item) => (
+                      <Card
+                        key={item.id}
+                        withBorder
+                        className={`${classes.itemCard} ${
+                          item.id === selectedItemId
+                            ? classes.itemCardActive
+                            : ""
+                        }`}
+                        onClick={() => setSelectedItemId(item.id)}
                       >
                         <Group
-                          gap="xs"
-                          style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
+                          justify="space-between"
+                          align="center"
                           wrap="nowrap"
                         >
-                          <Checkbox
-                            checked={selectedIds.has(item.id)}
-                            onChange={() => toggleSelect(item.id)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          {item.icon ? (
-                            <Avatar src={item.icon} size={32} radius="md" />
-                          ) : (
-                            <div className={classes.cardIconWrapper}>
-                              {getCategoryIcon(item.category)}
-                            </div>
-                          )}
-
-                          <Stack
-                            gap={0}
+                          <Group
+                            gap="xs"
                             style={{ overflow: "hidden", flex: 1, minWidth: 0 }}
-                          >
-                            <Text
-                              fw={700}
-                              size="sm"
-                              style={{
-                                color: "var(--color-neutral-dark)",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {item.title}
-                            </Text>
-                            {getPrimaryIdentifier(item) !== "-" && (
-                              <Text
-                                size="xs"
-                                c="dimmed"
-                                style={{
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  fontFamily:
-                                    item.category === "Credit Card"
-                                      ? "var(--mantine-font-family-monospace)"
-                                      : "inherit",
-                                }}
-                              >
-                                {getPrimaryIdentifier(item)}
-                              </Text>
-                            )}
-                          </Stack>
-                        </Group>
-
-                        <Group
-                          gap={4}
-                          className={classes.cardActions}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {item.username && (
-                            <Tooltip
-                              label={t("copyUsername", "Copy Username")}
-                              position="top"
-                              withArrow
-                            >
-                              <ActionIcon
-                                variant="subtle"
-                                color="gray"
-                                size="sm"
-                                onClick={() => clipboard.copy(item.username!)}
-                              >
-                                <IconCopy size={14} />
-                              </ActionIcon>
-                            </Tooltip>
-                          )}
-                          {item.password && (
-                            <Tooltip
-                              label={t("copyPassword", "Copy Password")}
-                              position="top"
-                              withArrow
-                            >
-                              <ActionIcon
-                                variant="subtle"
-                                color="gray"
-                                size="sm"
-                                onClick={() => clipboard.copy(item.password!)}
-                              >
-                                <IconKey size={14} />
-                              </ActionIcon>
-                            </Tooltip>
-                          )}
-                          <Menu position="bottom-end" shadow="md" radius="md">
-                            <Menu.Target>
-                              <ActionIcon
-                                variant="subtle"
-                                color="gray"
-                                size="sm"
-                              >
-                                <IconDotsVertical size={14} />
-                              </ActionIcon>
-                            </Menu.Target>
-                            <Menu.Dropdown>
-                              <Menu.Item
-                                leftSection={<IconCopy size={12} />}
-                                onClick={() => handleDuplicateItem(item)}
-                              >
-                                {t("duplicate", "Nhân bản")}
-                              </Menu.Item>
-                              <Menu.Item
-                                color="red"
-                                leftSection={<IconTrash size={12} />}
-                                onClick={() => setItemToDeleteId(item.id)}
-                              >
-                                {t("delete", "Xóa")}
-                              </Menu.Item>
-                            </Menu.Dropdown>
-                          </Menu>
-                        </Group>
-                      </Group>
-                    </Card>
-                  ))}
-                </Box>
-              ) : (
-                <Table.ScrollContainer
-                  minWidth={500}
-                  className={classes.tableScroll}
-                >
-                  <Table
-                    verticalSpacing="sm"
-                    striped
-                    highlightOnHover
-                    withTableBorder
-                    withRowBorders
-                  >
-                    <Table.Thead>
-                      <Table.Tr
-                        style={{
-                          borderBottom: "1px solid var(--color-neutral-light)",
-                        }}
-                      >
-                        <Table.Th style={{ width: 40, textAlign: "center" }}>
-                          <Checkbox
-                            checked={isAllPageSelected}
-                            indeterminate={
-                              isSomePageSelected && !isAllPageSelected
-                            }
-                            onChange={toggleSelectAllPage}
-                          />
-                        </Table.Th>
-                        <Table.Th
-                          style={{
-                            width: 60,
-                            color: "var(--color-neutral-medium)",
-                            textAlign: "center",
-                          }}
-                        >
-                          {t("tableHeaderIndex")}
-                        </Table.Th>
-                        <Table.Th
-                          style={{ color: "var(--color-neutral-medium)" }}
-                        >
-                          {t("tableHeaderTitle")}
-                        </Table.Th>
-                        <Table.Th
-                          style={{ color: "var(--color-neutral-medium)" }}
-                        >
-                          {t("tableHeaderCategory")}
-                        </Table.Th>
-                        <Table.Th
-                          style={{ color: "var(--color-neutral-medium)" }}
-                        >
-                          {t("tableHeaderUsername")}
-                        </Table.Th>
-                        <Table.Th
-                          style={{
-                            color: "var(--color-neutral-medium)",
-                            textAlign: "right",
-                          }}
-                        >
-                          {t("tableHeaderActions")}
-                        </Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {paginatedItems.map((item, index) => (
-                        <Table.Tr
-                          key={item.id}
-                          className={`${classes.tableRow} ${
-                            selectedIds.has(item.id)
-                              ? classes.tableRowSelected
-                              : ""
-                          }`}
-                          onClick={() => setSelectedItemId(item.id)}
-                          style={{
-                            borderBottom:
-                              "1px solid var(--color-neutral-light)",
-                          }}
-                        >
-                          <Table.Td
-                            onClick={(e) => e.stopPropagation()}
-                            style={{ textAlign: "center" }}
+                            wrap="nowrap"
                           >
                             <Checkbox
                               checked={selectedIds.has(item.id)}
                               onChange={() => toggleSelect(item.id)}
+                              onClick={(e) => e.stopPropagation()}
                             />
-                          </Table.Td>
-                          <Table.Td
-                            style={{
-                              color: "var(--mantine-color-dark-3)",
-                              fontSize: "13px",
-                              textAlign: "center",
-                            }}
-                          >
-                            {(currentPage - 1) * itemsPerPage + index + 1}
-                          </Table.Td>
-                          <Table.Td>
-                            <Group gap="xs" wrap="nowrap">
-                              {item.icon ? (
-                                <Avatar src={item.icon} size={32} radius="md" />
-                              ) : (
-                                <div className={classes.cardIconWrapper}>
-                                  {getCategoryIcon(item.category)}
-                                </div>
-                              )}
+                            {item.icon ? (
+                              <Avatar src={item.icon} size={32} radius="md" />
+                            ) : (
+                              <div className={classes.cardIconWrapper}>
+                                {getCategoryIcon(item.category)}
+                              </div>
+                            )}
+
+                            <Stack
+                              gap={0}
+                              style={{
+                                overflow: "hidden",
+                                flex: 1,
+                                minWidth: 0,
+                              }}
+                            >
                               <Text
                                 fw={700}
                                 size="sm"
                                 style={{
+                                  color: "var(--color-neutral-dark)",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
@@ -482,140 +338,446 @@ export function DashboardPage() {
                               >
                                 {item.title}
                               </Text>
-                            </Group>
-                          </Table.Td>
-                          <Table.Td>
-                            <Badge size="xs" variant="light" color="green">
-                              {t(`types.${item.category}`, item.category)}
-                            </Badge>
-                          </Table.Td>
-                          <Table.Td>
-                            <Text
-                              size="sm"
+                              {getPrimaryIdentifier(item) !== "-" && (
+                                <Text
+                                  size="xs"
+                                  c="dimmed"
+                                  style={{
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    fontFamily:
+                                      item.category === "Credit Card"
+                                        ? "var(--mantine-font-family-monospace)"
+                                        : "inherit",
+                                  }}
+                                >
+                                  {getPrimaryIdentifier(item)}
+                                </Text>
+                              )}
+                            </Stack>
+                          </Group>
+
+                          <Group
+                            gap={4}
+                            className={classes.cardActions}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {(() => {
+                              const totpField = item.customFields?.find(
+                                (cf) =>
+                                  cf.value?.startsWith("otpauth://") ||
+                                  cf.label?.toLowerCase().includes("totp") ||
+                                  cf.label?.toLowerCase().includes("one-time")
+                              );
+                              if (!totpField?.value) return null;
+                              return (
+                                <Tooltip
+                                  label="Copy Mã TOTP (2FA)"
+                                  position="top"
+                                  withArrow
+                                >
+                                  <ActionIcon
+                                    variant="light"
+                                    color="blue"
+                                    size="sm"
+                                    onClick={async () => {
+                                      const info = await generateTotpCode(
+                                        totpField.value
+                                      );
+                                      if (info.code && info.code !== "------") {
+                                        clipboard.copy(info.code);
+                                        notifications.show({
+                                          title: "Đã sao chép mã TOTP",
+                                          message: `Mã ${info.code} sẽ tự động bị xóa khỏi Clipboard sau 30s.`,
+                                          color: "blue",
+                                          autoClose: 2000,
+                                        });
+                                        setTimeout(
+                                          () => clipboard.copy(""),
+                                          30000
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    <IconShieldLock size={14} />
+                                  </ActionIcon>
+                                </Tooltip>
+                              );
+                            })()}
+                            {item.username && (
+                              <Tooltip
+                                label={t("copyUsername", "Copy Username")}
+                                position="top"
+                                withArrow
+                              >
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="gray"
+                                  size="sm"
+                                  onClick={() => clipboard.copy(item.username!)}
+                                >
+                                  <IconCopy size={14} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                            {item.password && (
+                              <Tooltip
+                                label={t("copyPassword", "Copy Password")}
+                                position="top"
+                                withArrow
+                              >
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="gray"
+                                  size="sm"
+                                  onClick={() => clipboard.copy(item.password!)}
+                                >
+                                  <IconKey size={14} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                            <Menu position="bottom-end" shadow="md" radius="md">
+                              <Menu.Target>
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="gray"
+                                  size="sm"
+                                >
+                                  <IconDotsVertical size={14} />
+                                </ActionIcon>
+                              </Menu.Target>
+                              <Menu.Dropdown>
+                                <Menu.Item
+                                  leftSection={<IconCopy size={12} />}
+                                  onClick={() => handleDuplicateItem(item)}
+                                >
+                                  {t("duplicate", "Nhân bản")}
+                                </Menu.Item>
+                                <Menu.Item
+                                  color="red"
+                                  leftSection={<IconTrash size={12} />}
+                                  onClick={() => setItemToDeleteId(item.id)}
+                                >
+                                  {t("delete", "Xóa")}
+                                </Menu.Item>
+                              </Menu.Dropdown>
+                            </Menu>
+                          </Group>
+                        </Group>
+                      </Card>
+                    ))}
+                  </Box>
+                ) : (
+                  <Table.ScrollContainer
+                    minWidth={isDrawerOpen ? 380 : 650}
+                    className={classes.tableScroll}
+                  >
+                    <Table
+                      verticalSpacing="sm"
+                      striped
+                      highlightOnHover
+                      withTableBorder
+                      withRowBorders
+                    >
+                      <Table.Thead>
+                        <Table.Tr
+                          style={{
+                            borderBottom:
+                              "1px solid var(--color-neutral-light)",
+                          }}
+                        >
+                          <Table.Th
+                            style={{
+                              width: 44,
+                              minWidth: 44,
+                              maxWidth: 44,
+                              textAlign: "center",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <Checkbox
+                              checked={isAllSelected}
+                              indeterminate={isSomeSelected && !isAllSelected}
+                              onChange={toggleSelectAll}
+                            />
+                          </Table.Th>
+                          {!isDrawerOpen && (
+                            <Table.Th
                               style={{
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
+                                width: 60,
+                                minWidth: 50,
+                                maxWidth: 70,
+                                color: "var(--color-neutral-medium)",
+                                textAlign: "center",
                                 whiteSpace: "nowrap",
-                                fontFamily:
-                                  "var(--mantine-font-family-monospace)",
                               }}
                             >
-                              {getPrimaryIdentifier(item)}
-                            </Text>
-                          </Table.Td>
-                          <Table.Td>
-                            <Group
-                              gap="xs"
-                              justify="flex-end"
-                              wrap="nowrap"
-                              className={classes.rowActions}
-                              onClick={(e) => e.stopPropagation()}
+                              {t("tableHeaderIndex")}
+                            </Table.Th>
+                          )}
+                          <Table.Th
+                            style={{
+                              color: "var(--color-neutral-medium)",
+                              minWidth: isDrawerOpen ? 140 : 160,
+                              maxWidth: isDrawerOpen ? 220 : 320,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {t("tableHeaderTitle")}
+                          </Table.Th>
+                          {!isDrawerOpen && (
+                            <Table.Th
+                              style={{
+                                color: "var(--color-neutral-medium)",
+                                minWidth: 120,
+                                maxWidth: 160,
+                                whiteSpace: "nowrap",
+                              }}
                             >
-                              {item.username && (
-                                <Tooltip
-                                  label={t("copyUsername", "Copy Username")}
-                                  position="top"
-                                  withArrow
-                                >
-                                  <ActionIcon
-                                    variant="subtle"
-                                    color="gray"
-                                    size="md"
-                                    onClick={() => {
-                                      clipboard.copy(item.username!);
-                                    }}
-                                  >
-                                    <IconCopy size={16} />
-                                  </ActionIcon>
-                                </Tooltip>
-                              )}
-                              {item.password && (
-                                <Tooltip
-                                  label={t("copyPassword", "Copy Password")}
-                                  position="top"
-                                  withArrow
-                                >
-                                  <ActionIcon
-                                    variant="subtle"
-                                    color="gray"
-                                    size="md"
-                                    onClick={() => {
-                                      clipboard.copy(item.password!);
-                                    }}
-                                  >
-                                    <IconKey size={16} />
-                                  </ActionIcon>
-                                </Tooltip>
-                              )}
-                              <Menu
-                                position="bottom-end"
-                                shadow="md"
-                                radius="md"
-                              >
-                                <Menu.Target>
-                                  <ActionIcon
-                                    variant="subtle"
-                                    color="gray"
-                                    size="md"
-                                  >
-                                    <IconDotsVertical size={16} />
-                                  </ActionIcon>
-                                </Menu.Target>
-                                <Menu.Dropdown>
-                                  <Menu.Item
-                                    leftSection={<IconCopy size={14} />}
-                                    onClick={() => handleDuplicateItem(item)}
-                                  >
-                                    {t("duplicate", "Nhân bản")}
-                                  </Menu.Item>
-                                  <Menu.Item
-                                    color="red"
-                                    leftSection={<IconTrash size={14} />}
-                                    onClick={() => setItemToDeleteId(item.id)}
-                                  >
-                                    {t("delete", "Xóa")}
-                                  </Menu.Item>
-                                </Menu.Dropdown>
-                              </Menu>
-                            </Group>
-                          </Table.Td>
+                              {t("tableHeaderCategory")}
+                            </Table.Th>
+                          )}
+                          <Table.Th
+                            style={{
+                              color: "var(--color-neutral-medium)",
+                              minWidth: 160,
+                              maxWidth: 350,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {t("tableHeaderUsername")}
+                          </Table.Th>
+                          <Table.Th
+                            style={{
+                              color: "var(--color-neutral-medium)",
+                              textAlign: "center",
+                              width: 80,
+                              minWidth: 70,
+                              maxWidth: 90,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {t("tableHeaderActions")}
+                          </Table.Th>
                         </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                </Table.ScrollContainer>
-              )}
+                      </Table.Thead>
+                      <Table.Tbody>
+                        {filteredItems.map((item, index) => (
+                          <Table.Tr
+                            key={item.id}
+                            className={`${classes.tableRow} ${
+                              selectedIds.has(item.id)
+                                ? classes.tableRowSelected
+                                : ""
+                            } ${
+                              item.id === selectedItemId
+                                ? classes.tableRowActive
+                                : ""
+                            }`}
+                            onClick={() => setSelectedItemId(item.id)}
+                            style={{
+                              borderBottom:
+                                "1px solid var(--color-neutral-light)",
+                            }}
+                          >
+                            <Table.Td
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                width: 44,
+                                minWidth: 44,
+                                maxWidth: 44,
+                                textAlign: "center",
+                              }}
+                            >
+                              <Checkbox
+                                checked={selectedIds.has(item.id)}
+                                onChange={() => toggleSelect(item.id)}
+                              />
+                            </Table.Td>
+                            {!isDrawerOpen && (
+                              <Table.Td
+                                style={{
+                                  width: 60,
+                                  minWidth: 50,
+                                  maxWidth: 70,
+                                  color: "var(--mantine-color-dark-3)",
+                                  fontSize: "13px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                {index + 1}
+                              </Table.Td>
+                            )}
+                            <Table.Td
+                              style={{
+                                minWidth: isDrawerOpen ? 140 : 160,
+                                maxWidth: isDrawerOpen ? 220 : 320,
+                              }}
+                            >
+                              <Group
+                                gap="xs"
+                                wrap="nowrap"
+                                style={{ overflow: "hidden" }}
+                              >
+                                {item.icon ? (
+                                  <Avatar
+                                    src={item.icon}
+                                    size={32}
+                                    radius="md"
+                                  />
+                                ) : (
+                                  <div className={classes.cardIconWrapper}>
+                                    {getCategoryIcon(item.category)}
+                                  </div>
+                                )}
+                                <Text
+                                  fw={700}
+                                  size="sm"
+                                  style={{
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    flex: 1,
+                                  }}
+                                >
+                                  {item.title}
+                                </Text>
+                              </Group>
+                            </Table.Td>
+                            {!isDrawerOpen && (
+                              <Table.Td
+                                style={{
+                                  minWidth: 120,
+                                  maxWidth: 160,
+                                }}
+                              >
+                                <Badge size="xs" variant="light" color="green">
+                                  {t(`types.${item.category}`, item.category)}
+                                </Badge>
+                              </Table.Td>
+                            )}
+                            <Table.Td
+                              style={{
+                                minWidth: 160,
+                                maxWidth: 350,
+                              }}
+                            >
+                              <Text
+                                size="sm"
+                                style={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  fontFamily:
+                                    "var(--mantine-font-family-monospace)",
+                                }}
+                              >
+                                {getPrimaryIdentifier(item)}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td
+                              onClick={(e) => e.stopPropagation()}
+                              style={{
+                                width: 80,
+                                minWidth: 70,
+                                maxWidth: 90,
+                                textAlign: "center",
+                              }}
+                            >
+                              <Group justify="center" wrap="nowrap">
+                                <Menu
+                                  position="bottom-end"
+                                  shadow="md"
+                                  radius="md"
+                                >
+                                  <Menu.Target>
+                                    <ActionIcon
+                                      variant="subtle"
+                                      color="gray"
+                                      size="md"
+                                    >
+                                      <IconDotsVertical size={16} />
+                                    </ActionIcon>
+                                  </Menu.Target>
+                                  <Menu.Dropdown>
+                                    {item.username && (
+                                      <Menu.Item
+                                        leftSection={<IconCopy size={14} />}
+                                        onClick={() => {
+                                          clipboard.copy(item.username!);
+                                          notifications.show({
+                                            title: t(
+                                              "copyUsernameSuccess",
+                                              "Đã sao chép Username"
+                                            ),
+                                            message: "",
+                                            color: "blue",
+                                            autoClose: 1500,
+                                          });
+                                        }}
+                                      >
+                                        {t("copyUsername", "Sao chép Username")}
+                                      </Menu.Item>
+                                    )}
+                                    {item.password && (
+                                      <Menu.Item
+                                        leftSection={<IconKey size={14} />}
+                                        onClick={() => {
+                                          clipboard.copy(item.password!);
+                                          notifications.show({
+                                            title: t(
+                                              "copyPasswordSuccess",
+                                              "Đã sao chép Mật khẩu"
+                                            ),
+                                            message: "",
+                                            color: "blue",
+                                            autoClose: 1500,
+                                          });
+                                        }}
+                                      >
+                                        {t("copyPassword", "Sao chép Mật khẩu")}
+                                      </Menu.Item>
+                                    )}
+                                    {(item.username || item.password) && (
+                                      <Menu.Divider />
+                                    )}
+                                    <Menu.Item
+                                      leftSection={<IconCopy size={14} />}
+                                      onClick={() => handleDuplicateItem(item)}
+                                    >
+                                      {t("duplicate", "Nhân bản")}
+                                    </Menu.Item>
+                                    <Menu.Item
+                                      color="red"
+                                      leftSection={<IconTrash size={14} />}
+                                      onClick={() => setItemToDeleteId(item.id)}
+                                    >
+                                      {t("delete", "Xóa")}
+                                    </Menu.Item>
+                                  </Menu.Dropdown>
+                                </Menu>
+                              </Group>
+                            </Table.Td>
+                          </Table.Tr>
+                        ))}
+                      </Table.Tbody>
+                    </Table>
+                  </Table.ScrollContainer>
+                )}
+              </Box>
             </Box>
-
-            {totalPages > 1 && (
-              <Group justify="center" mt="xl" pb="md">
-                <Pagination
-                  total={totalPages}
-                  value={currentPage}
-                  onChange={setCurrentPage}
-                  color="indigo"
-                  radius="md"
-                  size="sm"
-                />
-              </Group>
-            )}
-          </Box>
-        )}
+          )}
+        </Box>
       </Box>
 
       {/* Item Details and Edit Drawer */}
       {selectedItem && (
-        <>
-          <Box
-            className={classes.drawerOverlay}
-            onClick={() => setSelectedItemId(null)}
-          />
-          <ItemDrawer
-            key={selectedItem.id}
-            item={selectedItem}
-            onClose={() => setSelectedItemId(null)}
-          />
-        </>
+        <ItemDrawer
+          key={selectedItem.id}
+          item={selectedItem}
+          onClose={() => setSelectedItemId(null)}
+        />
       )}
 
       {/* Delete Confirmation Modal */}
@@ -626,13 +788,6 @@ export function DashboardPage() {
         centered
         radius="md"
         size="sm"
-        styles={{
-          content: {
-            backgroundColor: "rgba(26, 27, 30, 0.98)",
-            border: "1px solid var(--mantine-color-dark-4)",
-            color: "white",
-          },
-        }}
       >
         <Stack gap="md">
           <Text size="sm">
@@ -669,7 +824,7 @@ export function DashboardPage() {
           </Group>
         </Stack>
       </Modal>
-    </>
+    </Box>
   );
 }
 

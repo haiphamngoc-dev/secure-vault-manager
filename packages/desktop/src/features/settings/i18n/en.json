@@ -20,6 +20,8 @@
   "pairingKeyLabel": "Pairing Key",
   "pairingKeyPlaceholder": "Pairing key token",
   "pairingKeyDesc": "This key has been copied to your clipboard. Paste this key into the Extension configuration.",
+  "pairingKeyMaskDesc": "The key is masked by default. Click the eye icon to view or click copy to paste into your browser extensions.",
+  "regeneratePairKeyBtn": "Regenerate New Pairing Key",
   "statusLabel": "Status",
   "statusConnected": "Connected",
   "statusDisconnected": "Disconnected",
@@ -28,7 +30,7 @@
   "minimizeToTrayDesc": "If disabled, closing the window will exit the program completely.",
   "autostartLabel": "Launch automatically on system boot",
   "autostartDesc": "Start Secure Vault Manager automatically in the system tray when you log into your computer.",
-  "extensionPairingDesc": "To connect the extension to the Desktop app, you need to generate a pairing key and paste it into the browser extension settings.",
+  "extensionPairingDesc": "The pairing key connects the Desktop app with browser extensions. This key remains constant unless you explicitly regenerate a new key.",
   "browserIntegrationTitle": "Register Browser Integration (Native Messaging)",
   "chromeExtensionIdLabel": "Chrome Extension ID",
   "registerChromeBtn": "Register Chrome Integration",
@@ -38,5 +40,12 @@
   "registerProxySuccess": "Browser integration registered successfully!",
   "registerProxyError": "Failed to register browser integration.",
   "error": "Error",
-  "success": "Success"
+  "success": "Success",
+  "dataSection": "Vault Data Management (Import & Export)",
+  "importDataLabel": "Import Data",
+  "importDataDesc": "Support 1Password export (.1pux), JSON, and CSV files.",
+  "exportDataLabel": "Export Data",
+  "exportDataDesc": "Export vault items to JSON or CSV format.",
+  "importBtn": "Import Vault Data",
+  "exportBtn": "Export Vault Data"
 }

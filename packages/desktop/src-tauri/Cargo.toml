@@ -34,4 +34,6 @@ rand = "0.8"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util"] }
 reqwest = { version = "0.13" }
 base64 = "0.22"
+zip = "2"
+csv = "1.3"
 

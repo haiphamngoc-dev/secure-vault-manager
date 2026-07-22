@@ -18,6 +18,8 @@
   "pairingKeyLabel": "Mã kết nối (Pairing Key)",
   "pairingKeyPlaceholder": "Mã token kết nối",
   "pairingKeyDesc": "Mã này đã được tự động copy vào clipboard. Hãy dán mã này vào phần cài đặt của Extension.",
+  "pairingKeyMaskDesc": "Mã được ẩn mặc định. Nhấn biểu tượng mắt để xem mã hoặc bấm nút sao chép để dán vào Extension.",
+  "regeneratePairKeyBtn": "Sinh lại mã kết nối mới",
   "statusLabel": "Trạng thái",
   "statusConnected": "Đã kết nối",
   "statusDisconnected": "Chưa kết nối",
@@ -26,7 +28,7 @@
   "minimizeToTrayDesc": "Nếu không được bật, đóng cửa sổ sẽ thoát hoàn toàn chương trình.",
   "autostartLabel": "Tự động khởi động cùng hệ thống",
   "autostartDesc": "Tự động mở Secure Vault Manager chạy ngầm ở khay hệ thống khi đăng nhập máy tính.",
-  "extensionPairingDesc": "Để kết nối tiện ích mở rộng với ứng dụng Desktop, bạn cần tạo khóa ghép đôi và dán vào tiện ích trên trình duyệt.",
+  "extensionPairingDesc": "Mã kết nối (Pairing Key) được sử dụng để ghép đôi ứng dụng Desktop với tiện ích trình duyệt. Mã này luôn được giữ nguyên trừ khi bạn chủ động sinh lại mã mới.",
   "browserIntegrationTitle": "Đăng ký tích hợp trình duyệt (Native Messaging)",
   "chromeExtensionIdLabel": "Chrome Extension ID",
   "registerChromeBtn": "Đăng ký kết nối Chrome",
@@ -36,5 +38,12 @@
   "registerProxySuccess": "Đăng ký kết nối trình duyệt thành công!",
   "registerProxyError": "Đăng ký kết nối trình duyệt thất bại.",
   "error": "Lỗi",
-  "success": "Thành công"
+  "success": "Thành công",
+  "dataSection": "Quản lý dữ liệu Vault (Import & Export)",
+  "importDataLabel": "Nhập dữ liệu (Import)",
+  "importDataDesc": "Hỗ trợ tệp xuất từ 1Password (.1pux), tệp JSON và tệp CSV.",
+  "exportDataLabel": "Xuất dữ liệu (Export)",
+  "exportDataDesc": "Xuất dữ liệu Vault thành tệp JSON hoặc CSV.",
+  "importBtn": "Nhập dữ liệu (Import)",
+  "exportBtn": "Xuất dữ liệu (Export)"
 }

@@ -4,8 +4,8 @@ import { Outlet, useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useVault } from "@/app/providers/VaultProvider";
 import { Sidebar } from "./components/Sidebar";
-import { MainHeader } from "./components/MainHeader";
 import { AddItemModal } from "@/features/dashboard/components/AddItemModal";
+import { ExportModal } from "@/features/dashboard/components/ExportModal";
 import { useAutoLock } from "@/features/settings/hooks/useAutoLock";
 import { notifications } from "@mantine/notifications";
 import classes from "./MainLayout.module.css";
@@ -19,6 +19,7 @@ export function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Selection states
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -71,24 +72,6 @@ export function MainLayout() {
         onMobileClose={() => setMobileOpen(false)}
       />
       <Box className={classes.mainContent}>
-        {headerTitle && (
-          <MainHeader
-            title={headerTitle}
-            selectedCount={location.pathname === "/" ? selectedIds.size : 0}
-            onExport={() => {
-              notifications.show({
-                title: t("exportSelected", "Xuất dữ liệu"),
-                message: t(
-                  "exportNotImplemented",
-                  "Tính năng xuất dữ liệu sẽ được cập nhật sau."
-                ),
-                color: "blue",
-                autoClose: 2500,
-              });
-            }}
-            onDelete={() => setConfirmBulkDelete(true)}
-          />
-        )}
         <Box
           style={{
             flex: 1,
@@ -101,8 +84,11 @@ export function MainLayout() {
             context={{
               openMobileSidebar: () => setMobileOpen(true),
               onOpenAdd: () => setIsAddModalOpen(true),
+              onExport: () => setIsExportModalOpen(true),
+              onDelete: () => setConfirmBulkDelete(true),
               selectedIds,
               setSelectedIds,
+              headerTitle,
             }}
           />
         </Box>
@@ -112,6 +98,13 @@ export function MainLayout() {
       <AddItemModal
         opened={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+      />
+
+      {/* Quick Export Modal */}
+      <ExportModal
+        opened={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        selectedIds={Array.from(selectedIds)}
       />
 
       {/* Bulk Delete Confirmation Modal */}

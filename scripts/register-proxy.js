@@ -173,7 +173,7 @@ function register() {
         console.log(
           `Registered Chrome Native Messaging Host at: ${path.join(chromeDir, hostName)}`
         );
-      } catch (err) {
+      } catch {
         // Ignore individual browser dir errors
       }
     }
@@ -186,7 +186,7 @@ function register() {
         console.log(
           `Registered Firefox Native Messaging Host at: ${path.join(firefoxDir, hostName)}`
         );
-      } catch (err) {
+      } catch {
         // Ignore individual browser dir errors
       }
     }

@@ -343,8 +343,10 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     label: string;
     value: string;
     type: string;
+    section?: string;
     isCustom: boolean;
   }
+
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [websites, setWebsites] = useState<WebsiteInput[]>([
     { id: generateId(), value: "" },
@@ -449,11 +451,12 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
 
   // Custom fields
   const handleAddCustomField = (
-    type: "text" | "password" | "date" | "url" | "email" | "phone"
+    type: "text" | "password" | "date" | "url" | "email" | "phone",
+    defaultLabel = ""
   ) => {
     const newField: FormField = {
       id: generateId(),
-      label: "",
+      label: defaultLabel,
       value: "",
       type,
       isCustom: true,
@@ -549,6 +552,7 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
         label: field.label || "Field name",
         value: field.value,
         type: field.type === "password" ? "password" : "text",
+        section: field.section || undefined,
       }));
 
     addItem({
@@ -879,9 +883,17 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
                 </Button>
               </Menu.Target>
               <Menu.Dropdown>
+                <Menu.Item
+                  onClick={() =>
+                    handleAddCustomField("password", "One-Time Password (TOTP)")
+                  }
+                >
+                  Mã 2FA / TOTP Secret
+                </Menu.Item>
                 <Menu.Item onClick={() => handleAddCustomField("text")}>
                   Text
                 </Menu.Item>
+
                 <Menu.Item onClick={() => handleAddCustomField("password")}>
                   Password
                 </Menu.Item>

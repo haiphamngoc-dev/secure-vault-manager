@@ -1,0 +1,50 @@
+.modalHeader {
+  background-color: transparent !important;
+  border-bottom: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08));
+  padding-bottom: var(--mantine-spacing-md);
+  margin-bottom: var(--mantine-spacing-sm);
+}
+
+.modalTitle {
+  font-family: "Outfit", "Inter", sans-serif;
+  font-weight: 700;
+  color: var(--color-neutral-dark);
+  font-size: 1.1rem;
+}
+
+.modalContent {
+  background-color: light-dark(
+    rgba(255, 255, 255, 0.85),
+    rgba(15, 20, 38, 0.85)
+  ) !important;
+  border: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08)) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: light-dark(
+    0 20px 40px rgba(0, 0, 0, 0.06),
+    0 20px 40px rgba(0, 0, 0, 0.4)
+  ) !important;
+  border-radius: var(--mantine-radius-lg);
+  color: var(--color-neutral-dark);
+  padding: var(--mantine-spacing-xs);
+}
+
+.warningCard {
+  background-color: light-dark(
+    rgba(245, 158, 11, 0.08),
+    rgba(245, 158, 11, 0.12)
+  );
+  border: 1px solid
+    light-dark(rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.25));
+  border-radius: var(--mantine-radius-md);
+}
+
+.formatRadioGroup {
+  margin-top: var(--mantine-spacing-xs);
+}
+
+.scopeBadge {
+  font-family: var(--mantine-font-family-monospace);
+}

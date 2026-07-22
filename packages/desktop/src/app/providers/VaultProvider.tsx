@@ -10,8 +10,17 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { LoadingOverlay, Box } from "@mantine/core";
 
+export interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+  type: string;
+  section?: string;
+}
+
 export interface VaultItem {
   id: string;
+
   title: string;
   category: string;
   username?: string;
@@ -19,7 +28,7 @@ export interface VaultItem {
   url?: string;
   notes?: string;
   updatedAt: number;
-  customFields?: { id: string; label: string; value: string; type: string }[];
+  customFields?: CustomField[];
   tags?: string[];
   icon?: string;
 }
@@ -113,6 +122,11 @@ export function VaultProvider({
       }>("get_vaults");
       setVaults(registry.vaults);
       setDefaultVaultId(registry.default_vault_id);
+      if (registry.vaults.length === 0) {
+        setStatus("uninitialized");
+        setCurrentVaultId(null);
+        setDefaultVaultId(null);
+      }
     } catch (err) {
       console.error("Failed to fetch vaults registry:", err);
     }
@@ -130,6 +144,19 @@ export function VaultProvider({
       }
 
       await refreshVaultsList();
+
+      const registry = await invoke<{
+        default_vault_id: string | null;
+        vaults: VaultProfile[];
+      }>("get_vaults");
+
+      if (registry.vaults.length === 0) {
+        setStatus("uninitialized");
+        setVaults([]);
+        setCurrentVaultId(null);
+        setDefaultVaultId(null);
+        return;
+      }
 
       const unlocked = await invoke<boolean>("check_is_unlocked");
       if (unlocked) {
@@ -266,12 +293,16 @@ export function VaultProvider({
   const deleteVault = useCallback(
     async (vaultId: string, deleteFile: boolean) => {
       await invoke("delete_vault", { vaultId, deleteFile });
-      await refreshVaultsList();
       if (currentVaultId === vaultId) {
-        await lock();
+        try {
+          await invoke("lock");
+        } catch {
+          // ignore lock error if already locked
+        }
       }
+      await checkVaultStatus();
     },
-    [currentVaultId, refreshVaultsList, lock]
+    [currentVaultId, checkVaultStatus]
   );
 
   // Auto-save vault items when they change

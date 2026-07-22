@@ -41,6 +41,7 @@ export function VaultSelectionPage() {
     initialize,
     setDefaultVault,
     deleteVault,
+    checkVaultStatus,
   } = useVault();
 
   // Selection & UI States
@@ -62,6 +63,13 @@ export function VaultSelectionPage() {
   const [deleteOpened, setDeleteOpened] = useState(false);
   const [vaultToDelete, setVaultToDelete] = useState<VaultProfile | null>(null);
   const [deleteFile, setDeleteFile] = useState(false);
+
+  // If no vaults remain, trigger checkVaultStatus to switch to Onboarding screen immediately
+  useEffect(() => {
+    if (vaults.length === 0) {
+      checkVaultStatus();
+    }
+  }, [vaults.length, checkVaultStatus]);
 
   // Autoload default vault on mount
   useEffect(() => {

@@ -8,7 +8,10 @@ pub struct CustomField {
     pub label: String,
     pub value: String,
     pub r#type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub section: Option<String>,
 }
+
 
 /// Represents a single credential item stored in the secure vault.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
