@@ -18,6 +18,7 @@ import {
   Avatar,
   FileButton,
   Transition,
+  Select,
 } from "@mantine/core";
 import {
   IconX,
@@ -193,6 +194,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   );
 
   // Form states (used in Edit mode)
+  const [category, setCategory] = useState(item.category);
   const [title, setTitle] = useState(item.title);
   const [formFields, setFormFields] = useState<FormField[]>(() =>
     getInitialFormFields()
@@ -207,7 +209,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   const [icon, setIcon] = useState<string | undefined>(item.icon);
   const [isFetchingIcon, setIsFetchingIcon] = useState(false);
 
-  const activeType = ITEM_TYPES.find((t) => t.id === item.category);
+  const activeType = ITEM_TYPES.find((t) => t.id === category);
 
   // List of all distinct section names in edit mode
   const allEditSections = useMemo(() => {
@@ -370,6 +372,63 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     }
   };
 
+  const handleCategoryChange = (newCategory: string) => {
+    if (newCategory === category) return;
+    setCategory(newCategory);
+
+    const newTemplate = ITEM_TYPES.find((t) => t.id === newCategory);
+    const templateFields = newTemplate?.fields || [];
+    const templateFieldNames = new Set(templateFields.map((f) => f.name));
+
+    setFormFields((prevFields) => {
+      // 1. Demote unmapped old standard fields to custom fields so data is not lost
+      const updatedExisting = prevFields.map((field) => {
+        if (!field.isCustom) {
+          const isStandardId = [
+            "username",
+            "password",
+            "url",
+            "notes",
+            "adminUser",
+            "passphrase",
+            "wifiPassword",
+            "adminPassword",
+            "apiSecret",
+            "cvv",
+            "pin",
+            "server",
+            "endpoint",
+            "ipAddress",
+          ].includes(field.id);
+
+          const staysStandard = templateFieldNames.has(field.id);
+          if (isStandardId && !staysStandard) {
+            return {
+              ...field,
+              isCustom: true,
+            };
+          }
+        }
+        return field;
+      });
+
+      const existingFieldIds = new Set(updatedExisting.map((f) => f.id));
+
+      // 2. Supplement missing template fields from the new Category
+      const addedTemplateFields: FormField[] = templateFields
+        .filter((tf) => !existingFieldIds.has(tf.name))
+        .map((tf) => ({
+          id: tf.name,
+          label: t(tf.labelKey, tf.labelKey),
+          value: "",
+          type: tf.type,
+          isCustom: false,
+        }));
+
+      return [...updatedExisting, ...addedTemplateFields];
+    });
+  };
+
   const handleSave = () => {
     const findFieldVal = (id: string) =>
       formFields.find((f) => f.id === id)?.value;
@@ -386,7 +445,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
       findFieldVal("pin");
 
     const url =
-      item.category === "Login"
+      category === "Login"
         ? websites[0]
         : findFieldVal("server") ||
           findFieldVal("endpoint") ||
@@ -405,12 +464,12 @@ export const ItemDrawer = React.memo(function ItemDrawer({
           "pin",
         ].includes(field.id);
         const isUrl =
-          (item.category === "Login" && field.id === "url") ||
+          (category === "Login" && field.id === "url") ||
           field.id === "server" ||
           field.id === "endpoint" ||
           field.id === "ipAddress";
 
-        return !isUsername && !isPassword && !isUrl;
+        return (!isUsername && !isPassword && !isUrl) || field.isCustom;
       })
       .map((field) => ({
         id: field.id,
@@ -422,6 +481,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
 
     updateItem(item.id, {
       title,
+      category,
       username: username || undefined,
       password: password || undefined,
       url: url || undefined,
@@ -728,6 +788,26 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                           </ActionIcon>
                         )}
                       </Box>
+
+                      {!secName && (
+                        <Box mb="md">
+                          <Select
+                            label={t("categoryLabel", "Danh mục")}
+                            value={category}
+                            onChange={(val) => val && handleCategoryChange(val)}
+                            data={ITEM_TYPES.map((type) => ({
+                              value: type.id,
+                              label: t(`types.${type.id}`, type.id),
+                            }))}
+                            radius="md"
+                            size="sm"
+                            leftSection={
+                              activeType &&
+                              React.createElement(activeType.icon, { size: 16 })
+                            }
+                          />
+                        </Box>
+                      )}
 
                       {/* Section Fields */}
                       {secFields.map((field) => {
