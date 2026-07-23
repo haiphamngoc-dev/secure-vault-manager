@@ -490,20 +490,9 @@ export function VaultSelectionPage() {
         radius="lg"
         centered
         size="sm"
-        styles={{
-          content: {
-            backgroundColor: "var(--color-neutral-card)",
-            border: "1px solid var(--color-neutral-light)",
-            color: "var(--color-neutral-dark)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-          },
-          header: {
-            backgroundColor: "transparent",
-            color: "var(--color-neutral-dark)",
-            borderBottom: "1px solid var(--color-neutral-light)",
-            paddingBottom: "12px",
-          },
+        overlayProps={{
+          blur: 8,
+          backgroundOpacity: 0.35,
         }}
       >
         <Stack gap="md" mt="xs">
@@ -515,7 +504,7 @@ export function VaultSelectionPage() {
           </Text>
 
           <Alert color="red" icon={<IconAlertTriangle size={20} />} radius="md">
-            <Text size="xs" fw={500} style={{ color: "white" }}>
+            <Text size="xs" fw={500}>
               {t(
                 "deleteVaultWarning",
                 "Hành động này sẽ xóa Vault khỏi danh sách quản lý và XÓA VĨNH VIỄN tệp dữ liệu mã hóa (.enc) trên máy tính. Tất cả dữ liệu bên trong Vault này sẽ bị mất và không thể khôi phục."

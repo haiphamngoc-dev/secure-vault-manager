@@ -135,6 +135,7 @@
   "exportErrorNotification": "Lỗi xuất dữ liệu",
   "exportErrorMsg": "Không thể khởi tạo dữ liệu xuất.",
   "svmFormatLabel": "Tệp mã hóa Secure Vault (.svm)",
+  "recommendedBadge": "Khuyên dùng",
   "svmFormatDesc": "Mã hóa nhị phân an toàn với mật khẩu (AES-256-GCM). Thích hợp để khôi phục & sao lưu bảo mật.",
   "jsonFormatLabel": "Tệp JSON (.json)",
   "csvFormatLabel": "Tệp CSV (.csv)",
@@ -177,5 +178,9 @@
   "totpCopiedTitle": "Đã sao chép mã TOTP",
   "totpCopiedMsg": "Mã {{digits}} sẽ tự động bị xóa khỏi Bộ nhớ tạm sau 30 giây để bảo mật.",
   "totpRefreshIn": "Làm mới sau {{seconds}}s",
-  "totpCopyTooltip": "Sao chép mã 6 số"
+  "totpCopyTooltip": "Sao chép mã 6 số",
+  "categoryLabel": "Danh mục",
+  "errorUpload": "Lỗi tải ảnh",
+  "errorUploadDesc": "Không thể xử lý file ảnh này.",
+  "dragToResize": "Kéo để điều chỉnh kích thước"
 }

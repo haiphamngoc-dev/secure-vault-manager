@@ -112,12 +112,19 @@ export function TotpDisplay({
       <Group justify="space-between" align="center" wrap="nowrap">
         <Stack gap={2} style={{ flex: 1 }}>
           <Group gap="xs" align="center">
-            <IconShieldLock size={16} color="var(--mantine-color-blue-4)" />
-            <Text size="xs" fw={600} c="dimmed">
+            <IconShieldLock
+              size={16}
+              color="light-dark(var(--mantine-color-blue-7), var(--mantine-color-blue-4))"
+            />
+            <Text size="xs" className={classes.totpLabel}>
               {displayLabel}
             </Text>
             {parsed.issuer && (
-              <Text size="xs" c="blue.4" fw={500}>
+              <Text
+                size="xs"
+                color="light-dark(var(--mantine-color-blue-7), var(--mantine-color-blue-4))"
+                fw={600}
+              >
                 ({parsed.issuer})
               </Text>
             )}
@@ -127,7 +134,7 @@ export function TotpDisplay({
             <Text className={classes.totpCode}>{formattedCode}</Text>
             <Text
               size="xs"
-              c="dimmed"
+              className={classes.totpSubtext}
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {t("totpRefreshIn", {

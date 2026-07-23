@@ -245,8 +245,50 @@ export function DashboardPage() {
 
   const selectedItem = items.find((item) => item.id === selectedItemId);
 
+  // Resizable ItemDrawer width state (min 320px, max 700px)
+  const [drawerWidth, setDrawerWidth] = useState<number>(400);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newWidth = containerRect.right - e.clientX;
+      const maxAllowed = Math.min(700, containerRect.width * 0.65);
+      const clampedWidth = Math.max(320, Math.min(maxAllowed, newWidth));
+      setDrawerWidth(clampedWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isResizing]);
+
   return (
-    <Box className={classes.masterDetailContainer}>
+    <Box
+      ref={containerRef}
+      className={`${classes.masterDetailContainer} ${
+        isResizing ? classes.masterDetailContainerResizing : ""
+      } ${isResizing ? classes.isResizing : ""}`}
+      style={{
+        gridTemplateColumns: selectedItem ? `1fr ${drawerWidth}px` : "1fr 0px",
+      }}
+    >
       <Box className={classes.masterColumn}>
         {headerTitle && (
           <MainHeader
@@ -295,15 +337,16 @@ export function DashboardPage() {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                minHeight: "100%",
+                flex: 1,
+                minHeight: 0,
               }}
             >
               <Box
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "16px",
                   flex: 1,
+                  minHeight: 0,
                 }}
               >
                 {showCards ? (
@@ -507,6 +550,7 @@ export function DashboardPage() {
                       highlightOnHover
                       withTableBorder
                       withRowBorders
+                      stickyHeader
                     >
                       <Table.Thead>
                         <Table.Tr
@@ -800,13 +844,29 @@ export function DashboardPage() {
       </Box>
 
       {/* Item Details and Edit Drawer */}
-      {selectedItem && (
-        <ItemDrawer
-          key={selectedItem.id}
-          item={selectedItem}
-          onClose={() => setSelectedItemId(null)}
-        />
-      )}
+      <Box className={classes.drawerWrapper} style={{ width: drawerWidth }}>
+        {selectedItem && (
+          <>
+            <Box
+              className={`${classes.splitterHandle} ${
+                isResizing ? classes.splitterHandleActive : ""
+              }`}
+              onMouseDown={handleMouseDown}
+              onDoubleClick={() => setDrawerWidth(400)}
+              title={t(
+                "dragToResize",
+                "Kéo để điều chỉnh kích thước (Nhấp kép để reset)"
+              )}
+            >
+              <Box className={classes.splitterGrip} />
+            </Box>
+            <ItemDrawer
+              item={selectedItem}
+              onClose={() => setSelectedItemId(null)}
+            />
+          </>
+        )}
+      </Box>
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -814,8 +874,12 @@ export function DashboardPage() {
         onClose={() => setItemToDeleteId(null)}
         title={t("confirmDeleteTitle", "Xác nhận xóa")}
         centered
-        radius="md"
+        radius="lg"
         size="sm"
+        overlayProps={{
+          blur: 8,
+          backgroundOpacity: 0.35,
+        }}
       >
         <Stack gap="md">
           <Text size="sm">

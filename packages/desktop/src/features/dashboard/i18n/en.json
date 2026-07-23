@@ -135,6 +135,7 @@
   "exportErrorNotification": "Export Error",
   "exportErrorMsg": "Unable to prepare export data.",
   "svmFormatLabel": "Secure Vault Encrypted File (.svm)",
+  "recommendedBadge": "Recommended",
   "svmFormatDesc": "Secure binary encryption with password (AES-256-GCM). Ideal for secure backup & restore.",
   "jsonFormatLabel": "JSON File (.json)",
   "csvFormatLabel": "CSV File (.csv)",
@@ -177,5 +178,9 @@
   "totpCopiedTitle": "TOTP Code Copied",
   "totpCopiedMsg": "Code {{digits}} will be automatically cleared from Clipboard after 30 seconds for security.",
   "totpRefreshIn": "Refreshes in {{seconds}}s",
-  "totpCopyTooltip": "Copy 6-digit code"
+  "totpCopyTooltip": "Copy 6-digit code",
+  "categoryLabel": "Category",
+  "errorUpload": "Image Upload Error",
+  "errorUploadDesc": "Unable to process this image file.",
+  "dragToResize": "Drag to resize"
 }

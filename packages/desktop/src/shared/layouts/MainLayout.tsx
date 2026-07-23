@@ -113,14 +113,11 @@ export function MainLayout() {
         onClose={() => setConfirmBulkDelete(false)}
         title={t("confirmBulkDeleteTitle", "Xác nhận xóa hàng loạt")}
         centered
-        radius="md"
+        radius="lg"
         size="sm"
-        styles={{
-          content: {
-            backgroundColor: "rgba(26, 27, 30, 0.98)",
-            border: "1px solid var(--mantine-color-dark-4)",
-            color: "white",
-          },
+        overlayProps={{
+          blur: 8,
+          backgroundOpacity: 0.35,
         }}
       >
         <Stack gap="md">

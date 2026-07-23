@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import {
   Box,
   Group,
@@ -84,7 +90,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   onClose,
 }: Readonly<ItemDrawerProps>) {
   const { t } = useTranslation();
-  const { updateItem, deleteItem } = useVault();
+  const { updateItem } = useVault();
   const clipboard = useClipboard();
 
   const [opened, setOpened] = useState(false);
@@ -120,64 +126,68 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     });
   };
 
-  const getInitialFormFields = (): FormField[] => {
-    const parsedFields: FormField[] = [];
+  const getInitialFormFields = useCallback(
+    (currentItem: VaultItem = item): FormField[] => {
+      const parsedFields: FormField[] = [];
 
-    if (item.username !== undefined) {
-      parsedFields.push({
-        id: "username",
-        label: t("usernameLabel", "Username"),
-        value: item.username,
-        type: "text",
-        isCustom: false,
-      });
-    }
-
-    if (item.password !== undefined) {
-      parsedFields.push({
-        id: "password",
-        label: t("passwordLabel", "Password"),
-        value: item.password,
-        type: "password",
-        isCustom: false,
-      });
-    }
-
-    if (item.url !== undefined && item.category !== "Login") {
-      const template = ITEM_TYPES.find((t) => t.id === item.category);
-      const urlField = template?.fields.find((f) =>
-        ["server", "endpoint", "ipAddress"].includes(f.name)
-      );
-      parsedFields.push({
-        id: urlField?.name || "url",
-        label: urlField ? t(urlField.labelKey, urlField.labelKey) : "URL",
-        value: item.url,
-        type: "text",
-        isCustom: false,
-      });
-    }
-
-    if (item.customFields) {
-      item.customFields.forEach((cf) => {
-        const template = ITEM_TYPES.find((t) => t.id === item.category);
-        const templateField = template?.fields.find((f) => f.name === cf.id);
+      if (currentItem.username !== undefined) {
         parsedFields.push({
-          id: cf.id,
-          label: cf.label,
-          value: cf.value,
-          type: cf.type,
-          section: cf.section,
-          isCustom: !templateField,
+          id: "username",
+          label: t("usernameLabel", "Username"),
+          value: currentItem.username,
+          type: "text",
+          isCustom: false,
         });
-      });
-    }
+      }
 
-    return parsedFields;
-  };
+      if (currentItem.password !== undefined) {
+        parsedFields.push({
+          id: "password",
+          label: t("passwordLabel", "Password"),
+          value: currentItem.password,
+          type: "password",
+          isCustom: false,
+        });
+      }
+
+      if (currentItem.url !== undefined && currentItem.category !== "Login") {
+        const template = ITEM_TYPES.find((t) => t.id === currentItem.category);
+        const urlField = template?.fields.find((f) =>
+          ["server", "endpoint", "ipAddress"].includes(f.name)
+        );
+        parsedFields.push({
+          id: urlField?.name || "url",
+          label: urlField ? t(urlField.labelKey, urlField.labelKey) : "URL",
+          value: currentItem.url,
+          type: "text",
+          isCustom: false,
+        });
+      }
+
+      if (currentItem.customFields) {
+        currentItem.customFields.forEach((cf) => {
+          const template = ITEM_TYPES.find(
+            (t) => t.id === currentItem.category
+          );
+          const templateField = template?.fields.find((f) => f.name === cf.id);
+          parsedFields.push({
+            id: cf.id,
+            label: cf.label,
+            value: cf.value,
+            type: cf.type,
+            section: cf.section,
+            isCustom: !templateField,
+          });
+        });
+      }
+
+      return parsedFields;
+    },
+    [item, t]
+  );
 
   // Mode state
   const [isEditing, setIsEditing] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [sectionToDelete, setSectionToDelete] = useState<{
     name: string;
     fieldCount: number;
@@ -185,24 +195,17 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
 
-  useEffect(() => {
-    setIcon(item.icon);
-  }, [item.icon]);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === "Escape" &&
-        !showDeleteConfirm &&
-        !sectionToDelete &&
-        !isUrlModalOpen
-      ) {
+      if (e.key === "Escape" && !sectionToDelete && !isUrlModalOpen) {
         handleClose();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showDeleteConfirm, sectionToDelete, isUrlModalOpen]);
+  }, [sectionToDelete, isUrlModalOpen]);
 
   // View state: track which password fields are revealed
   const [revealedFields, setRevealedFields] = useState<Record<string, boolean>>(
@@ -213,7 +216,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   const [category, setCategory] = useState(item.category);
   const [title, setTitle] = useState(item.title);
   const [formFields, setFormFields] = useState<FormField[]>(() =>
-    getInitialFormFields()
+    getInitialFormFields(item)
   );
   const [extraSections, setExtraSections] = useState<string[]>([]);
   const [websites, setWebsites] = useState<string[]>(() =>
@@ -226,6 +229,26 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   const [userHasCustomIcon, setUserHasCustomIcon] = useState(false);
   const [isFetchingIcon, setIsFetchingIcon] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync internal state when selecting a different item without closing drawer
+  useEffect(() => {
+    setIsEditing(false);
+    setSectionToDelete(null);
+    setIsUrlModalOpen(false);
+    setRevealedFields({});
+    setCategory(item.category);
+    setTitle(item.title);
+    setFormFields(getInitialFormFields(item));
+    setExtraSections([]);
+    setWebsites(item.category === "Login" && item.url ? [item.url] : [""]);
+    setNotes(item.notes || "");
+    setTags(item.tags || []);
+    setTagInput("");
+    setIcon(item.icon);
+    setUserHasCustomIcon(false);
+    setCopiedFieldId(null);
+    scrollAreaRef.current?.scrollTo({ top: 0 });
+  }, [item, getInitialFormFields]);
 
   const activeType = ITEM_TYPES.find((t) => t.id === category);
 
@@ -743,13 +766,13 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                   <Tooltip label={t("changeIcon", "Đổi biểu tượng")}>
                     <Box style={{ cursor: "pointer", position: "relative" }}>
                       {effectiveIcon ? (
-                        <Avatar src={effectiveIcon} size={54} radius="lg" />
+                        <Avatar src={effectiveIcon} size={36} radius="md" />
                       ) : (
                         <div
                           className={`${classes.iconWrapperLarge} ${activeType?.bgClass}`}
                         >
                           {activeType &&
-                            React.createElement(activeType.icon, { size: 26 })}
+                            React.createElement(activeType.icon, { size: 20 })}
                         </div>
                       )}
                       {isFetchingIcon && (
@@ -758,7 +781,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                             position: "absolute",
                             inset: 0,
                             backgroundColor: "rgba(0,0,0,0.5)",
-                            borderRadius: "12px",
+                            borderRadius: "8px",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -806,13 +829,13 @@ export const ItemDrawer = React.memo(function ItemDrawer({
             ) : (
               <div style={{ flexShrink: 0 }}>
                 {effectiveIcon ? (
-                  <Avatar src={effectiveIcon} size={54} radius="lg" />
+                  <Avatar src={effectiveIcon} size={36} radius="md" />
                 ) : (
                   <div
                     className={`${classes.iconWrapperLarge} ${activeType?.bgClass}`}
                   >
                     {activeType &&
-                      React.createElement(activeType.icon, { size: 26 })}
+                      React.createElement(activeType.icon, { size: 20 })}
                   </div>
                 )}
               </div>
@@ -846,7 +869,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
           </Box>
 
           {/* Drawer Body Scroll */}
-          <Box className={classes.scrollArea}>
+          <Box ref={scrollAreaRef} className={classes.scrollArea}>
             {isEditing ? (
               // ==================== EDIT MODE ====================
               <>
@@ -959,7 +982,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                                   styles={{
                                     input: {
                                       fontWeight: 600,
-                                      color: "var(--mantine-color-white)",
+                                      color: "var(--color-neutral-dark)",
                                       fontSize: "var(--mantine-font-size-xs)",
                                       padding: 0,
                                       height: "auto",
@@ -968,7 +991,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                                   }}
                                 />
                               ) : (
-                                <Text size="xs" fw={600} c="white">
+                                <Text size="xs" fw={600} c="dimmed">
                                   {field.label}
                                 </Text>
                               )}
@@ -1022,7 +1045,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
 
                 {item.category === "Login" && (
                   <Box className={classes.section}>
-                    <Text size="xs" fw={600} c="white">
+                    <Text size="xs" fw={600} c="dimmed">
                       {t("websiteLabel")}
                     </Text>
                     <TextInput
@@ -1068,7 +1091,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
 
                 {/* Edit Tags */}
                 <Box className={classes.section}>
-                  <Text size="xs" fw={600} c="white" mb={4}>
+                  <Text size="xs" fw={600} c="dimmed" mb={4}>
                     {t("tagsLabel")}
                   </Text>
                   <Group gap="xs" mb="xs">
@@ -1209,11 +1232,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                     </Text>
                     <Group justify="space-between" align="center">
                       <Text
-                        className={classes.fieldValue}
-                        style={{
-                          cursor: "pointer",
-                          color: "var(--mantine-color-blue-4)",
-                        }}
+                        className={classes.fieldValueLink}
                         onClick={() => handleOpenWebsite(item.url!)}
                       >
                         {item.url}
@@ -1296,60 +1315,16 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                 </Button>
               </>
             ) : (
-              <>
-                <Button
-                  color="red"
-                  variant="light"
-                  size="xs"
-                  leftSection={<IconTrash size={14} />}
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  {t("deleteBtn")}
-                </Button>
-                <Button
-                  color="blue"
-                  size="xs"
-                  leftSection={<IconEdit size={14} />}
-                  onClick={() => setIsEditing(true)}
-                >
-                  {t("editBtn")}
-                </Button>
-              </>
+              <Button
+                color="blue"
+                size="xs"
+                leftSection={<IconEdit size={14} />}
+                onClick={() => setIsEditing(true)}
+              >
+                {t("editBtn")}
+              </Button>
             )}
           </Box>
-
-          {/* Modal Confirm Delete Item */}
-          <Modal
-            opened={showDeleteConfirm}
-            onClose={() => setShowDeleteConfirm(false)}
-            title={t("confirmDeleteTitle")}
-            radius="lg"
-            centered
-            size="sm"
-          >
-            <Stack gap="md">
-              <Text size="sm">{t("confirmDeleteDesc")}</Text>
-              <Group justify="flex-end" gap="sm">
-                <Button
-                  variant="default"
-                  size="xs"
-                  onClick={() => setShowDeleteConfirm(false)}
-                >
-                  {t("cancelBtn")}
-                </Button>
-                <Button
-                  color="red"
-                  size="xs"
-                  onClick={() => {
-                    deleteItem(item.id);
-                    handleClose();
-                  }}
-                >
-                  {t("confirmDeleteBtn")}
-                </Button>
-              </Group>
-            </Stack>
-          </Modal>
 
           {/* Modal Confirm Delete Section */}
           <Modal
@@ -1359,6 +1334,10 @@ export const ItemDrawer = React.memo(function ItemDrawer({
             radius="lg"
             centered
             size="sm"
+            overlayProps={{
+              blur: 8,
+              backgroundOpacity: 0.35,
+            }}
           >
             <Stack gap="md">
               <Text size="sm">
@@ -1394,6 +1373,10 @@ export const ItemDrawer = React.memo(function ItemDrawer({
             radius="lg"
             centered
             size="sm"
+            overlayProps={{
+              blur: 8,
+              backgroundOpacity: 0.35,
+            }}
           >
             <Stack gap="md">
               <TextInput

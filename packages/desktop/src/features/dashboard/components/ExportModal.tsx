@@ -10,6 +10,7 @@ import {
   Badge,
   PasswordInput,
   SegmentedControl,
+  Box,
 } from "@mantine/core";
 import {
   IconDownload,
@@ -37,7 +38,7 @@ export function ExportModal({
 }: Readonly<ExportModalProps>) {
   const { t } = useTranslation();
   const { items } = useVault();
-  const [format, setFormat] = useState<"json" | "csv" | "svm">("json");
+  const [format, setFormat] = useState<"json" | "csv" | "svm">("svm");
   const [passwordMode, setPasswordMode] = useState<"master" | "custom">(
     "master"
   );
@@ -188,7 +189,7 @@ export function ExportModal({
     >
       <Stack gap="md">
         <Group justify="space-between" align="center">
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="dimmed" fw={500}>
             {t("exportScopeLabel", "Phạm vi xuất:")}
           </Text>
           <Badge
@@ -224,7 +225,7 @@ export function ExportModal({
         )}
 
         <Stack gap="xs">
-          <Text size="sm" fw={600}>
+          <Text size="xs" fw={700} className={classes.sectionLabel}>
             {t("selectExportFormat", "Chọn định dạng tệp xuất:")}
           </Text>
           <Radio.Group
@@ -235,72 +236,108 @@ export function ExportModal({
             }}
             className={classes.formatRadioGroup}
           >
-            <Stack gap="sm">
-              <Radio
-                value="svm"
-                label={
-                  <Group gap="xs">
-                    <IconLock size={18} color="var(--mantine-color-indigo-4)" />
-                    <Text fw={500}>
-                      {t("svmFormatLabel", "Tệp mã hóa Secure Vault (.svm)")}
-                    </Text>
-                  </Group>
-                }
-                description={t(
-                  "svmFormatDesc",
-                  "Mã hóa nhị phân an toàn với mật khẩu (AES-256-GCM). Thích hợp để khôi phục & sao lưu bảo mật."
-                )}
-              />
-              <Radio
-                value="json"
-                label={
-                  <Group gap="xs">
-                    <IconFileCode
-                      size={18}
-                      color="var(--mantine-color-blue-4)"
-                    />
-                    <Text fw={500}>
-                      {t("jsonFormatLabel", "Tệp JSON (.json)")}
-                    </Text>
-                  </Group>
-                }
-                description={t(
-                  "jsonFormatDesc",
-                  "Định dạng tiêu chuẩn chứa đầy đủ các trường dữ liệu, custom fields và tags."
-                )}
-              />
-              <Radio
-                value="csv"
-                label={
-                  <Group gap="xs">
-                    <IconFileTypeCsv
-                      size={18}
-                      color="var(--mantine-color-teal-4)"
-                    />
-                    <Text fw={500}>
-                      {t("csvFormatLabel", "Tệp CSV (.csv)")}
-                    </Text>
-                  </Group>
-                }
-                description={t(
-                  "csvFormatDesc",
-                  "Định dạng bảng tính phù hợp để xem trong Microsoft Excel, Google Sheets hoặc nhập vào ứng dụng khác."
-                )}
-              />
+            <Stack gap="xs">
+              <Box
+                className={`${classes.formatCard} ${
+                  format === "svm" ? classes.formatCardActive : ""
+                }`}
+                onClick={() => {
+                  setFormat("svm");
+                  setPasswordError(null);
+                }}
+              >
+                <Radio
+                  value="svm"
+                  label={
+                    <Group gap="xs" align="center">
+                      <IconLock
+                        size={18}
+                        color="var(--mantine-color-indigo-4)"
+                      />
+                      <Text fw={600} size="sm">
+                        {t("svmFormatLabel", "Tệp mã hóa Secure Vault (.svm)")}
+                      </Text>
+                      <Badge
+                        size="xs"
+                        color="indigo"
+                        variant="light"
+                        radius="sm"
+                      >
+                        {t("recommendedBadge", "Khuyên dùng")}
+                      </Badge>
+                    </Group>
+                  }
+                  description={t(
+                    "svmFormatDesc",
+                    "Mã hóa nhị phân an toàn với mật khẩu (AES-256-GCM). Thích hợp để khôi phục & sao lưu bảo mật."
+                  )}
+                />
+              </Box>
+
+              <Box
+                className={`${classes.formatCard} ${
+                  format === "json" ? classes.formatCardActive : ""
+                }`}
+                onClick={() => {
+                  setFormat("json");
+                  setPasswordError(null);
+                }}
+              >
+                <Radio
+                  value="json"
+                  label={
+                    <Group gap="xs" align="center">
+                      <IconFileCode
+                        size={18}
+                        color="var(--mantine-color-blue-4)"
+                      />
+                      <Text fw={600} size="sm">
+                        {t("jsonFormatLabel", "Tệp JSON (.json)")}
+                      </Text>
+                    </Group>
+                  }
+                  description={t(
+                    "jsonFormatDesc",
+                    "Định dạng tiêu chuẩn chứa đầy đủ các trường dữ liệu, custom fields và tags."
+                  )}
+                />
+              </Box>
+
+              <Box
+                className={`${classes.formatCard} ${
+                  format === "csv" ? classes.formatCardActive : ""
+                }`}
+                onClick={() => {
+                  setFormat("csv");
+                  setPasswordError(null);
+                }}
+              >
+                <Radio
+                  value="csv"
+                  label={
+                    <Group gap="xs" align="center">
+                      <IconFileTypeCsv
+                        size={18}
+                        color="var(--mantine-color-teal-4)"
+                      />
+                      <Text fw={600} size="sm">
+                        {t("csvFormatLabel", "Tệp CSV (.csv)")}
+                      </Text>
+                    </Group>
+                  }
+                  description={t(
+                    "csvFormatDesc",
+                    "Định dạng bảng tính phù hợp để xem trong Microsoft Excel, Google Sheets hoặc nhập vào ứng dụng khác."
+                  )}
+                />
+              </Box>
             </Stack>
           </Radio.Group>
         </Stack>
 
         {format === "svm" && (
-          <Stack
-            gap="xs"
-            p="sm"
-            style={{
-              background: "var(--mantine-color-dark-6)",
-              borderRadius: "var(--mantine-radius-md)",
-            }}
-          >
-            <Text size="sm" fw={600}>
+          <Box className={classes.svmSettingsBox}>
+            <Text size="xs" fw={700} className={classes.sectionLabel}>
               {t(
                 "svmPasswordOptionTitle",
                 "Tùy chọn mật khẩu mã hóa tệp .svm:"
@@ -325,6 +362,7 @@ export function ExportModal({
               fullWidth
               size="xs"
               color="indigo"
+              radius="md"
             />
 
             <PasswordInput
@@ -376,19 +414,20 @@ export function ExportModal({
             )}
 
             {passwordError && (
-              <Text size="xs" c="red.4">
+              <Text size="xs" c="red.5" fw={500}>
                 {passwordError}
               </Text>
             )}
-          </Stack>
+          </Box>
         )}
 
-        <Group justify="flex-end" gap="sm" mt="md">
-          <Button variant="default" onClick={onClose}>
+        <Group justify="flex-end" gap="sm" mt="xs">
+          <Button variant="default" radius="md" onClick={onClose}>
             {t("cancelBtn", "Hủy")}
           </Button>
           <Button
             color={format === "svm" ? "indigo" : "blue"}
+            radius="md"
             leftSection={<IconDownload size={16} />}
             onClick={handleExport}
             loading={loading}

@@ -1,14 +1,11 @@
 .drawerContainer {
   position: relative;
-  width: 400px;
-  flex-shrink: 0;
+  width: 100%;
   height: 100%;
   background-color: light-dark(
     rgba(255, 255, 255, 0.85),
     rgba(15, 20, 38, 0.85)
   ) !important;
-  border-left: 1px solid
-    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08)) !important;
   box-shadow: light-dark(
     -4px 0 20px rgba(0, 0, 0, 0.03),
     -4px 0 20px rgba(0, 0, 0, 0.2)
@@ -21,16 +18,20 @@
 }
 
 .header {
-  padding: var(--mantine-spacing-md);
-  border-bottom: 1px solid var(--color-neutral-light);
+  height: 56px;
+  padding: 0 var(--mantine-spacing-md);
+  border-bottom: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08));
   display: flex;
   align-items: center;
-  gap: var(--mantine-spacing-md);
+  gap: var(--mantine-spacing-sm);
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .iconWrapperLarge {
-  width: 50px;
-  height: 50px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--mantine-radius-md);
   display: flex;
   align-items: center;
@@ -121,8 +122,9 @@
 
 .fieldLabel {
   font-size: var(--mantine-font-size-xs);
-  color: var(--mantine-color-dimmed);
-  font-weight: 500;
+  color: light-dark(#495057, #a6a7ab);
+  font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 .fieldValueWrapper {
@@ -140,6 +142,20 @@
   font-family: var(--mantine-font-family-monospace);
 }
 
+.fieldValueLink {
+  font-size: var(--mantine-font-size-sm);
+  color: light-dark(var(--mantine-color-blue-7), var(--mantine-color-blue-4));
+  flex: 1;
+  word-break: break-all;
+  font-family: var(--mantine-font-family-monospace);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.fieldValueLink:hover {
+  text-decoration: underline;
+}
+
 .customFieldBox {
   display: flex;
   flex-direction: column;
@@ -148,7 +164,8 @@
 
 .footer {
   padding: var(--mantine-spacing-md);
-  border-top: 1px solid var(--color-neutral-light);
+  border-top: 1px solid
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08));
   display: flex;
   justify-content: flex-end;
   gap: var(--mantine-spacing-sm);
