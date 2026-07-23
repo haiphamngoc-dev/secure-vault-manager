@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { useDebouncedValue } from "@mantine/hooks";
 import {
   Group,
   UnstyledButton,
@@ -121,14 +122,39 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
     );
   };
 
-  const searchQuery = searchParams.get("q") || "";
-  const handleSearchChange = (val: string) => {
+  const urlSearchQuery = searchParams.get("q") || "";
+  const [localSearchQuery, setLocalSearchQuery] = useState(urlSearchQuery);
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlSearchQuery);
+  const [debouncedSearchQuery] = useDebouncedValue(localSearchQuery, 200);
+
+  // Sync state during render when URL query changes externally
+  if (urlSearchQuery !== prevUrlQuery) {
+    setPrevUrlQuery(urlSearchQuery);
+    setLocalSearchQuery(urlSearchQuery);
+  }
+
+  // Sync debounced search value to URL search params
+  useEffect(() => {
+    setSearchParams(
+      (prev) => {
+        const currentQ = prev.get("q") || "";
+        if (debouncedSearchQuery === currentQ) return prev;
+
+        if (debouncedSearchQuery) {
+          prev.set("q", debouncedSearchQuery);
+        } else {
+          prev.delete("q");
+        }
+        return prev;
+      },
+      { replace: true }
+    );
+  }, [debouncedSearchQuery, setSearchParams]);
+
+  const handleClearSearch = () => {
+    setLocalSearchQuery("");
     setSearchParams((prev) => {
-      if (val) {
-        prev.set("q", val);
-      } else {
-        prev.delete("q");
-      }
+      prev.delete("q");
       return prev;
     });
   };
@@ -387,11 +413,22 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
                         "titlebar.searchPlaceholder",
                         "Tìm kiếm dữ liệu..."
                       )}
-                      value={searchQuery}
+                      value={localSearchQuery}
                       onChange={(e) =>
-                        handleSearchChange(e.currentTarget.value)
+                        setLocalSearchQuery(e.currentTarget.value)
                       }
                       leftSection={<IconSearch size={14} />}
+                      rightSection={
+                        localSearchQuery ? (
+                          <ActionIcon
+                            variant="transparent"
+                            color="gray"
+                            onClick={handleClearSearch}
+                          >
+                            <IconX size={14} />
+                          </ActionIcon>
+                        ) : null
+                      }
                       size="xs"
                       className={`${classes.searchInput} ${classes.desktopSearch}`}
                     />
@@ -448,15 +485,15 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
                     "titlebar.searchPlaceholder",
                     "Tìm kiếm dữ liệu..."
                   )}
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.currentTarget.value)}
+                  value={localSearchQuery}
+                  onChange={(e) => setLocalSearchQuery(e.currentTarget.value)}
                   leftSection={<IconSearch size={14} />}
                   rightSection={
-                    searchQuery ? (
+                    localSearchQuery ? (
                       <ActionIcon
                         variant="transparent"
                         color="gray"
-                        onClick={() => handleSearchChange("")}
+                        onClick={handleClearSearch}
                       >
                         <IconX size={14} />
                       </ActionIcon>
@@ -510,11 +547,22 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
                         "titlebar.searchPlaceholder",
                         "Tìm kiếm dữ liệu..."
                       )}
-                      value={searchQuery}
+                      value={localSearchQuery}
                       onChange={(e) =>
-                        handleSearchChange(e.currentTarget.value)
+                        setLocalSearchQuery(e.currentTarget.value)
                       }
                       leftSection={<IconSearch size={14} />}
+                      rightSection={
+                        localSearchQuery ? (
+                          <ActionIcon
+                            variant="transparent"
+                            color="gray"
+                            onClick={handleClearSearch}
+                          >
+                            <IconX size={14} />
+                          </ActionIcon>
+                        ) : null
+                      }
                       size="xs"
                       className={classes.searchInput}
                     />
