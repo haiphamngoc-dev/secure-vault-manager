@@ -33,6 +33,7 @@ import { useTranslation } from "react-i18next";
 import { useMediaQuery, useClipboard } from "@mantine/hooks";
 import { MainHeader } from "@/shared/layouts/components/MainHeader";
 import { getDatabaseLogo } from "@/shared/utils/databaseTypes";
+import { notifications } from "@mantine/notifications";
 
 import classes from "./DashboardPage.module.css";
 
