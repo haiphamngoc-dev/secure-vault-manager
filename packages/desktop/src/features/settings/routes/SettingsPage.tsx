@@ -5,7 +5,6 @@ import {
   Text,
   SegmentedControl,
   Select,
-  TextInput,
   PasswordInput,
   Button,
   Group,
@@ -33,6 +32,8 @@ import { useOutletContext } from "react-router-dom";
 import { MainHeader } from "@/shared/layouts/components/MainHeader";
 import classes from "./SettingsPage.module.css";
 
+const DEFAULT_CHROME_EXTENSION_ID = "pnahlaohpcfkgjkdhhfdkapdbgjchdfe";
+
 interface AppSettings {
   lang: string;
   auto_lock_interval: string;
@@ -50,17 +51,13 @@ export function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>({
     lang: "vi",
     auto_lock_interval: "15m",
-    chrome_extension_id: "",
+    chrome_extension_id: DEFAULT_CHROME_EXTENSION_ID,
     minimize_to_tray: true,
     autostart: false,
   });
 
   const [pairingKey, setPairingKey] = useState<string>("");
   const [isPairing, setIsPairing] = useState<boolean>(false);
-  const [isRegisteringChrome, setIsRegisteringChrome] =
-    useState<boolean>(false);
-  const [isRegisteringFirefox, setIsRegisteringFirefox] =
-    useState<boolean>(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
 
@@ -72,7 +69,9 @@ export function SettingsPage() {
         setSettings({
           ...res,
           chrome_extension_id:
-            res.chrome_extension_id || res.extension_id || "",
+            res.chrome_extension_id ||
+            res.extension_id ||
+            DEFAULT_CHROME_EXTENSION_ID,
           minimize_to_tray: res.minimize_to_tray !== false,
           autostart: res.autostart === true,
         });
@@ -151,59 +150,6 @@ export function SettingsPage() {
       });
     } finally {
       setIsPairing(false);
-    }
-  };
-
-  const handleRegisterProxy = async (browser: "chrome" | "firefox") => {
-    if (browser === "chrome") {
-      if (!settings.chrome_extension_id?.trim()) {
-        notifications.show({
-          title: t("error", "Lỗi"),
-          message: t("chromeIdRequired", "Vui lòng nhập Chrome Extension ID."),
-          color: "red",
-        });
-        return;
-      }
-      setIsRegisteringChrome(true);
-    } else {
-      setIsRegisteringFirefox(true);
-    }
-
-    try {
-      const extId =
-        browser === "chrome"
-          ? (settings.chrome_extension_id?.trim() ?? "")
-          : "secure-vault-manager-ext@haiphamngoc.dev";
-
-      await invoke("register_extension_proxy", {
-        browser,
-        extensionId: extId,
-      });
-
-      notifications.show({
-        title: t("success", "Thành công"),
-        message: t(
-          "registerProxySuccess",
-          "Đăng ký kết nối trình duyệt thành công!"
-        ),
-        color: "green",
-      });
-    } catch (err) {
-      console.error(`Failed to register proxy for ${browser}:`, err);
-      notifications.show({
-        title: t("error", "Lỗi"),
-        message: t(
-          "registerProxyError",
-          "Đăng ký kết nối trình duyệt thất bại."
-        ),
-        color: "red",
-      });
-    } finally {
-      if (browser === "chrome") {
-        setIsRegisteringChrome(false);
-      } else {
-        setIsRegisteringFirefox(false);
-      }
     }
   };
 
@@ -460,75 +406,6 @@ export function SettingsPage() {
                   {t("regeneratePairKeyBtn", "Sinh lại mã kết nối mới")}
                 </Button>
               </Group>
-
-              <hr className={classes.divider} />
-
-              <Text size="sm" fw={600}>
-                {t(
-                  "browserIntegrationTitle",
-                  "Đăng ký tích hợp trình duyệt (Native Messaging)"
-                )}
-              </Text>
-
-              <Box className={classes.integrationGrid}>
-                {/* Chrome Card */}
-                <Box p="md" className={classes.integrationCard}>
-                  <Text fw={600} size="sm" mb="xs">
-                    Google Chrome / Chromium
-                  </Text>
-                  <Stack gap="sm">
-                    <TextInput
-                      label={t("chromeExtensionIdLabel", "Chrome Extension ID")}
-                      placeholder="e.g., gkdjgnbkoongjmehhdecofdhlcajgggj"
-                      value={settings.chrome_extension_id || ""}
-                      onChange={(e) =>
-                        updateSetting("chrome_extension_id", e.target.value)
-                      }
-                    />
-                    <Button
-                      variant="light"
-                      color="blue"
-                      onClick={() => handleRegisterProxy("chrome")}
-                      loading={isRegisteringChrome}
-                      fullWidth
-                    >
-                      {t("registerChromeBtn", "Đăng ký kết nối Chrome")}
-                    </Button>
-                  </Stack>
-                </Box>
-
-                {/* Firefox Card */}
-                <Box p="md" className={classes.integrationCard}>
-                  <Text fw={600} size="sm" mb="xs">
-                    Mozilla Firefox
-                  </Text>
-                  <Stack gap="sm">
-                    <TextInput
-                      label={t(
-                        "firefoxExtensionIdLabel",
-                        "Firefox Extension ID (Cố định)"
-                      )}
-                      value="secure-vault-manager-ext@haiphamngoc.dev"
-                      readOnly
-                      styles={{
-                        input: {
-                          fontFamily: "var(--mantine-font-family-monospace)",
-                          opacity: 0.7,
-                        },
-                      }}
-                    />
-                    <Button
-                      variant="light"
-                      color="blue"
-                      onClick={() => handleRegisterProxy("firefox")}
-                      loading={isRegisteringFirefox}
-                      fullWidth
-                    >
-                      {t("registerFirefoxBtn", "Đăng ký kết nối Firefox")}
-                    </Button>
-                  </Stack>
-                </Box>
-              </Box>
             </Stack>
           </Box>
         </Stack>

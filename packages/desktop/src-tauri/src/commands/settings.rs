@@ -4,6 +4,8 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
 
+pub const DEFAULT_CHROME_EXTENSION_ID: &str = "pnahlaohpcfkgjkdhhfdkapdbgjchdfe";
+
 fn default_true() -> bool {
     true
 }
@@ -27,8 +29,8 @@ impl Default for AppSettings {
         Self {
             lang: "vi".to_string(),
             auto_lock_interval: "15m".to_string(),
-            chrome_extension_id: None,
-            extension_id: None,
+            chrome_extension_id: Some(DEFAULT_CHROME_EXTENSION_ID.to_string()),
+            extension_id: Some(DEFAULT_CHROME_EXTENSION_ID.to_string()),
             minimize_to_tray: true,
             autostart: false,
             pairing_token: None,
@@ -53,8 +55,13 @@ pub fn get_settings(app: tauri::AppHandle) -> Result<AppSettings, String> {
     }
     let content =
         fs::read_to_string(&path).map_err(|e| format!("Failed to read settings file: {}", e))?;
-    let settings: AppSettings = serde_json::from_str(&content)
+    let mut settings: AppSettings = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse settings JSON: {}", e))?;
+
+    if settings.chrome_extension_id.as_deref().unwrap_or("").trim().is_empty() {
+        settings.chrome_extension_id = Some(DEFAULT_CHROME_EXTENSION_ID.to_string());
+    }
+
     Ok(settings)
 }
 
@@ -200,13 +207,11 @@ pub fn register_extension_proxy(
         }
     }
 
-    // Determine home directory for config file output
-    #[cfg(not(windows))]
-    let home_dir = std::env::var_os("HOME").map(PathBuf::from);
-    #[cfg(windows)]
-    let home_dir = std::env::var_os("USERPROFILE").map(PathBuf::from);
-
-    let home_dir = home_dir.ok_or_else(|| "Could not determine user home directory".to_string())?;
+    // Determine home directory for config file output on Unix systems
+    #[cfg(not(target_os = "windows"))]
+    let home_dir = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .ok_or_else(|| "Could not determine user home directory".to_string())?;
 
     let browser_lower = browser.to_lowercase();
     let host_name = "com.haiphamngoc_dev.secure_vault_manager_proxy.json";

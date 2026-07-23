@@ -7,13 +7,8 @@ import os from "node:os";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 
-// Get extension ID from arguments
-const extId = process.argv[2];
-if (!extId) {
-  console.error("Error: Please provide an Extension ID.");
-  console.log("Usage: pnpm run register-proxy <extension_id>");
-  process.exit(1);
-}
+// Get extension ID from arguments or use published extension ID as default
+const extId = process.argv[2] || "pnahlaohpcfkgjkdhhfdkapdbgjchdfe";
 
 // Target Triple detection
 function getTargetTriple() {

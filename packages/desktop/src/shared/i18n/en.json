@@ -1,7 +1,13 @@
 {
   "titlebar": {
     "about": "About",
-    "aboutDescription": "A premium, high-performance desktop application interface built with React and Rust.",
+    "aboutDescription": "Secure Vault Manager is a professional password and personal credentials manager designed to keep your accounts, keys, and data private and secure on your device.",
+    "aboutVersion": "Version 0.1.1",
+    "featureE2EE": "AES-256 & Argon2id Encryption",
+    "featureOffline": "100% Local & Private Storage",
+    "featureExtension": "Browser Extension Integration",
+    "featureTotp": "Built-in 2FA & TOTP Generator",
+    "copyright": "© 2026 Secure Vault Manager. All rights reserved.",
     "close": "Close",
     "copy": "Copy",
     "cut": "Cut",

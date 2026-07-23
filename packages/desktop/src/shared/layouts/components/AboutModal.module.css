@@ -1,11 +1,12 @@
 .titleGradient {
   font-family: "Outfit", "Inter", sans-serif;
   font-weight: 800;
+  font-size: 1.35rem;
   letter-spacing: -0.5px;
   background: linear-gradient(
     135deg,
-    var(--mantine-color-indigo-5) 0%,
-    var(--mantine-color-cyan-5) 100%
+    var(--mantine-color-blue-5) 0%,
+    var(--mantine-color-cyan-4) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -14,16 +15,16 @@
 
 .modalContent {
   background-color: light-dark(
-    rgba(255, 255, 255, 0.75),
-    rgba(15, 20, 38, 0.7)
+    rgba(255, 255, 255, 0.95),
+    rgba(18, 24, 43, 0.92)
   ) !important;
   border: 1px solid
-    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.08)) !important;
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+    light-dark(var(--color-neutral-light), rgba(255, 255, 255, 0.1)) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow: light-dark(
-    0 20px 40px rgba(0, 0, 0, 0.06),
-    0 20px 40px rgba(0, 0, 0, 0.4)
+    0 20px 40px rgba(0, 0, 0, 0.08),
+    0 24px 48px rgba(0, 0, 0, 0.5)
   ) !important;
   border-radius: var(--mantine-radius-lg);
   color: var(--color-neutral-dark);
@@ -31,8 +32,39 @@
 
 .modalHeader {
   background-color: transparent !important;
+  padding-bottom: 0 !important;
 }
 
 .modalBody {
   background-color: transparent !important;
+}
+
+.logoWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 16px;
+  background: light-dark(rgba(34, 139, 230, 0.06), rgba(34, 139, 230, 0.12));
+  border: 1px solid
+    light-dark(rgba(34, 139, 230, 0.15), rgba(34, 139, 230, 0.25));
+}
+
+.descriptionText {
+  line-height: 1.5;
+  max-width: 420px;
+}
+
+.featureCard {
+  background: light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.03));
+  border: 1px solid light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
+  border-radius: var(--mantine-radius-md);
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.featureCard:hover {
+  background: light-dark(rgba(34, 139, 230, 0.05), rgba(34, 139, 230, 0.08));
 }

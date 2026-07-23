@@ -229,12 +229,30 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Load initial settings to update tray language and sync autostart
+            // Load initial settings to update tray language, sync autostart, and auto-register extension proxies
             let app_handle = app.app_handle();
             let mut autostart_active = false;
             if let Ok(settings) = commands::settings::get_settings(app_handle.clone()) {
                 sync_tray_menu_lang(app_handle, &settings.lang);
                 autostart_active = settings.autostart;
+
+                let chrome_id = settings
+                    .chrome_extension_id
+                    .as_deref()
+                    .filter(|s| !s.trim().is_empty())
+                    .unwrap_or(commands::settings::DEFAULT_CHROME_EXTENSION_ID);
+
+                // Auto-register Native Messaging host proxy manifests for Chrome and Firefox
+                let _ = commands::settings::register_extension_proxy(
+                    app_handle.clone(),
+                    "chrome".to_string(),
+                    chrome_id.to_string(),
+                );
+                let _ = commands::settings::register_extension_proxy(
+                    app_handle.clone(),
+                    "firefox".to_string(),
+                    "secure-vault-manager-ext@haiphamngoc.dev".to_string(),
+                );
             }
 
             // Check CLI arguments to handle minimized start
