@@ -34,6 +34,7 @@ import {
   IconCheck,
   IconUpload,
   IconFolderPlus,
+  IconCalendar,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useVault, VaultItem } from "@/app/providers/VaultProvider";
@@ -45,6 +46,8 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
 import { notifications } from "@mantine/notifications";
 import { resizeImageToBase64 } from "@/shared/utils/image";
+import { DateInput } from "@mantine/dates";
+import dayjs from "dayjs";
 import {
   DATABASE_TYPE_NAMES,
   getDatabaseTypeInfo,
@@ -623,6 +626,35 @@ export const ItemDrawer = React.memo(function ItemDrawer({
 
     if (field.type === "textarea" || field.id === "notes") {
       return <Textarea {...commonProps} rows={3} />;
+    }
+
+    if (field.type === "date") {
+      const dateVal =
+        field.value && dayjs(field.value).isValid()
+          ? dayjs(field.value).toDate()
+          : null;
+      return (
+        <DateInput
+          placeholder={
+            field.isCustom ? t("fieldValuePlaceholder", "Giá trị") : field.label
+          }
+          value={dateVal}
+          onChange={(date) => {
+            const formatted = date ? dayjs(date).format("YYYY-MM-DD") : "";
+            handleFieldValueChange(field.id, formatted);
+          }}
+          valueFormat="YYYY-MM-DD"
+          clearable
+          leftSection={<IconCalendar size={16} />}
+          radius="md"
+          size="sm"
+          popoverProps={{
+            withinPortal: true,
+            shadow: "md",
+            radius: "md",
+          }}
+        />
+      );
     }
 
     return <TextInput {...commonProps} />;

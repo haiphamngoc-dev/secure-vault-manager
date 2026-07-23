@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap");
 @import "@mantine/core/styles.css";
 @import "@mantine/notifications/styles.css";
+@import "@mantine/dates/styles.css";
 
 :root {
   --font-native:
@@ -243,4 +244,53 @@ a {
 [data-mantine-color-scheme="dark"] .mantine-Card-root:hover {
   border-color: rgba(56, 189, 248, 0.3) !important;
   box-shadow: var(--glow-subtle) !important;
+}
+
+/* Mantine Dates Popover & Calendar Styling Overrides */
+.mantine-DateInput-dropdown,
+.mantine-DatePickerInput-dropdown,
+.mantine-DatePicker-dropdown {
+  background-color: var(--color-neutral-card, #1e293b) !important;
+  border: 1px solid var(--color-neutral-light, rgba(255, 255, 255, 0.12)) !important;
+  border-radius: var(--mantine-radius-md, 12px) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  padding: 12px !important;
+}
+
+.mantine-DatePicker-calendarHeaderControl,
+.mantine-DatePicker-calendarHeaderLevel {
+  color: var(--color-neutral-dark, #e2e8f0) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+}
+
+.mantine-DatePicker-calendarHeaderControl:hover,
+.mantine-DatePicker-calendarHeaderLevel:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.mantine-DatePicker-weekday {
+  color: var(--mantine-color-dimmed, #94a3b8) !important;
+  font-weight: 600 !important;
+}
+
+.mantine-DatePicker-day {
+  color: var(--color-neutral-dark, #e2e8f0) !important;
+  border-radius: 8px !important;
+}
+
+.mantine-DatePicker-day:hover:not([data-disabled]) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.mantine-DatePicker-day[data-selected] {
+  background-color: var(--color-brand-primary, #2563eb) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.mantine-DatePicker-day[data-today] {
+  border: 1px solid var(--color-brand-primary, #2563eb) !important;
 }
