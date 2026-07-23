@@ -661,16 +661,25 @@ pub fn export_svm_bytes(
     state: State<'_, AppState>,
     item_ids: Option<Vec<String>>,
     password: String,
+    master_password: Option<String>,
 ) -> Result<Vec<u8>, String> {
     if password.trim().is_empty() {
         return Err("Mật khẩu mã hóa tệp .svm không được để trống.".to_string());
     }
 
-    let key_guard = state.vault_key.lock().unwrap();
-    let key = key_guard.as_ref().ok_or("Vault đang bị khóa.")?;
-
     let file_guard = state.current_vault_file.lock().unwrap();
     let file_name = file_guard.as_ref().ok_or("Vault đang bị khóa.")?;
+
+    if let Some(mp) = master_password {
+        if mp.trim().is_empty() {
+            return Err("Master Password của Vault không được để trống.".to_string());
+        }
+        crate::core::storage::unlock_and_load_vault(&app, &mp, file_name)
+            .map_err(|_| "Master Password của Vault không chính xác.".to_string())?;
+    }
+
+    let key_guard = state.vault_key.lock().unwrap();
+    let key = key_guard.as_ref().ok_or("Vault đang bị khóa.")?;
 
     let vault = crate::core::storage::load_vault_with_key(&app, key, file_name)?;
 

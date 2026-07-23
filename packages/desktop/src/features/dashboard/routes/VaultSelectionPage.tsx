@@ -62,7 +62,6 @@ export function VaultSelectionPage() {
   // Delete Modal States
   const [deleteOpened, setDeleteOpened] = useState(false);
   const [vaultToDelete, setVaultToDelete] = useState<VaultProfile | null>(null);
-  const [deleteFile, setDeleteFile] = useState(false);
 
   // If no vaults remain, trigger checkVaultStatus to switch to Onboarding screen immediately
   useEffect(() => {
@@ -151,14 +150,14 @@ export function VaultSelectionPage() {
   const handleDeleteSubmit = async () => {
     if (!vaultToDelete) return;
     try {
-      await deleteVault(vaultToDelete.id, deleteFile);
+      await deleteVault(vaultToDelete.id, true);
       setDeleteOpened(false);
       setVaultToDelete(null);
       if (selectedVault?.id === vaultToDelete.id) {
         setSelectedVault(null);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Lỗi khi xóa Vault:", err);
     }
   };
 
@@ -367,7 +366,6 @@ export function VaultSelectionPage() {
                         leftSection={<IconTrash size={14} />}
                         onClick={() => {
                           setVaultToDelete(vault);
-                          setDeleteFile(false);
                           setDeleteOpened(true);
                         }}
                       >
@@ -510,37 +508,19 @@ export function VaultSelectionPage() {
       >
         <Stack gap="md" mt="xs">
           <Text size="sm">
-            {t(
-              "deleteVaultDesc",
-              "Bạn có chắc chắn muốn xóa Vault này khỏi danh sách quản lý không?"
-            )}
+            {t("deleteVaultConfirmDesc", {
+              name: vaultToDelete?.name,
+              defaultValue: `Bạn có chắc chắn muốn xóa Vault "${vaultToDelete?.name}" không?`,
+            })}
           </Text>
 
-          <Alert color="red" icon={<IconAlertTriangle size={16} />} radius="md">
-            <Group gap="xs" align="flex-start" wrap="nowrap">
-              <input
-                type="checkbox"
-                id="deleteFileCheckbox"
-                checked={deleteFile}
-                onChange={(e) => setDeleteFile(e.target.checked)}
-                style={{ marginTop: "4px" }}
-              />
-              <label
-                htmlFor="deleteFileCheckbox"
-                style={{ fontSize: "13px", cursor: "pointer", color: "white" }}
-              >
-                <strong>
-                  {t("deletePhysicalFile", "Xóa cả file dữ liệu vật lý (.enc)")}
-                </strong>
-                <br />
-                <Text size="xs" c="dimmed">
-                  {t(
-                    "deletePhysicalFileWarn",
-                    "Chú ý: File mã hóa của Vault này trên ổ đĩa sẽ bị xóa vĩnh viễn và không thể khôi phục lại."
-                  )}
-                </Text>
-              </label>
-            </Group>
+          <Alert color="red" icon={<IconAlertTriangle size={20} />} radius="md">
+            <Text size="xs" fw={500} style={{ color: "white" }}>
+              {t(
+                "deleteVaultWarning",
+                "Hành động này sẽ xóa Vault khỏi danh sách quản lý và XÓA VĨNH VIỄN tệp dữ liệu mã hóa (.enc) trên máy tính. Tất cả dữ liệu bên trong Vault này sẽ bị mất và không thể khôi phục."
+              )}
+            </Text>
           </Alert>
 
           <Group justify="flex-end" gap="sm">
@@ -552,7 +532,7 @@ export function VaultSelectionPage() {
               {t("cancelBtn", "Hủy")}
             </Button>
             <Button color="red" size="xs" onClick={handleDeleteSubmit}>
-              {t("deleteSubmitBtn", "Xóa")}
+              {t("confirmDeleteBtn", "Xóa vĩnh viễn")}
             </Button>
           </Group>
         </Stack>

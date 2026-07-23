@@ -31,8 +31,8 @@ import { useVault, VaultItem } from "@/app/providers/VaultProvider";
 import { generateTotpCode } from "@/shared/utils/totp";
 import { useTranslation } from "react-i18next";
 import { useMediaQuery, useClipboard } from "@mantine/hooks";
-import { notifications } from "@mantine/notifications";
 import { MainHeader } from "@/shared/layouts/components/MainHeader";
+import { getDatabaseLogo } from "@/shared/utils/databaseTypes";
 
 import classes from "./DashboardPage.module.css";
 
@@ -112,6 +112,20 @@ export function DashboardPage() {
     const type = ITEM_TYPES.find((t) => t.id === category);
     const IconComponent = type?.icon || IconKey;
     return <IconComponent size={18} />;
+  };
+
+  const getItemIcon = (item: VaultItem) => {
+    if (item.icon) return item.icon;
+    if (item.category === "Database") {
+      const dbTypeField = item.customFields?.find(
+        (cf) =>
+          cf.id === "dbType" ||
+          cf.label.toLowerCase().includes("database type") ||
+          cf.label.toLowerCase().includes("loại db")
+      );
+      return getDatabaseLogo(dbTypeField?.value);
+    }
+    return undefined;
   };
 
   const getPrimaryIdentifier = (item: VaultItem) => {
@@ -319,8 +333,12 @@ export function DashboardPage() {
                               onChange={() => toggleSelect(item.id)}
                               onClick={(e) => e.stopPropagation()}
                             />
-                            {item.icon ? (
-                              <Avatar src={item.icon} size={32} radius="md" />
+                            {getItemIcon(item) ? (
+                              <Avatar
+                                src={getItemIcon(item)}
+                                size={32}
+                                radius="md"
+                              />
                             ) : (
                               <div className={classes.cardIconWrapper}>
                                 {getCategoryIcon(item.category)}
@@ -629,9 +647,9 @@ export function DashboardPage() {
                                 wrap="nowrap"
                                 style={{ overflow: "hidden" }}
                               >
-                                {item.icon ? (
+                                {getItemIcon(item) ? (
                                   <Avatar
-                                    src={item.icon}
+                                    src={getItemIcon(item)}
                                     size={32}
                                     radius="md"
                                   />

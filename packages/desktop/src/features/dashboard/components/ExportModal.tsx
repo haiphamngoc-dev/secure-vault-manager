@@ -41,7 +41,8 @@ export function ExportModal({
   const [passwordMode, setPasswordMode] = useState<"master" | "custom">(
     "master"
   );
-  const [svmPassword, setSvmPassword] = useState("");
+  const [masterPassword, setMasterPassword] = useState("");
+  const [customPassword, setCustomPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -49,25 +50,44 @@ export function ExportModal({
   const exportCount =
     selectedIds.length > 0 ? selectedIds.length : items.length;
 
+  const resetFormState = () => {
+    setMasterPassword("");
+    setCustomPassword("");
+    setConfirmPassword("");
+    setPasswordError(null);
+  };
+
   const handleExport = async () => {
     setPasswordError(null);
 
     if (format === "svm") {
-      if (!svmPassword.trim()) {
+      if (!masterPassword.trim()) {
         setPasswordError(
           t(
-            "passwordRequiredError",
-            "Vui lòng nhập mật khẩu mã hóa cho tệp .svm."
+            "masterPasswordRequiredError",
+            "Vui lòng nhập Master Password của Vault."
           )
         );
         return;
       }
 
-      if (passwordMode === "custom" && svmPassword !== confirmPassword) {
-        setPasswordError(
-          t("passwordMismatchError", "Mật khẩu xác nhận không trùng khớp.")
-        );
-        return;
+      if (passwordMode === "custom") {
+        if (!customPassword.trim()) {
+          setPasswordError(
+            t(
+              "customPasswordRequiredError",
+              "Vui lòng nhập mật khẩu mã hóa cho tệp .svm."
+            )
+          );
+          return;
+        }
+
+        if (customPassword !== confirmPassword) {
+          setPasswordError(
+            t("passwordMismatchError", "Mật khẩu xác nhận không trùng khớp.")
+          );
+          return;
+        }
       }
     }
 
@@ -77,9 +97,13 @@ export function ExportModal({
       let filename: string;
 
       if (format === "svm") {
+        const encryptionPassword =
+          passwordMode === "master" ? masterPassword : customPassword;
+
         const resultBytes = await invoke<number[]>("export_svm_bytes", {
           itemIds: itemIdsArg,
-          password: svmPassword,
+          password: encryptionPassword,
+          masterPassword: masterPassword,
         });
 
         filename = `vault-backup-${new Date().toISOString().slice(0, 10)}.svm`;
@@ -125,8 +149,7 @@ export function ExportModal({
       });
 
       // Reset password state
-      setSvmPassword("");
-      setConfirmPassword("");
+      resetFormState();
       onClose();
     } catch (err: unknown) {
       console.error("Lỗi khi xuất dữ liệu Vault:", err);
@@ -146,9 +169,7 @@ export function ExportModal({
     <Modal
       opened={opened}
       onClose={() => {
-        setSvmPassword("");
-        setConfirmPassword("");
-        setPasswordError(null);
+        resetFormState();
         onClose();
       }}
       title={t("exportModalTitle", "Xuất dữ liệu Vault (Export)")}
@@ -307,36 +328,51 @@ export function ExportModal({
             />
 
             <PasswordInput
-              label={
-                passwordMode === "master"
-                  ? t(
-                      "masterPasswordInputLabel",
-                      "Nhập Master Password của Vault"
-                    )
-                  : t(
-                      "customPasswordInputLabel",
-                      "Nhập mật khẩu mã hóa cho tệp .svm"
-                    )
-              }
-              placeholder={t("enterPasswordPlaceholder", "Nhập mật khẩu...")}
-              value={svmPassword}
-              onChange={(e) => setSvmPassword(e.currentTarget.value)}
+              label={t(
+                "masterPasswordInputLabel",
+                "Master Password của Vault (Bắt buộc)"
+              )}
+              placeholder={t(
+                "masterPasswordPlaceholder",
+                "Nhập Master Password của Vault..."
+              )}
+              value={masterPassword}
+              onChange={(e) => setMasterPassword(e.currentTarget.value)}
               radius="md"
               size="sm"
             />
 
             {passwordMode === "custom" && (
-              <PasswordInput
-                label={t("confirmCustomPasswordLabel", "Xác nhận mật khẩu")}
-                placeholder={t(
-                  "confirmPasswordPlaceholder",
-                  "Nhập lại mật khẩu..."
-                )}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.currentTarget.value)}
-                radius="md"
-                size="sm"
-              />
+              <>
+                <PasswordInput
+                  label={t(
+                    "customPasswordInputLabel",
+                    "Mật khẩu mã hóa tùy chỉnh cho tệp .svm"
+                  )}
+                  placeholder={t(
+                    "customPasswordPlaceholder",
+                    "Nhập mật khẩu mã hóa tùy chỉnh..."
+                  )}
+                  value={customPassword}
+                  onChange={(e) => setCustomPassword(e.currentTarget.value)}
+                  radius="md"
+                  size="sm"
+                />
+                <PasswordInput
+                  label={t(
+                    "confirmCustomPasswordLabel",
+                    "Xác nhận mật khẩu tùy chỉnh"
+                  )}
+                  placeholder={t(
+                    "confirmPasswordPlaceholder",
+                    "Nhập lại mật khẩu tùy chỉnh..."
+                  )}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+                  radius="md"
+                  size="sm"
+                />
+              </>
             )}
 
             {passwordError && (

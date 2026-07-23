@@ -107,6 +107,10 @@
 
 .addSectionBtn {
   border-style: dashed;
+  height: 44px !important;
+  min-height: 44px !important;
+  flex-shrink: 0;
+  font-weight: 600;
 }
 
 .fieldRow {

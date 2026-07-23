@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Modal,
   Box,
@@ -14,8 +14,8 @@ import {
   PasswordInput,
   Loader,
   Avatar,
-  FileButton,
   Stack,
+  Autocomplete,
 } from "@mantine/core";
 import {
   IconKey,
@@ -54,6 +54,10 @@ import { notifications } from "@mantine/notifications";
 import { useVault } from "@/app/providers/VaultProvider";
 import { invoke } from "@tauri-apps/api/core";
 import { resizeImageToBase64 } from "@/shared/utils/image";
+import {
+  DATABASE_TYPE_NAMES,
+  getDatabaseTypeInfo,
+} from "@/shared/utils/databaseTypes";
 import classes from "./AddItemModal.module.css";
 
 // Interface definitions
@@ -355,9 +359,11 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [icon, setIcon] = useState<string | undefined>(undefined);
+  const [userHasCustomIcon, setUserHasCustomIcon] = useState(false);
   const [isFetchingIcon, setIsFetchingIcon] = useState(false);
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [inputUrl, setInputUrl] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeType = ITEM_TYPES.find((type) => type.id === selectedType);
 
@@ -371,7 +377,10 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     setNotes("");
     setTags([]);
     setTagInput("");
+    setTags([]);
+    setTagInput("");
     setIcon(undefined);
+    setUserHasCustomIcon(false);
     setIsFetchingIcon(false);
     setIsUrlModalOpen(false);
     setInputUrl("");
@@ -392,10 +401,27 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     try {
       const b64 = await invoke<string>("download_favicon", { domain });
       setIcon(b64);
+      setUserHasCustomIcon(true);
     } catch (err) {
       console.error("Failed to download favicon:", err);
     } finally {
       setIsFetchingIcon(false);
+    }
+  };
+
+  const handleDbLogoChange = (dbTypeVal: string) => {
+    const dbInfo = getDatabaseTypeInfo(dbTypeVal);
+    if (dbInfo && !userHasCustomIcon) {
+      setIcon(dbInfo.defaultIcon);
+      invoke<string>("download_favicon", { domain: dbInfo.domain })
+        .then((b64) => {
+          if (b64 && !userHasCustomIcon) {
+            setIcon(b64);
+          }
+        })
+        .catch(() => {
+          // ignore
+        });
     }
   };
 
@@ -604,6 +630,20 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
       size: "sm" as const,
     };
 
+    if (field.id === "dbType") {
+      return (
+        <Autocomplete
+          {...commonProps}
+          data={DATABASE_TYPE_NAMES}
+          value={field.value}
+          onChange={(val) => {
+            handleFieldValueChange(field.id, val);
+            handleDbLogoChange(val);
+          }}
+        />
+      );
+    }
+
     if (field.type === "password") {
       return <PasswordInput {...commonProps} />;
     }
@@ -678,37 +718,12 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
                 <Menu.Label>
                   {t("iconOptions", "Tùy chọn biểu tượng")}
                 </Menu.Label>
-
-                <FileButton
-                  onChange={async (file) => {
-                    if (file) {
-                      try {
-                        const b64 = await resizeImageToBase64(file);
-                        setIcon(b64);
-                      } catch (err) {
-                        console.error("Failed to resize image:", err);
-                        notifications.show({
-                          title: t("errorUpload", "Lỗi tải ảnh"),
-                          message: t(
-                            "errorUploadDesc",
-                            "Không thể nén ảnh này."
-                          ),
-                          color: "red",
-                        });
-                      }
-                    }
-                  }}
-                  accept="image/png,image/jpeg,image/webp"
+                <Menu.Item
+                  leftSection={<IconUpload size={14} />}
+                  onClick={() => fileInputRef.current?.click()}
                 >
-                  {(props) => (
-                    <Menu.Item
-                      {...props}
-                      leftSection={<IconUpload size={14} />}
-                    >
-                      {t("uploadFromComputer", "Tải lên từ máy tính")}
-                    </Menu.Item>
-                  )}
-                </FileButton>
+                  {t("uploadFromComputer", "Tải lên từ máy tính")}
+                </Menu.Item>
 
                 <Menu.Item
                   leftSection={<IconGlobe size={14} />}
@@ -723,7 +738,10 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
                     <Menu.Item
                       color="red"
                       leftSection={<IconX size={14} />}
-                      onClick={() => setIcon(undefined)}
+                      onClick={() => {
+                        setIcon(undefined);
+                        setUserHasCustomIcon(false);
+                      }}
                     >
                       {t("deleteIcon", "Xóa biểu tượng tùy chỉnh")}
                     </Menu.Item>
@@ -1154,6 +1172,44 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
           </Group>
         </Stack>
       </Modal>
+      {/* Hidden File Input for uploading logo from computer */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        accept="image/*"
+        onChange={async (e) => {
+          const file = e.currentTarget.files?.[0];
+          if (file) {
+            try {
+              let b64 = "";
+              try {
+                b64 = await resizeImageToBase64(file);
+              } catch {
+                b64 = await new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = (ev) =>
+                    resolve((ev.target?.result as string) || "");
+                  reader.onerror = () => resolve("");
+                  reader.readAsDataURL(file);
+                });
+              }
+              if (b64) {
+                setIcon(b64);
+                setUserHasCustomIcon(true);
+              }
+            } catch (err) {
+              console.error("Failed to process image:", err);
+              notifications.show({
+                title: t("errorUpload", "Lỗi tải ảnh"),
+                message: t("errorUploadDesc", "Không thể nén ảnh này."),
+                color: "red",
+              });
+            }
+          }
+          e.currentTarget.value = "";
+        }}
+      />
     </Modal>
   );
 }

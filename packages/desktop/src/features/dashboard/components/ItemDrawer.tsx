@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Box,
   Group,
@@ -16,9 +16,9 @@ import {
   Stack,
   Loader,
   Avatar,
-  FileButton,
   Transition,
   Select,
+  Autocomplete,
 } from "@mantine/core";
 import {
   IconX,
@@ -42,6 +42,14 @@ import { TotpDisplay } from "./TotpDisplay";
 import classes from "./ItemDrawer.module.css";
 import { useClipboard } from "@mantine/hooks";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
+import { notifications } from "@mantine/notifications";
+import { resizeImageToBase64 } from "@/shared/utils/image";
+import {
+  DATABASE_TYPE_NAMES,
+  getDatabaseTypeInfo,
+  getDatabaseLogo,
+} from "@/shared/utils/databaseTypes";
 
 interface ItemDrawerProps {
   item: VaultItem;
@@ -172,6 +180,11 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     fieldCount: number;
   } | null>(null);
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [inputUrl, setInputUrl] = useState("");
+
+  useEffect(() => {
+    setIcon(item.icon);
+  }, [item.icon]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -207,7 +220,9 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   const [tags, setTags] = useState<string[]>(item.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [icon, setIcon] = useState<string | undefined>(item.icon);
+  const [userHasCustomIcon, setUserHasCustomIcon] = useState(false);
   const [isFetchingIcon, setIsFetchingIcon] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeType = ITEM_TYPES.find((t) => t.id === category);
 
@@ -259,18 +274,24 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     setSectionToDelete(null);
   };
 
-  // Group fields by section for rendering
-  const viewSectionGroups = useMemo(() => {
+  // Group non-empty fields by section for rendering in View mode
+  const visibleSectionGroups = useMemo(() => {
     const map: Record<string, FormField[]> = {};
     formFields.forEach((field) => {
-      const key = (field.section || "").trim();
-      if (!map[key]) map[key] = [];
-      map[key].push(field);
+      if (
+        field.value !== undefined &&
+        field.value !== null &&
+        field.value.trim() !== ""
+      ) {
+        const key = (field.section || "").trim();
+        if (!map[key]) map[key] = [];
+        map[key].push(field);
+      }
     });
     return map;
   }, [formFields]);
 
-  const viewSectionKeys = Object.keys(viewSectionGroups);
+  const viewSectionKeys = Object.keys(visibleSectionGroups);
   const showSectionHeaders =
     viewSectionKeys.length > 1 ||
     (viewSectionKeys.length === 1 && viewSectionKeys[0] !== "");
@@ -299,21 +320,75 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     });
   };
 
+  const processImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      resizeImageToBase64(file)
+        .then((b64) => {
+          if (b64 && b64.length > 20) {
+            resolve(b64);
+          } else {
+            throw new Error("Resized image empty");
+          }
+        })
+        .catch(() => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              resolve(e.target.result as string);
+            } else {
+              resolve("");
+            }
+          };
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(file);
+        });
+    });
+  };
+
+  const handleUpdateLogo = (newIcon: string | undefined) => {
+    setIcon(newIcon);
+    setUserHasCustomIcon(!!newIcon);
+  };
+
+  const handleDbLogoChange = (dbTypeVal: string) => {
+    const dbInfo = getDatabaseTypeInfo(dbTypeVal);
+    if (dbInfo && !userHasCustomIcon) {
+      setIcon(dbInfo.defaultIcon);
+      invoke<string>("download_favicon", { domain: dbInfo.domain })
+        .then((b64) => {
+          if (b64 && !userHasCustomIcon) {
+            setIcon(b64);
+          }
+        })
+        .catch(() => {
+          // ignore
+        });
+    }
+  };
+
   const handleUrlBlur = async (urlVal: string) => {
-    const trimmed = urlVal.trim();
-    if (!trimmed) return;
+    if (!urlVal || !urlVal.trim()) return;
+
+    let domain = urlVal.trim();
+    domain = domain.replace(/^(https?:\/\/)?(www\.)?/i, "");
+    domain = domain.split("/")[0].split(":")[0];
+
+    if (!domain) return;
 
     setIsFetchingIcon(true);
     try {
-      let domain = trimmed;
-      if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
-        domain = `https://${domain}`;
-      }
-      const parsed = new URL(domain);
-      const iconUrl = `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=128`;
-      setIcon(iconUrl);
-    } catch {
-      // ignore
+      const b64 = await invoke<string>("download_favicon", { domain });
+      handleUpdateLogo(b64);
+    } catch (err) {
+      console.error("Failed to download favicon:", err);
+      notifications.show({
+        title: t("errorFetchFavicon", "Lỗi tải biểu tượng"),
+        message: t(
+          "errorFetchFaviconDesc",
+          "Không thể tải biểu tượng từ URL này."
+        ),
+        color: "red",
+      });
     } finally {
       setIsFetchingIcon(false);
     }
@@ -519,6 +594,20 @@ export const ItemDrawer = React.memo(function ItemDrawer({
       size: "sm" as const,
     };
 
+    if (field.id === "dbType") {
+      return (
+        <Autocomplete
+          {...commonProps}
+          data={DATABASE_TYPE_NAMES}
+          value={field.value}
+          onChange={(val) => {
+            handleFieldValueChange(field.id, val);
+            handleDbLogoChange(val);
+          }}
+        />
+      );
+    }
+
     if (field.type === "password") {
       return (
         <PasswordInput
@@ -598,6 +687,12 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     </Menu>
   );
 
+  const dbTypeVal =
+    formFields.find((f) => f.id === "dbType")?.value ||
+    item.customFields?.find((cf) => cf.id === "dbType")?.value;
+  const effectiveIcon =
+    icon || (category === "Database" ? getDatabaseLogo(dbTypeVal) : undefined);
+
   return (
     <Transition
       mounted={opened}
@@ -611,12 +706,12 @@ export const ItemDrawer = React.memo(function ItemDrawer({
           {/* Drawer Header */}
           <Box className={classes.header}>
             {isEditing ? (
-              <Menu shadow="md" width={200} position="bottom-start" withArrow>
+              <Menu shadow="md" width={220} position="bottom-start" withArrow>
                 <Menu.Target>
                   <Tooltip label={t("changeIcon", "Đổi biểu tượng")}>
                     <Box style={{ cursor: "pointer", position: "relative" }}>
-                      {icon ? (
-                        <Avatar src={icon} size={54} radius="lg" />
+                      {effectiveIcon ? (
+                        <Avatar src={effectiveIcon} size={54} radius="lg" />
                       ) : (
                         <div
                           className={`${classes.iconWrapperLarge} ${activeType?.bgClass}`}
@@ -644,36 +739,23 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                   </Tooltip>
                 </Menu.Target>
                 <Menu.Dropdown>
+                  <Menu.Label>
+                    {t("iconOptions", "Tùy chọn biểu tượng")}
+                  </Menu.Label>
+
+                  <Menu.Item
+                    leftSection={<IconUpload size={14} />}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {t("uploadFromComputer", "Tải lên từ máy tính")}
+                  </Menu.Item>
+
                   <Menu.Item
                     leftSection={<IconGlobe size={14} />}
                     onClick={() => setIsUrlModalOpen(true)}
                   >
-                    {t("fetchFromUrl", "Lấy từ URL trang web")}
+                    {t("fetchFromUrl", "Tải logo từ địa chỉ web")}
                   </Menu.Item>
-
-                  <FileButton
-                    onChange={(file) => {
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                          if (e.target?.result) {
-                            setIcon(e.target.result as string);
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                    accept="image/png,image/jpeg,image/svg+xml"
-                  >
-                    {(props) => (
-                      <Menu.Item
-                        leftSection={<IconUpload size={14} />}
-                        {...props}
-                      >
-                        {t("uploadImage", "Tải lên ảnh từ máy tính")}
-                      </Menu.Item>
-                    )}
-                  </FileButton>
 
                   {icon && (
                     <>
@@ -681,7 +763,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                       <Menu.Item
                         color="red"
                         leftSection={<IconX size={14} />}
-                        onClick={() => setIcon(undefined)}
+                        onClick={() => handleUpdateLogo(undefined)}
                       >
                         {t("deleteIcon", "Xóa biểu tượng tùy chỉnh")}
                       </Menu.Item>
@@ -691,8 +773,8 @@ export const ItemDrawer = React.memo(function ItemDrawer({
               </Menu>
             ) : (
               <div style={{ flexShrink: 0 }}>
-                {item.icon ? (
-                  <Avatar src={item.icon} size={54} radius="lg" />
+                {effectiveIcon ? (
+                  <Avatar src={effectiveIcon} size={54} radius="lg" />
                 ) : (
                   <div
                     className={`${classes.iconWrapperLarge} ${activeType?.bgClass}`}
@@ -929,10 +1011,10 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                 <Button
                   variant="dashed"
                   color="blue"
-                  size="xs"
+                  size="sm"
                   radius="md"
                   fullWidth
-                  leftSection={<IconFolderPlus size={14} />}
+                  leftSection={<IconFolderPlus size={16} />}
                   onClick={handleAddSection}
                   className={classes.addSectionBtn}
                 >
@@ -994,7 +1076,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
               // ==================== VIEW MODE ====================
               <>
                 {viewSectionKeys.map((secKey) => {
-                  const secFields = viewSectionGroups[secKey];
+                  const secFields = visibleSectionGroups[secKey];
                   if (!secFields || secFields.length === 0) return null;
 
                   return (
@@ -1037,7 +1119,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                             </Text>
                             <div className={classes.fieldValueWrapper}>
                               <Text className={classes.fieldValue}>
-                                {displayValue || t("empty", "(Trống)")}
+                                {displayValue}
                               </Text>
                               <Group gap={4} style={{ flexShrink: 0 }}>
                                 {isPassword && field.value && (
@@ -1272,7 +1354,10 @@ export const ItemDrawer = React.memo(function ItemDrawer({
           {/* Modal Fetch Favicon by URL */}
           <Modal
             opened={isUrlModalOpen}
-            onClose={() => setIsUrlModalOpen(false)}
+            onClose={() => {
+              setIsUrlModalOpen(false);
+              setInputUrl("");
+            }}
             title={t("fetchFromUrlTitle", "Tải biểu tượng từ trang web")}
             radius="lg"
             centered
@@ -1282,25 +1367,23 @@ export const ItemDrawer = React.memo(function ItemDrawer({
               <TextInput
                 placeholder="https://example.com"
                 label={t("websiteUrl", "Địa chỉ URL")}
+                value={inputUrl}
+                onChange={(e) => setInputUrl(e.currentTarget.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    handleUrlBlur(e.currentTarget.value);
+                    handleUrlBlur(inputUrl);
                     setIsUrlModalOpen(false);
+                    setInputUrl("");
                   }
                 }}
               />
               <Group justify="flex-end">
                 <Button
                   size="xs"
-                  onClick={(e) => {
-                    const input =
-                      e.currentTarget.parentElement?.previousElementSibling?.querySelector(
-                        "input"
-                      );
-                    if (input) {
-                      handleUrlBlur(input.value);
-                    }
+                  onClick={() => {
+                    handleUrlBlur(inputUrl);
                     setIsUrlModalOpen(false);
+                    setInputUrl("");
                   }}
                 >
                   {t("fetchBtn", "Tải biểu tượng")}
@@ -1308,6 +1391,41 @@ export const ItemDrawer = React.memo(function ItemDrawer({
               </Group>
             </Stack>
           </Modal>
+          {/* Hidden File Input for uploading logo from computer */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.currentTarget.files?.[0];
+              if (file) {
+                try {
+                  const b64 = await processImageFile(file);
+                  if (b64) {
+                    handleUpdateLogo(b64);
+                  } else {
+                    notifications.show({
+                      title: t("errorUpload", "Lỗi tải ảnh"),
+                      message: t(
+                        "errorUploadDesc",
+                        "Không thể đọc file ảnh này."
+                      ),
+                      color: "red",
+                    });
+                  }
+                } catch (err) {
+                  console.error("Failed to process image:", err);
+                  notifications.show({
+                    title: t("errorUpload", "Lỗi tải ảnh"),
+                    message: t("errorUploadDesc", "Không thể nén ảnh này."),
+                    color: "red",
+                  });
+                }
+              }
+              e.currentTarget.value = "";
+            }}
+          />
         </Box>
       )}
     </Transition>
