@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Box,
   Card,
@@ -74,37 +74,39 @@ export function DashboardPage() {
     setSelectedIds(new Set());
   }
 
-  // Filter items matching category and search query
-  const filteredItems = items.filter((item) => {
-    // Category check
-    const categoryMatch =
-      activeCategory === "all" ||
-      (activeCategory === "Login" && item.category === "Login") ||
-      (activeCategory === "Card" && item.category === "Credit Card") ||
-      (activeCategory === "Note" && item.category === "Secure Note") ||
-      (activeCategory === "Database" && item.category === "Database");
+  // Filter items matching category and search query (memoized)
+  const filteredItems = useMemo(() => {
+    return items.filter((item) => {
+      // Category check
+      const categoryMatch =
+        activeCategory === "all" ||
+        (activeCategory === "Login" && item.category === "Login") ||
+        (activeCategory === "Card" && item.category === "Credit Card") ||
+        (activeCategory === "Note" && item.category === "Secure Note") ||
+        (activeCategory === "Database" && item.category === "Database");
 
-    if (!categoryMatch) return false;
+      if (!categoryMatch) return false;
 
-    // Search query check
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase().trim();
+      // Search query check
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase().trim();
 
-    const fieldsMatch =
-      item.title.toLowerCase().includes(query) ||
-      item.category.toLowerCase().includes(query) ||
-      item.username?.toLowerCase().includes(query) ||
-      item.url?.toLowerCase().includes(query) ||
-      item.notes?.toLowerCase().includes(query);
+      const fieldsMatch =
+        item.title.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        item.username?.toLowerCase().includes(query) ||
+        item.url?.toLowerCase().includes(query) ||
+        item.notes?.toLowerCase().includes(query);
 
-    const customFieldsMatch = item.customFields?.some(
-      (cf) =>
-        cf.label.toLowerCase().includes(query) ||
-        cf.value.toLowerCase().includes(query)
-    );
+      const customFieldsMatch = item.customFields?.some(
+        (cf) =>
+          cf.label.toLowerCase().includes(query) ||
+          cf.value.toLowerCase().includes(query)
+      );
 
-    return fieldsMatch || customFieldsMatch;
-  });
+      return fieldsMatch || customFieldsMatch;
+    });
+  }, [items, activeCategory, searchQuery]);
 
   const getCategoryIcon = (category: string) => {
     const type = ITEM_TYPES.find((t) => t.id === category);
@@ -133,34 +135,41 @@ export function DashboardPage() {
 
   const isDrawerOpen = selectedItemId !== null;
 
+  // Ref to access current filteredItems inside stable keyboard listener
+  const filteredItemsRef = useRef(filteredItems);
+  useEffect(() => {
+    filteredItemsRef.current = filteredItems;
+  }, [filteredItems]);
+
   // Keyboard ArrowUp / ArrowDown navigation between items
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isInputFocused = ["INPUT", "TEXTAREA"].includes(
         (document.activeElement as HTMLElement)?.tagName || ""
       );
-      if (isInputFocused || filteredItems.length === 0) return;
+      const currentFiltered = filteredItemsRef.current;
+      if (isInputFocused || currentFiltered.length === 0) return;
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
         if (!selectedItemId) {
-          setSelectedItemId(filteredItems[0].id);
+          setSelectedItemId(currentFiltered[0].id);
         } else {
-          const currentIndex = filteredItems.findIndex(
+          const currentIndex = currentFiltered.findIndex(
             (item) => item.id === selectedItemId
           );
-          if (currentIndex < filteredItems.length - 1) {
-            setSelectedItemId(filteredItems[currentIndex + 1].id);
+          if (currentIndex < currentFiltered.length - 1) {
+            setSelectedItemId(currentFiltered[currentIndex + 1].id);
           }
         }
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         if (selectedItemId) {
-          const currentIndex = filteredItems.findIndex(
+          const currentIndex = currentFiltered.findIndex(
             (item) => item.id === selectedItemId
           );
           if (currentIndex > 0) {
-            setSelectedItemId(filteredItems[currentIndex - 1].id);
+            setSelectedItemId(currentFiltered[currentIndex - 1].id);
           }
         }
       }
@@ -168,7 +177,7 @@ export function DashboardPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedItemId, filteredItems]);
+  }, [selectedItemId, filteredItemsRef]);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {

@@ -67,7 +67,10 @@ function generateCustomFieldId(): string {
   return `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
+export const ItemDrawer = React.memo(function ItemDrawer({
+  item,
+  onClose,
+}: Readonly<ItemDrawerProps>) {
   const { t } = useTranslation();
   const { updateItem, deleteItem } = useVault();
   const clipboard = useClipboard();
@@ -1229,6 +1232,6 @@ export function ItemDrawer({ item, onClose }: Readonly<ItemDrawerProps>) {
       )}
     </Transition>
   );
-}
+});
 
 export default ItemDrawer;

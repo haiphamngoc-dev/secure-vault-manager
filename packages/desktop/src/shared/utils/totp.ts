@@ -89,6 +89,9 @@ export function parseOtpAuthUri(secretOrUri: string): OtpAuthParams {
   };
 }
 
+// Module-level cache for imported CryptoKeys to avoid re-importing on every 1-second tick
+const cryptoKeyCache = new Map<string, CryptoKey>();
+
 /**
  * Generates an RFC 6238 TOTP code using Web Crypto API.
  */
@@ -122,14 +125,18 @@ export async function generateTotpCode(
     view.setUint32(0, 0, false);
     view.setUint32(4, counter, false);
 
-    // Import HMAC Key
-    const key = await crypto.subtle.importKey(
-      "raw",
-      keyBytes as BufferSource,
-      { name: "HMAC", hash: { name: params.algorithm || "SHA-1" } },
-      false,
-      ["sign"]
-    );
+    // Get cached HMAC Key or import a new one
+    let key = cryptoKeyCache.get(params.secret);
+    if (!key) {
+      key = await crypto.subtle.importKey(
+        "raw",
+        keyBytes as BufferSource,
+        { name: "HMAC", hash: { name: params.algorithm || "SHA-1" } },
+        false,
+        ["sign"]
+      );
+      cryptoKeyCache.set(params.secret, key);
+    }
 
     // Compute HMAC
     const signature = await crypto.subtle.sign("HMAC", key, buffer);

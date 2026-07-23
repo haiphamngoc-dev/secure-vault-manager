@@ -12,7 +12,7 @@ import classes from "./MainLayout.module.css";
 
 export function MainLayout() {
   useAutoLock();
-  const { lock, deleteItem } = useVault();
+  const { lock, deleteItems } = useVault();
   const { t } = useTranslation();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -141,9 +141,7 @@ export function MainLayout() {
               radius="md"
               size="xs"
               onClick={() => {
-                for (const id of selectedIds) {
-                  deleteItem(id);
-                }
+                deleteItems(Array.from(selectedIds));
                 setSelectedIds(new Set());
                 setConfirmBulkDelete(false);
                 notifications.show({
