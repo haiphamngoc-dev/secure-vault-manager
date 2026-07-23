@@ -61,6 +61,31 @@ export function MainLayout() {
     headerTitle = t("settingsSync", "Settings & Sync");
   }
 
+  const outletElement = (
+    <Box className={classes.mainContent}>
+      <Box
+        style={{
+          flex: 1,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Outlet
+          context={{
+            openMobileSidebar: () => setMobileOpen(true),
+            onOpenAdd: () => setIsAddModalOpen(true),
+            onExport: () => setIsExportModalOpen(true),
+            onDelete: () => setConfirmBulkDelete(true),
+            selectedIds,
+            setSelectedIds,
+            headerTitle,
+          }}
+        />
+      </Box>
+    </Box>
+  );
+
   return (
     <Box className={classes.dashboardContainer}>
       <Sidebar
@@ -71,28 +96,7 @@ export function MainLayout() {
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
       />
-      <Box className={classes.mainContent}>
-        <Box
-          style={{
-            flex: 1,
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Outlet
-            context={{
-              openMobileSidebar: () => setMobileOpen(true),
-              onOpenAdd: () => setIsAddModalOpen(true),
-              onExport: () => setIsExportModalOpen(true),
-              onDelete: () => setConfirmBulkDelete(true),
-              selectedIds,
-              setSelectedIds,
-              headerTitle,
-            }}
-          />
-        </Box>
-      </Box>
+      {outletElement}
 
       {/* Shared Item Creator Modal */}
       <AddItemModal
