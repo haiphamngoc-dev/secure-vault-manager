@@ -292,6 +292,9 @@ pub fn run() {
             #[cfg(windows)]
             ipc::pipe::start_named_pipe_listener(app.app_handle().clone());
 
+            // Start Local Loopback HTTP Server (127.0.0.1:12519)
+            ipc::http_server::start_local_http_server(app.app_handle().clone());
+
             Ok(())
         })
         // Global listener for window events (e.g. intercepts close to minimize to tray)

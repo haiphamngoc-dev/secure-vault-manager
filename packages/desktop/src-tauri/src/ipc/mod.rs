@@ -2,6 +2,8 @@
 pub mod pipe;
 #[cfg(not(windows))]
 pub mod socket;
+pub mod http_server;
+
 
 use serde::{Deserialize, Serialize};
 use tauri::{Emitter, Manager};

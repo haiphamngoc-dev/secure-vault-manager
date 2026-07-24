@@ -1,4 +1,8 @@
 import { generate_totp, parse_otpauth_uri } from "@secure-vault/crypto-wasm";
+import {
+  fetchLocalServerStatus,
+  sendLocalServerRpc,
+} from "./services/http-client";
 
 const HOST_NAME = "com.haiphamngoc_dev.secure_vault_manager_proxy";
 
@@ -17,15 +21,18 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "svm_keep_alive") {
     getPairingToken().then((token) => {
       if (token) {
-        chrome.runtime.sendNativeMessage(
-          HOST_NAME,
-          { action: "check_status", pairing_token: token },
-          () => {
-            if (chrome.runtime.lastError) {
-              // Ignore background ping errors
+        // Ping HTTP status or Native Message in background
+        fetchLocalServerStatus().catch(() => {
+          chrome.runtime.sendNativeMessage(
+            HOST_NAME,
+            { action: "check_status", pairing_token: token },
+            () => {
+              if (chrome.runtime.lastError) {
+                // Ignore background ping errors
+              }
             }
-          }
-        );
+          );
+        });
       }
     });
   }
@@ -60,6 +67,31 @@ async function sendNativeMessageWithRetry(
   }
 }
 
+/**
+ * Sends request to Desktop using Local Loopback HTTP Server (127.0.0.1:12519) first,
+ * with automatic fallback to Native Messaging Host.
+ */
+async function sendRequestToDesktop(
+  actionPayload: Record<string, unknown>,
+  token: string
+): Promise<unknown> {
+  // 1. Try Local HTTP Server via 127.0.0.1:12519 (Fastest, 100% Snap compatible)
+  try {
+    const httpRes = await sendLocalServerRpc(actionPayload, token);
+    if (httpRes) {
+      return httpRes;
+    }
+  } catch {
+    // Fallback to Native Messaging Host if Local HTTP Server fails
+  }
+
+  // 2. Fallback to Native Messaging Host IPC
+  return await sendNativeMessageWithRetry({
+    ...actionPayload,
+    pairing_token: token,
+  });
+}
+
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.type === "CHECK_STATUS") {
     getPairingToken().then(async (token) => {
@@ -73,10 +105,17 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return;
       }
       try {
-        const response = await sendNativeMessageWithRetry({
-          action: "check_status",
-          pairing_token: token,
-        });
+        // Try local HTTP status check first
+        const localStatus = await fetchLocalServerStatus();
+        if (localStatus) {
+          sendResponse(localStatus);
+          return;
+        }
+
+        const response = await sendRequestToDesktop(
+          { action: "check_status" },
+          token
+        );
         sendResponse(response);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -99,11 +138,10 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return;
       }
       try {
-        const response = await sendNativeMessageWithRetry({
-          action: "get_credentials",
-          domain: request.domain,
-          pairing_token: token,
-        });
+        const response = await sendRequestToDesktop(
+          { action: "get_credentials", domain: request.domain },
+          token
+        );
         sendResponse(response);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -123,14 +161,16 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return;
       }
       try {
-        const response = await sendNativeMessageWithRetry({
-          action: "save_credential",
-          domain: request.domain,
-          username: request.username,
-          password: request.password,
-          is_new_account: request.isNewAccount,
-          pairing_token: token,
-        });
+        const response = await sendRequestToDesktop(
+          {
+            action: "save_credential",
+            domain: request.domain,
+            username: request.username,
+            password: request.password,
+            is_new_account: request.isNewAccount,
+          },
+          token
+        );
         sendResponse(response);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -150,12 +190,14 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return;
       }
       try {
-        const response = await sendNativeMessageWithRetry({
-          action: "update_totp",
-          domain: request.domain,
-          totp_secret: request.totpSecret,
-          pairing_token: token,
-        });
+        const response = await sendRequestToDesktop(
+          {
+            action: "update_totp",
+            domain: request.domain,
+            totp_secret: request.totpSecret,
+          },
+          token
+        );
         sendResponse(response);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -202,11 +244,10 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return;
       }
       try {
-        const response = await sendNativeMessageWithRetry({
-          action: "unlock_vault",
-          password: request.password,
-          pairing_token: token,
-        });
+        const response = await sendRequestToDesktop(
+          { action: "unlock_vault", password: request.password },
+          token
+        );
         sendResponse(response);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
@@ -226,10 +267,10 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return;
       }
       try {
-        const response = await sendNativeMessageWithRetry({
-          action: "trigger_biometrics",
-          pairing_token: token,
-        });
+        const response = await sendRequestToDesktop(
+          { action: "trigger_biometrics" },
+          token
+        );
         sendResponse(response);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
