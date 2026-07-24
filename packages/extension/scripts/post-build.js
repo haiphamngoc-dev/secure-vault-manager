@@ -44,16 +44,23 @@ function main() {
   if (fs.existsSync(firefoxManifestPath)) {
     const manifest = JSON.parse(fs.readFileSync(firefoxManifestPath, "utf8"));
 
+    // Filter out Chrome-only permissions unsupported by Firefox
+    if (Array.isArray(manifest.permissions)) {
+      manifest.permissions = manifest.permissions.filter(
+        (p) => p !== "offscreen"
+      );
+    }
+
     if (manifest.background && manifest.background.service_worker) {
       // Convert service_worker to scripts array for Firefox MV3 compatibility
       manifest.background.scripts = [manifest.background.service_worker];
       delete manifest.background.service_worker;
-
-      fs.writeFileSync(firefoxManifestPath, JSON.stringify(manifest, null, 2));
-      console.log(
-        "Successfully converted background.service_worker to background.scripts for Firefox."
-      );
     }
+
+    fs.writeFileSync(firefoxManifestPath, JSON.stringify(manifest, null, 2));
+    console.log(
+      "Successfully updated manifest.json for Firefox compatibility."
+    );
   }
 }
 

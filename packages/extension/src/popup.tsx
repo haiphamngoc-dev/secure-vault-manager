@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./global.css";
 import classes from "./popup.module.css";
@@ -7,12 +7,15 @@ import {
   IconRefresh,
   IconPlugConnectedX,
   IconLoader2,
+  IconQrcode,
 } from "@tabler/icons-react";
+import { scanVisibleTabForQr } from "./services/qr-scanner";
 
 interface CredentialItem {
   id: string;
   username?: string;
   password?: string;
+  totp_secret?: string;
 }
 
 function Popup() {
@@ -39,6 +42,40 @@ function Popup() {
   const [unlockPassword, setUnlockPassword] = useState("");
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [desktopRunning, setDesktopRunning] = useState(true);
+  const [qrScanning, setQrScanning] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const handleScanQr = async () => {
+    setQrScanning(true);
+    setError("");
+    setSuccessMessage("");
+    try {
+      const result = await scanVisibleTabForQr();
+      if (result.otpauth) {
+        const secret = result.otpauth.secret;
+        chrome.runtime.sendMessage(
+          { type: "UPDATE_TOTP", domain, totpSecret: secret },
+          (resp) => {
+            setQrScanning(false);
+            if (resp && resp.status === "success") {
+              setSuccessMessage("Đã lưu mã 2FA TOTP cho " + domain + "!");
+            } else {
+              setError(resp?.message || "Không thể lưu TOTP secret.");
+            }
+          }
+        );
+      } else {
+        setQrScanning(false);
+        setError(
+          "Mã QR không hợp lệ (không chứa otpauth://). Text: " + result.rawText
+        );
+      }
+    } catch (err: unknown) {
+      setQrScanning(false);
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || "Không tìm thấy mã QR trên trang web hiện tại.");
+    }
+  };
 
   const handleUnlockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,40 +122,58 @@ function Popup() {
     setError("");
   };
 
-  const checkStatus = async () => {
-    setError("");
-    chrome.runtime.sendMessage({ type: "CHECK_STATUS" }, (response) => {
-      setIsChecking(false);
-      if (!response || response.status === "error") {
-        const msg =
-          response?.message || "Cannot connect to desktop application.";
-        if (
-          msg.includes("pairing key") ||
-          msg.includes("pairing token") ||
-          msg.includes("not paired") ||
-          msg.includes("paired")
-        ) {
-          setPaired(false);
-          setDesktopRunning(true);
-        } else if (
-          msg.includes("not running") ||
-          msg.includes("lost") ||
-          msg.includes("closed") ||
-          msg.includes("Cannot connect")
-        ) {
-          setDesktopRunning(false);
-          setError(msg);
-        } else {
-          setError(msg);
-          setDesktopRunning(false);
+  const checkStatusRef = useRef<
+    (retryArg?: number | React.SyntheticEvent) => void
+  >(() => {});
+
+  const checkStatus = useCallback(
+    async (retryArg: number | React.SyntheticEvent = 0) => {
+      const retryCount = typeof retryArg === "number" ? retryArg : 0;
+      setError("");
+      chrome.runtime.sendMessage({ type: "CHECK_STATUS" }, (response) => {
+        if ((!response || response.status === "error") && retryCount < 1) {
+          // Retry once after 350ms if Service Worker was dormant/waking up
+          setTimeout(() => checkStatusRef.current(retryCount + 1), 350);
+          return;
         }
-      } else {
-        setDesktopRunning(true);
-        setPaired(response.paired !== false);
-        setLocked(response.locked !== false);
-      }
-    });
-  };
+
+        setIsChecking(false);
+        if (!response || response.status === "error") {
+          const msg =
+            response?.message || "Cannot connect to desktop application.";
+          if (
+            msg.includes("pairing key") ||
+            msg.includes("pairing token") ||
+            msg.includes("not paired") ||
+            msg.includes("paired")
+          ) {
+            setPaired(false);
+            setDesktopRunning(true);
+          } else if (
+            msg.includes("not running") ||
+            msg.includes("lost") ||
+            msg.includes("closed") ||
+            msg.includes("Cannot connect")
+          ) {
+            setDesktopRunning(false);
+            setError(msg);
+          } else {
+            setError(msg);
+            setDesktopRunning(false);
+          }
+        } else {
+          setDesktopRunning(true);
+          setPaired(response.paired !== false);
+          setLocked(response.locked !== false);
+        }
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    checkStatusRef.current = checkStatus;
+  }, [checkStatus]);
 
   const getCredentials = async (currentDomain: string) => {
     if (!currentDomain) return;
@@ -152,7 +207,7 @@ function Popup() {
     setTimeout(() => {
       checkStatus();
     }, 0);
-  }, []);
+  }, [checkStatus]);
 
   useEffect(() => {
     if (paired && !locked && domain) {
@@ -256,6 +311,21 @@ function Popup() {
           <span className={classes.logoText}>Secure Vault Manager</span>
         </div>
         <div style={{ display: "flex", gap: "4px" }}>
+          {paired && desktopRunning && !locked && (
+            <button
+              className={classes.iconBtn}
+              onClick={handleScanQr}
+              disabled={qrScanning}
+              title="Quét mã QR 2FA trên trang"
+              style={{ color: "#a6e3a1" }}
+            >
+              {qrScanning ? (
+                <IconLoader2 size={15} className="spin" />
+              ) : (
+                <IconQrcode size={15} />
+              )}
+            </button>
+          )}
           <button
             className={classes.iconBtn}
             onClick={checkStatus}
@@ -275,6 +345,21 @@ function Popup() {
           )}
         </div>
       </div>
+
+      {successMessage && (
+        <div
+          style={{
+            background: "#183626",
+            color: "#a6e3a1",
+            padding: "8px 12px",
+            borderRadius: "6px",
+            fontSize: "12px",
+            marginBottom: "8px",
+          }}
+        >
+          {successMessage}
+        </div>
+      )}
 
       {error && desktopRunning && (
         <div className={classes.errorMessage}>{error}</div>

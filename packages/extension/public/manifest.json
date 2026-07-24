@@ -25,11 +25,19 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
+      "all_frames": true,
       "js": ["assets/content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ],
-  "permissions": ["activeTab", "storage", "nativeMessaging"],
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "nativeMessaging",
+    "clipboardWrite",
+    "alarms"
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   },

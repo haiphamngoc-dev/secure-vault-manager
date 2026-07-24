@@ -8,6 +8,7 @@
     "build": "tsc && vite build && node scripts/post-build.js"
   },
   "dependencies": {
+    "@secure-vault/crypto-wasm": "workspace:*",
     "@secure-vault/shared": "workspace:*",
     "@tabler/icons-react": "^3.44.0",
     "react": "^19.1.0",

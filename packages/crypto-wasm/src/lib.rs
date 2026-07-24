@@ -6,6 +6,10 @@ use chacha20poly1305::{
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
+pub mod qr;
+pub mod totp;
+
+
 #[derive(Serialize, Deserialize)]
 pub struct EncryptionResult {
     pub ciphertext: Vec<u8>,

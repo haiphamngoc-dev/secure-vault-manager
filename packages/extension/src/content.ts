@@ -1,7 +1,13 @@
+import { classifyInputField } from "./services/classifier";
+import { performSmartAutofill } from "./services/autofill";
+import { initFormCapture, CapturedCredential } from "./services/form-capture";
+import { showSaveCredentialPrompt } from "./components/save-prompt";
+
 interface CredentialItem {
   id: string;
   username?: string;
   password?: string;
+  totp_secret?: string;
 }
 
 let activeInput: HTMLInputElement | null = null;
@@ -19,85 +25,25 @@ function escapeHtml(str: string): string {
 }
 
 // Perform Autofill helper
-const performAutofill = (username: string, password: string): boolean => {
-  const inputs = Array.from(document.querySelectorAll("input"));
-  const passwordFields = inputs.filter((i) => i.type === "password");
-
-  let filledUsername = false;
-  let filledPassword = false;
-
-  if (passwordFields.length > 0) {
-    const passwordField = passwordFields[0];
-    passwordField.value = password;
-    passwordField.dispatchEvent(new Event("input", { bubbles: true }));
-    passwordField.dispatchEvent(new Event("change", { bubbles: true }));
-    filledPassword = true;
-
-    // Try to find the username input
-    // 1. Check in the same form
-    const form = passwordField.form;
-    if (form) {
-      const formInputs = Array.from(form.querySelectorAll("input"));
-      const usernameField = formInputs.find(
-        (i) =>
-          i.type !== "password" &&
-          i.type !== "submit" &&
-          i.type !== "button" &&
-          i.type !== "checkbox" &&
-          i.type !== "radio" &&
-          i.type !== "hidden"
-      );
-      if (usernameField) {
-        usernameField.value = username;
-        usernameField.dispatchEvent(new Event("input", { bubbles: true }));
-        usernameField.dispatchEvent(new Event("change", { bubbles: true }));
-        filledUsername = true;
+const performAutofill = (
+  username: string,
+  password: string,
+  totpSecret?: string
+): boolean => {
+  if (totpSecret) {
+    chrome.runtime.sendMessage(
+      { type: "GENERATE_TOTP", secret: totpSecret },
+      (response) => {
+        const totpCode =
+          response && response.status === "success" ? response.code : undefined;
+        performSmartAutofill(username, password, totpCode);
       }
-    }
-
-    // 2. If not found in form, find the input preceding the password field in the DOM
-    if (!filledUsername) {
-      const passIndex = inputs.indexOf(passwordField);
-      for (let i = passIndex - 1; i >= 0; i--) {
-        const input = inputs[i];
-        if (
-          input.type !== "password" &&
-          input.type !== "submit" &&
-          input.type !== "button" &&
-          input.type !== "checkbox" &&
-          input.type !== "radio" &&
-          input.type !== "hidden"
-        ) {
-          input.value = username;
-          input.dispatchEvent(new Event("input", { bubbles: true }));
-          input.dispatchEvent(new Event("change", { bubbles: true }));
-          filledUsername = true;
-          break;
-        }
-      }
-    }
-  }
-
-  // Fallback if no password field but we have inputs
-  if (!filledUsername && !filledPassword && inputs.length > 0) {
-    const usernameField = inputs.find(
-      (i) =>
-        i.type !== "password" &&
-        i.type !== "submit" &&
-        i.type !== "button" &&
-        i.type !== "checkbox" &&
-        i.type !== "radio" &&
-        i.type !== "hidden"
     );
-    if (usernameField) {
-      usernameField.value = username;
-      usernameField.dispatchEvent(new Event("input", { bubbles: true }));
-      usernameField.dispatchEvent(new Event("change", { bubbles: true }));
-      filledUsername = true;
-    }
+    return true;
   }
 
-  return filledUsername || filledPassword;
+  const res = performSmartAutofill(username, password);
+  return res.usernameFilled || res.passwordFilled;
 };
 
 // Keydown handler on input field
@@ -418,8 +364,8 @@ const initDropdown = async (inputEl: HTMLInputElement) => {
 const handleTrigger = (e: Event) => {
   const target = e.target as HTMLInputElement;
   if (target && target.tagName === "INPUT") {
-    const type = target.type.toLowerCase();
-    if (type === "text" || type === "email" || type === "password") {
+    const classification = classifyInputField(target);
+    if (classification !== "unknown") {
       initDropdown(target);
     }
   }
@@ -442,8 +388,42 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.type === "AUTOFILL") {
     const success = performAutofill(
       request.username || "",
-      request.password || ""
+      request.password || "",
+      request.totp_secret
     );
     sendResponse({ success });
   }
+});
+
+// Initialize form submit listener for floating Save Prompt banner
+initFormCapture((captured: CapturedCredential) => {
+  showSaveCredentialPrompt(
+    captured,
+    (cred) => {
+      chrome.runtime.sendMessage(
+        {
+          type: "SAVE_CREDENTIAL",
+          domain: cred.domain,
+          username: cred.username,
+          password: cred.password,
+          isNewAccount: cred.isNewAccount,
+        },
+        (resp) => {
+          if (resp && resp.status === "success") {
+            console.log(
+              "[SVM Extension] Credential saved successfully to Vault."
+            );
+          } else {
+            console.warn(
+              "[SVM Extension] Failed to save credential:",
+              resp?.message
+            );
+          }
+        }
+      );
+    },
+    () => {
+      console.log("[SVM Extension] User dismissed save credential prompt.");
+    }
+  );
 });

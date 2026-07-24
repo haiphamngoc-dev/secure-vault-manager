@@ -119,6 +119,9 @@ importers:
 
   packages/extension:
     dependencies:
+      '@secure-vault/crypto-wasm':
+        specifier: workspace:*
+        version: link:../crypto-wasm
       '@secure-vault/shared':
         specifier: workspace:*
         version: link:../shared

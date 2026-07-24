@@ -12,7 +12,10 @@ pub struct ProxyRequest {
     pub domain: Option<String>,
     pub pairing_token: Option<String>,
     pub password: Option<String>,
+    pub username: Option<String>,
     pub vault_id: Option<String>,
+    pub totp_secret: Option<String>,
+    pub is_new_account: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]
@@ -33,6 +36,8 @@ pub struct ProxyCredential {
     pub id: String,
     pub username: Option<String>,
     pub password: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub totp_secret: Option<String>,
 }
 
 pub async fn read_msg<R: tokio::io::AsyncReadExt + Unpin>(
@@ -278,10 +283,26 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                         false
                     }
                 })
-                .map(|item| ProxyCredential {
-                    id: item.id,
-                    username: item.username,
-                    password: item.password,
+                .map(|item| {
+                    let totp_secret = item.custom_fields.as_ref().and_then(|fields| {
+                        fields.iter().find_map(|f| {
+                            let label_lower = f.label.to_lowercase();
+                            if label_lower.contains("totp")
+                                || label_lower.contains("one-time password")
+                                || f.value.starts_with("otpauth://")
+                            {
+                                Some(f.value.clone())
+                            } else {
+                                None
+                            }
+                        })
+                    });
+                    ProxyCredential {
+                        id: item.id,
+                        username: item.username,
+                        password: item.password,
+                        totp_secret,
+                    }
                 })
                 .collect();
 
@@ -291,6 +312,265 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 message: None,
                 locked: Some(false),
                 paired: Some(true),
+            }
+        }
+        "save_credential" => {
+            let state = app.state::<crate::AppState>();
+            let key_guard = state.vault_key.lock().unwrap();
+            let key = match key_guard.as_ref() {
+                Some(k) => *k,
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("Vault is locked.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
+            };
+            drop(key_guard);
+
+            let salt_guard = state.vault_salt.lock().unwrap();
+            let salt = match salt_guard.as_ref() {
+                Some(s) => *s,
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("Vault salt missing.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
+            };
+            drop(salt_guard);
+
+            let file_guard = state.current_vault_file.lock().unwrap();
+            let file_name = match file_guard.as_ref() {
+                Some(f) => f.clone(),
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("No vault selected.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
+            };
+            drop(file_guard);
+
+            let mut vault = match crate::core::storage::load_vault_with_key(app, &key, &file_name) {
+                Ok(v) => v,
+                Err(e) => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some(format!("Failed to load vault: {}", e)),
+                        locked: None,
+                        paired: None,
+                    }
+                }
+            };
+
+            let domain = req.domain.unwrap_or_default();
+            let username = req.username;
+            let password = req.password;
+
+            if domain.is_empty() {
+                return ProxyResponse {
+                    status: "error".to_string(),
+                    data: None,
+                    message: Some("Domain is required to save credential.".to_string()),
+                    locked: Some(false),
+                    paired: Some(true),
+                };
+            }
+
+            let domain_lower = domain.to_lowercase();
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs();
+
+            let existing_item = vault.items.iter_mut().find(|i| {
+                let matches_url = i.url.as_ref().map(|u| u.to_lowercase().contains(&domain_lower)).unwrap_or(false);
+                let matches_title = i.title.to_lowercase().contains(&domain_lower);
+                let matches_user = username.is_none() || i.username == username;
+                (matches_url || matches_title) && matches_user
+            });
+
+            if let Some(item) = existing_item {
+                if let Some(p) = password {
+                    item.password = Some(p);
+                }
+                item.updated_at = now;
+            } else {
+                let new_id = uuid::Uuid::new_v4().to_string();
+                let new_item = crate::core::vault::VaultItem {
+                    id: new_id,
+                    title: domain.clone(),
+                    username,
+                    password,
+                    url: Some(format!("https://{}", domain)),
+                    notes: None,
+                    category: Some("Web logins".to_string()),
+                    updated_at: now,
+                    custom_fields: None,
+                    tags: None,
+                    icon: None,
+                };
+                vault.items.push(new_item);
+            }
+
+            if let Err(e) = crate::core::storage::save_existing_vault(app, &key, &salt, &vault, &file_name) {
+                return ProxyResponse {
+                    status: "error".to_string(),
+                    data: None,
+                    message: Some(format!("Failed to save vault: {}", e)),
+                    locked: Some(false),
+                    paired: Some(true),
+                };
+            }
+
+            let _ = app.emit("vault_updated", ());
+
+            ProxyResponse {
+                status: "success".to_string(),
+                data: None,
+                message: Some("Credential saved successfully.".to_string()),
+                locked: Some(false),
+                paired: Some(true),
+            }
+        }
+        "update_totp" => {
+            let state = app.state::<crate::AppState>();
+            let key_guard = state.vault_key.lock().unwrap();
+            let key = match key_guard.as_ref() {
+                Some(k) => *k,
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("Vault is locked.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
+            };
+            drop(key_guard);
+
+            let salt_guard = state.vault_salt.lock().unwrap();
+            let salt = match salt_guard.as_ref() {
+                Some(s) => *s,
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("Vault salt missing.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
+            };
+            drop(salt_guard);
+
+            let file_guard = state.current_vault_file.lock().unwrap();
+            let file_name = match file_guard.as_ref() {
+                Some(f) => f.clone(),
+                None => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("No vault selected.".to_string()),
+                        locked: Some(true),
+                        paired: Some(true),
+                    }
+                }
+            };
+            drop(file_guard);
+
+            let mut vault = match crate::core::storage::load_vault_with_key(app, &key, &file_name) {
+                Ok(v) => v,
+                Err(e) => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some(format!("Failed to load vault: {}", e)),
+                        locked: None,
+                        paired: None,
+                    }
+                }
+            };
+
+            let domain = req.domain.unwrap_or_default().to_lowercase();
+            let totp_secret = match req.totp_secret {
+                Some(s) if !s.is_empty() => s,
+                _ => {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some("TOTP secret is required.".to_string()),
+                        locked: Some(false),
+                        paired: Some(true),
+                    }
+                }
+            };
+
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs();
+
+            let target_item = vault.items.iter_mut().find(|i| {
+                let matches_url = i.url.as_ref().map(|u| u.to_lowercase().contains(&domain)).unwrap_or(false);
+                let matches_title = i.title.to_lowercase().contains(&domain);
+                matches_url || matches_title
+            });
+
+            if let Some(item) = target_item {
+                let fields = item.custom_fields.get_or_insert_with(Vec::new);
+                if let Some(totp_field) = fields.iter_mut().find(|f| f.label.to_lowercase().contains("totp") || f.label.to_lowercase().contains("one-time password")) {
+                    totp_field.value = totp_secret;
+                } else {
+                    fields.push(crate::core::vault::CustomField {
+                        id: uuid::Uuid::new_v4().to_string(),
+                        label: "one-time password".to_string(),
+                        value: totp_secret,
+                        r#type: "concealed".to_string(),
+                        section: Some("Security".to_string()),
+                    });
+                }
+                item.updated_at = now;
+
+                if let Err(e) = crate::core::storage::save_existing_vault(app, &key, &salt, &vault, &file_name) {
+                    return ProxyResponse {
+                        status: "error".to_string(),
+                        data: None,
+                        message: Some(format!("Failed to save vault: {}", e)),
+                        locked: Some(false),
+                        paired: Some(true),
+                    };
+                }
+
+                let _ = app.emit("vault_updated", ());
+
+                ProxyResponse {
+                    status: "success".to_string(),
+                    data: None,
+                    message: Some("TOTP secret added to item.".to_string()),
+                    locked: Some(false),
+                    paired: Some(true),
+                }
+            } else {
+                ProxyResponse {
+                    status: "error".to_string(),
+                    data: None,
+                    message: Some(format!("No credential item found for domain '{}'", domain)),
+                    locked: Some(false),
+                    paired: Some(true),
+                }
             }
         }
         _ => ProxyResponse {

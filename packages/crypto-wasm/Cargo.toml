@@ -14,6 +14,11 @@ rand = "0.8"
 getrandom = { version = "0.2", features = ["js"] }
 serde = { version = "1", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
+hmac = "0.12"
+sha1 = "0.10"
+data-encoding = "2.6"
+rqrr = "0.8"
+url = "2.5"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
