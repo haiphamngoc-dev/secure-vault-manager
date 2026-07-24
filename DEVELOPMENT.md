@@ -30,18 +30,27 @@ secure-vault-manager/
 ├── Cargo.toml                   # Root Cargo Workspace (Quản lý các crate Rust)
 ├── pnpm-workspace.yaml          # Định nghĩa các package TypeScript/Node
 ├── scripts/
-│   └── copy-sidecar.js          # Script tự động copy proxy sang binaries của desktop
+│   └── clean.js                 # Script dọn dẹp thư mục build tạm
 └── packages/
-    ├── desktop/                 # Ứng dụng Desktop (React + Tauri backend)
+    ├── desktop/                 # Ứng dụng Desktop (React + Mantine v9 + Tauri V2)
     ├── extension/               # Browser Extension (Manifest V3 cho Chrome/Firefox)
-    ├── shared/                  # Code TypeScript dùng chung (types, Wasm wrappers)
-    ├── crypto-wasm/             # Module mã hóa bằng Rust biên dịch sang WebAssembly
-    └── proxy/                   # Native Messaging Proxy viết bằng Rust
+    ├── shared/                  # Code TypeScript dùng chung (types, utils)
+    └── crypto-wasm/             # Module mã hóa & TOTP bằng Rust biên dịch sang WebAssembly
 ```
 
 ---
 
-## 3. Thiết Lập Môi Trường Phát Triển Cục Bộ
+## 3. Kiến Trúc Giao Tiếp Extension & Desktop App
+
+Secure Vault Manager sử dụng **Local Loopback REST API (`http://127.0.0.1:12519`)** với mã hóa **End-to-End Encryption (AES-256-GCM)** cho mọi giao tiếp giữa Browser Extension và Desktop App:
+
+- **Tương thích 100% Snap & Flatpak:** Do sử dụng kết nối TCP Loopback `127.0.0.1`, Extension hoạt động hoàn hảo trên mọi môi trường trình duyệt Linux (APT, Snap, Flatpak) mà không gặp rào cản Sandbox AppArmor.
+- **Tốc độ cực nhanh (< 1-3ms):** Kết nối trực tiếp với Server Axum HTTP siêu nhẹ chạy ngầm trong ứng dụng Desktop.
+- **Bảo mật tuyệt đối:** Mọi yêu cầu/phản hồi dữ liệu qua `/rpc` đều được mã hóa bằng AES-256-GCM với chìa khóa đối xứng derive từ **Pairing Token**. Mỗi request có 12-byte IV ngẫu nhiên riêng chống hoàn toàn Replay Attack.
+
+---
+
+## 4. Thiết Lập Môi Trường Phát Triển Cục Bộ
 
 Thực hiện các bước sau theo thứ tự để khởi động dự án lần đầu tiên:
 
@@ -61,23 +70,28 @@ Biên dịch mã nguồn Rust trong `packages/crypto-wasm` sang định dạng W
 pnpm run build:wasm
 ```
 
-_Lưu ý:_ Dự án đã được tạo sẵn cấu trúc stub (pkg placeholder) giúp bạn có thể bỏ qua bước này ở lần đầu chạy thử nếu chưa cài đặt `wasm-pack`.
-
-### Bước 3: Biên dịch và thiết lập Proxy Sidecar
-
-Ứng dụng Tauri Desktop yêu cầu tệp thực thi của `proxy` nằm trong thư mục binaries của nó. Hãy chạy chuỗi lệnh sau:
+### Bước 3: Khởi chạy Ứng dụng Desktop
 
 ```bash
-# Biên dịch proxy viết bằng Rust
-pnpm run build:proxy
-
-# Copy proxy vào đúng thư mục binaries của desktop với định dạng target triple của OS
-pnpm run copy:sidecar
+pnpm dev:desktop
 ```
+
+### Bước 4: Biên dịch và Nạp Browser Extension
+
+Biên dịch Extension cho Chrome và Firefox:
+
+```bash
+pnpm --filter extension build
+```
+
+Sau đó:
+
+- Trên Chrome: Vào `chrome://extensions` $\rightarrow$ Đật **Developer mode** $\rightarrow$ Chọn **Load unpacked** $\rightarrow$ Chọn thư mục `packages/extension/dist/chrome`.
+- Trên Firefox: Vào `about:debugging#/runtime/this-firefox` $\rightarrow$ Chọn **Load Temporary Add-on...** $\rightarrow$ Chọn tệp `packages/extension/dist/firefox/manifest.json`.
 
 ---
 
-## 4. Các Lệnh Vận Hành Dự Án (Scripts)
+## 5. Các Lệnh Vận Hành Dự Án (Scripts)
 
 Tất cả các lệnh điều phối dự án đều được chạy từ thư mục gốc:
 
@@ -85,83 +99,12 @@ Tất cả các lệnh điều phối dự án đều được chạy từ thư 
 | :------------------------------ | :--------------------------------------------------------------------------------------- |
 | `pnpm dev:desktop`              | Khởi chạy ứng dụng Desktop (Tauri) trong chế độ phát triển (Live reload)                 |
 | `pnpm build:desktop`            | Build gói cài đặt sản phẩm cho ứng dụng Desktop (Tauri)                                  |
+| `pnpm build:wasm`               | Biên dịch Rust `crypto-wasm` sang WebAssembly                                            |
 | `pnpm --filter extension dev`   | Khởi chạy Extension ở chế độ phát triển (Vite watch mode)                                |
-| `pnpm --filter extension build` | Biên dịch Browser Extension ra thư mục `dist/`                                           |
+| `pnpm --filter extension build` | Biên dịch Browser Extension ra thư mục `dist/chrome` và `dist/firefox`                  |
 | `pnpm lint`                     | Chạy công cụ ESLint kiểm tra lỗi cú pháp và định dạng trên toàn Monorepo                 |
 | `pnpm format`                   | Định dạng lại mã nguồn bằng Prettier trên toàn bộ dự án                                  |
 | `pnpm clean`                    | Dọn dẹp toàn bộ thư mục build tạm của Rust (target), frontend (dist/pkg) và node_modules |
-
----
-
-## 5. Cấu Hình Browser Native Messaging Host (Đặc thù)
-
-Để Browser Extension có thể giao tiếp được với ứng dụng Desktop, trình duyệt cần biết vị trí của ứng dụng proxy trung gian thông qua một tệp cấu hình JSON đăng ký trên hệ điều hành.
-
-### Cách 1: Đăng ký tự động qua Script (Khuyến nghị)
-
-Sau khi nạp Extension và lấy được **Extension ID** trên trình duyệt (ví dụ: `gkdjgnbkoongjmehhdecofdhlcajgggj`), bạn chỉ cần chạy lệnh sau từ thư mục gốc của dự án:
-
-```bash
-pnpm run register-proxy <ID_EXTENSION_CỦA_BẠN>
-```
-
-_Tác dụng:_ Script sẽ tự động nhận diện hệ điều hành, tạo tệp cấu hình JSON với đường dẫn tuyệt đối chuẩn xác, và sao chép/đăng ký vào đúng thư mục cấu hình trình duyệt (hoặc Registry trên Windows).
-
-### Cách 2: Đăng ký thủ công (Dành cho kiểm tra thủ công)
-
-Nếu muốn tự cấu hình, bạn có thể thực hiện theo các bước sau:
-
-#### Bước 1: Tạo tệp JSON cấu hình Proxy
-
-Tạo một tệp cấu hình có tên `com.haiphamngoc_dev.secure_vault_manager_proxy.json` ở bất kỳ thư mục nào trên máy của bạn với nội dung:
-
-```json
-{
-  "name": "com.haiphamngoc_dev.secure_vault_manager_proxy",
-  "description": "Secure Vault Manager Native Messaging Proxy Host",
-  "path": "/ĐƯỜNG_DẪN_TUYỆT_ĐỐI_ĐẾN/packages/desktop/src-tauri/binaries/proxy-TARGET_TRIPLE",
-  "type": "stdio",
-  "allowed_origins": ["chrome-extension://ID_EXTENSION_CỦA_BẠN/"]
-}
-```
-
-> [!IMPORTANT]
->
-> 1. Thay thế phần `/ĐƯỜNG_DẪN_TUYỆT_ĐỐI_ĐẾN/` bằng đường dẫn thực tế trên máy bạn.
-> 2. Sửa `proxy-TARGET_TRIPLE` thành tên file proxy thực tế đã tạo ở Bước 3 thiết lập (ví dụ: `proxy-x86_64-unknown-linux-gnu` hoặc `proxy-x86_64-pc-windows-msvc.exe`).
-> 3. Thay `ID_EXTENSION_CỦA_BẠN` thành ID thực tế của Extension hiển thị trên trang `chrome://extensions` sau khi bạn nạp Extension từ thư mục `packages/extension/dist`.
-
-#### Bước 2: Đăng ký tệp JSON cấu hình với trình duyệt
-
-Tùy thuộc vào hệ điều hành của bạn, hãy sao chép hoặc trỏ đường dẫn đăng ký đến tệp JSON vừa tạo:
-
-#### **Hệ điều hành Linux**
-
-Sao chép tệp JSON vào các thư mục sau:
-
-- **Google Chrome**: `~/.config/google-chrome/NativeMessagingHosts/`
-- **Mozilla Firefox**: `~/.mozilla/native-messaging-hosts/`
-
-_Lệnh mẫu:_
-
-```bash
-mkdir -p ~/.config/google-chrome/NativeMessagingHosts/
-cp com.haiphamngoc_dev.secure_vault_manager_proxy.json ~/.config/google-chrome/NativeMessagingHosts/
-```
-
-#### **Hệ điều hành macOS**
-
-Sao chép tệp JSON vào các thư mục sau:
-
-- **Google Chrome**: `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/`
-- **Mozilla Firefox**: `~/Library/Application Support/Mozilla/NativeMessagingHosts/`
-
-#### **Hệ điều hành Windows**
-
-Tạo một Registry Key trỏ đến vị trí tệp JSON:
-
-- **Google Chrome**: Tạo key `HKEY_CURRENT_USER\Software\Google\Chrome\NativeMessagingHosts\com.haiphamngoc_dev.secure_vault_manager_proxy`
-- Đặt giá trị mặc định (`Default`) của key này là đường dẫn tuyệt đối dẫn tới tệp cấu hình JSON của bạn trên đĩa cứng (ví dụ: `C:\path\to\com.haiphamngoc_dev.secure_vault_manager_proxy.json`).
 
 ---
 
@@ -169,15 +112,17 @@ Tạo một Registry Key trỏ đến vị trí tệp JSON:
 
 ### Lỗi 1: `Module not found: Can't resolve '@secure-vault/crypto-wasm'`
 
-- **Nguyên nhân:** Chưa biên dịch WebAssembly hoặc các tệp placeholder bị mất.
+- **Nguyên nhân:** Chưa biên dịch WebAssembly hoặc các tệp pkg bị thiếu.
 - **Cách khắc phục:** Chạy `pnpm run build:wasm` để tạo lại tệp JavaScript và kiểu dữ liệu TypeScript trong `packages/crypto-wasm/pkg`.
 
-### Lỗi 2: Tauri báo lỗi thiếu file sidecar: `resource path binaries/proxy-... doesn't exist`
+### Lỗi 2: Extension báo "Cannot connect to desktop application"
 
-- **Nguyên nhân:** Bạn chưa biên dịch proxy hoặc chưa chạy script copy trước khi chạy ứng dụng tauri.
-- **Cách khắc phục:** Chạy `pnpm run build:proxy && pnpm run copy:sidecar`.
+- **Nguyên nhân:** Ứng dụng Desktop chưa khởi chạy hoặc cổng HTTP `12519` bị ứng dụng khác chiếm dụng.
+- **Cách khắc phục:**
+  1. Khởi động ứng dụng Desktop (`pnpm dev:desktop`).
+  2. Đảm bảo ứng dụng Desktop đang hoạt động trên khay hệ thống (System Tray).
 
-### Lỗi 3: Extension báo "Native Messaging Host not found"
+### Lỗi 3: Extension báo "Mã kết nối không chính xác"
 
-- **Nguyên nhân:** Tệp cấu hình JSON chưa được đăng ký đúng chỗ trên hệ điều hành, hoặc đường dẫn `"path"` bên trong file JSON trỏ sai file proxy thực thi.
-- **Cách khắc phục:** Xem lại kỹ **Phần 5** và khởi động lại trình duyệt để cập nhật cấu hình.
+- **Nguyên nhân:** Pairing Token trong Extension không trùng khớp với mã trên Desktop App (hoặc mã đã bị reset).
+- **Cách khắc phục:** Mở Cài đặt trên ứng dụng Desktop $\rightarrow$ Bắt cặp Extension $\rightarrow$ Sao chép Pairing Key mới và dán vào Extension.

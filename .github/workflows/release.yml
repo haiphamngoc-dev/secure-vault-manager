@@ -74,24 +74,8 @@ jobs:
       - name: Build Crypto WASM
         run: pnpm build:wasm
 
-      - name: Build and setup Sidecar (Linux / Windows)
-        if: matrix.platform != 'macos-latest'
-        run: |
-          pnpm build:proxy
-          pnpm copy:sidecar
-
-      - name: Build and setup Sidecar (macOS Universal)
-        if: matrix.platform == 'macos-latest'
-        run: |
-          cargo build --manifest-path packages/proxy/Cargo.toml --release --target aarch64-apple-darwin
-          cargo build --manifest-path packages/proxy/Cargo.toml --release --target x86_64-apple-darwin
-          mkdir -p packages/desktop/src-tauri/binaries
-          cp target/aarch64-apple-darwin/release/secure-vault-manager-proxy packages/desktop/src-tauri/binaries/proxy-aarch64-apple-darwin
-          cp target/x86_64-apple-darwin/release/secure-vault-manager-proxy packages/desktop/src-tauri/binaries/proxy-x86_64-apple-darwin
-          lipo -create \
-            target/aarch64-apple-darwin/release/secure-vault-manager-proxy \
-            target/x86_64-apple-darwin/release/secure-vault-manager-proxy \
-            -output packages/desktop/src-tauri/binaries/proxy-universal-apple-darwin
+      - name: Build Extension
+        run: pnpm --filter extension build
 
       - name: Build and Release Tauri App
         uses: tauri-apps/tauri-action@v0
