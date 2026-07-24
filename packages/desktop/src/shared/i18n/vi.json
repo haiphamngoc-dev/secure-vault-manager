@@ -2,7 +2,7 @@
   "titlebar": {
     "about": "Giới thiệu",
     "aboutDescription": "Secure Vault Manager là ứng dụng quản lý mật khẩu và thông tin cá nhân bảo mật cao. Giúp bạn lưu trữ an toàn, tự động điền và bảo vệ dữ liệu tuyệt đối trên thiết bị của mình.",
-    "aboutVersion": "Phiên bản 0.1.1",
+    "aboutVersion": "Phiên bản 0.1.2",
     "featureE2EE": "Mã hóa cao cấp AES-256 & Argon2id",
     "featureOffline": "Bảo mật & Lưu trữ cục bộ 100%",
     "featureExtension": "Tích hợp Tiện ích Trình duyệt",

@@ -2,7 +2,7 @@
   "titlebar": {
     "about": "About",
     "aboutDescription": "Secure Vault Manager is a professional password and personal credentials manager designed to keep your accounts, keys, and data private and secure on your device.",
-    "aboutVersion": "Version 0.1.1",
+    "aboutVersion": "Version 0.1.2",
     "featureE2EE": "AES-256 & Argon2id Encryption",
     "featureOffline": "100% Local & Private Storage",
     "featureExtension": "Browser Extension Integration",

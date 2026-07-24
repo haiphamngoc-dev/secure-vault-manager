@@ -101,7 +101,7 @@ Tất cả các lệnh điều phối dự án đều được chạy từ thư 
 | `pnpm build:desktop`            | Build gói cài đặt sản phẩm cho ứng dụng Desktop (Tauri)                                  |
 | `pnpm build:wasm`               | Biên dịch Rust `crypto-wasm` sang WebAssembly                                            |
 | `pnpm --filter extension dev`   | Khởi chạy Extension ở chế độ phát triển (Vite watch mode)                                |
-| `pnpm --filter extension build` | Biên dịch Browser Extension ra thư mục `dist/chrome` và `dist/firefox`                  |
+| `pnpm --filter extension build` | Biên dịch Browser Extension ra thư mục `dist/chrome` và `dist/firefox`                   |
 | `pnpm lint`                     | Chạy công cụ ESLint kiểm tra lỗi cú pháp và định dạng trên toàn Monorepo                 |
 | `pnpm format`                   | Định dạng lại mã nguồn bằng Prettier trên toàn bộ dự án                                  |
 | `pnpm clean`                    | Dọn dẹp toàn bộ thư mục build tạm của Rust (target), frontend (dist/pkg) và node_modules |

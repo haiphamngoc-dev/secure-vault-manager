@@ -81,7 +81,7 @@ export function AboutModal({ opened, onClose }: Readonly<AboutModalProps>) {
           </Title>
           <Group gap="xs">
             <Badge variant="light" color="blue" size="sm" radius="xl">
-              {t("titlebar.aboutVersion", "Phiên bản 0.1.1")}
+              {t("titlebar.aboutVersion", "Phiên bản 0.1.2")}
             </Badge>
           </Group>
         </Stack>

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Secure Vault Manager Extension",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Auto-fill passwords securely from your local Secure Vault Manager desktop application.",
   "icons": {
     "16": "icon-16.png",
