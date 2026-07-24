@@ -64,6 +64,65 @@ export function isElementVisible(element: HTMLInputElement): boolean {
 }
 
 /**
+ * Normalizes text by converting to lowercase, removing Vietnamese accents,
+ * and stripping non-alphanumeric characters (including spaces, punctuation, hyphens).
+ */
+export function normalizeText(text: string): string {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9]/g, ""); // Strip non-alphanumeric
+}
+
+const OTP_NAME_KEYWORDS = [
+  "otp",
+  "otc",
+  "mfa",
+  "2fa",
+  "totpin",
+  "validation_code",
+  "totp",
+  "totpcode",
+  "2facode",
+  "approvals_code",
+  "code",
+  "mfacode",
+  "otc-code",
+  "otp-code",
+  "otpcode",
+  "pin",
+  "security_code",
+  "twofactor",
+  "twofa",
+  "twofactorcode",
+  "verificationcode",
+];
+
+const OTP_LABEL_KEYWORDS = [
+  "onetimepassword",
+  "onetimepasscode",
+  "authenticationcode",
+  "twofactorcode",
+  "enter6digitcode",
+  "validationcode",
+  "mfacode",
+  "securitycode",
+  "enter7digitcode",
+  "xxxxxx",
+  "maxacthuc",
+  "maxacminh",
+  "mabaomat",
+  "maotp",
+  "ma2fa",
+  "maxacnhan",
+  "xacthuc",
+  "xacminh",
+];
+
+/**
  * Classifies an HTMLInputElement into Username, Current Password, New Password, or OTP.
  * Returns 'unknown' for non-login inputs (like Search, Date pickers, Filters, Comments, etc.)
  */
@@ -89,7 +148,6 @@ export function classifyInputField(input: HTMLInputElement): FieldType {
     "cc-exp",
   ];
   if (nonLoginAutocompletes.includes(autocomplete)) {
-    // Note: 'off' is often used on password inputs, so only treat 'off' as non-login if input is NOT a password
     if (autocomplete !== "off" || input.type.toLowerCase() !== "password") {
       // Continue check
     }
@@ -110,23 +168,51 @@ export function classifyInputField(input: HTMLInputElement): FieldType {
   const title = (input.title || "").toLowerCase();
   const className = (input.className || "").toLowerCase();
   const role = (input.getAttribute("role") || "").toLowerCase();
+  const pattern = input.getAttribute("pattern") || "";
 
-  const labelText = getAssociatedLabelText(input).toLowerCase();
+  const labelText = getAssociatedLabelText(input);
 
-  const combinedText = `${name} ${id} ${placeholder} ${ariaLabel} ${title} ${className} ${role} ${labelText}`;
+  const combinedText =
+    `${name} ${id} ${placeholder} ${ariaLabel} ${title} ${className} ${role} ${labelText}`.toLowerCase();
 
   // 2. Exclude Date / Time / Calendar / Picker / Filter / Search / Non-login fields
   const exclusionPattern =
-    /date|time|picker|calendar|daterange|period|khoảng|thời gian|ngày|tháng|năm|search|query|filter|searchbox|find|seek|coupon|promo|discount|voucher|captcha|comment|note|quantity|count|amount|price|address|city|state|zip|postal/i;
+    /date|(?<!one-?)\btime\b|picker|calendar|daterange|period|khoảng|thời gian|ngày|tháng|năm|search|query|filter|searchbox|find|seek|coupon|promo|discount|voucher|giảm giá|khuyến mãi|tìm kiếm|captcha|comment|note|quantity|count|amount|price|address|city|state|zip|postal|bưu chính|bưu điện/i;
 
   if (exclusionPattern.test(combinedText) && inputType !== "password") {
     return "unknown";
   }
 
-  // 3. Check for OTP / 2FA / Verification Code
-  const otpPattern =
-    /otp|2fa|totp|authenticator|verify|verification|one-time|code/i;
-  if (otpPattern.test(combinedText)) {
+  // 3. OTP Checks (inspired by 1Password)
+  const normName = normalizeText(name);
+  const normId = normalizeText(id);
+  const normPlaceholder = normalizeText(placeholder);
+  const normAriaLabel = normalizeText(ariaLabel);
+  const normLabel = normalizeText(labelText);
+  const normClassName = normalizeText(className);
+
+  const hasOtpAutocomplete = autocomplete === "one-time-code";
+  const hasOtpPattern = /\\d\{[4-8]\}|\[0-9\]\{[4-8]\}/.test(pattern);
+  const hasOtpClassName = /totp|otpinput|optinput|otp-field/.test(
+    normClassName
+  );
+  const hasOtpName = OTP_NAME_KEYWORDS.some(
+    (kw) => normName.includes(kw) || normId.includes(kw)
+  );
+  const hasOtpLabelText = OTP_LABEL_KEYWORDS.some(
+    (kw) =>
+      normPlaceholder.includes(kw) ||
+      normAriaLabel.includes(kw) ||
+      normLabel.includes(kw)
+  );
+
+  if (
+    hasOtpAutocomplete ||
+    hasOtpPattern ||
+    hasOtpClassName ||
+    hasOtpName ||
+    hasOtpLabelText
+  ) {
     return "one-time-code";
   }
 
@@ -164,11 +250,8 @@ export function classifyInputField(input: HTMLInputElement): FieldType {
       return "username";
     }
 
-    if (/user|username|email|login|account/i.test(labelText)) {
+    if (/user|username|email|login|account/i.test(labelText.toLowerCase())) {
       return "username";
-    }
-    if (/otp|2fa|totp|verification|code/i.test(labelText)) {
-      return "one-time-code";
     }
 
     // Contextual preceding element inspection (input immediately before a password field)
@@ -186,6 +269,7 @@ export function classifyInputField(input: HTMLInputElement): FieldType {
 function getAssociatedLabelText(input: HTMLInputElement): string {
   let labelText = "";
 
+  // 1. Label by for attribute
   if (input.id) {
     try {
       const label = document.querySelector(
@@ -197,12 +281,36 @@ function getAssociatedLabelText(input: HTMLInputElement): string {
     }
   }
 
+  // 2. Label by aria-labelledby attribute
+  const ariaLabelledBy = input.getAttribute("aria-labelledby");
+  if (ariaLabelledBy) {
+    ariaLabelledBy.split(/\s+/).forEach((id) => {
+      if (id) {
+        try {
+          const label = document.querySelector(`#${CSS.escape(id)}`);
+          if (label) labelText += " " + label.textContent;
+        } catch {
+          // Ignore
+        }
+      }
+    });
+  }
+
+  // 3. Closest label parent
   const parentLabel = input.closest("label");
   if (parentLabel) {
     labelText += " " + parentLabel.textContent;
   }
 
-  // Check closest fieldset or container legend/header
+  // 4. Previous element sibling if it is a label
+  if (
+    input.previousElementSibling &&
+    input.previousElementSibling.tagName === "LABEL"
+  ) {
+    labelText += " " + input.previousElementSibling.textContent;
+  }
+
+  // 5. Container legend or header label as fallback
   const container = input.closest(".form-group, .input-group, fieldset, div");
   if (container) {
     const titleEl = container.querySelector("label, .label, legend, span");

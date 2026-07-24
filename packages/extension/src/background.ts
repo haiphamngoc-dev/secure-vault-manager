@@ -10,6 +10,20 @@ interface OtpAuthParsed {
   period?: number;
 }
 
+interface PendingCredential {
+  domain: string;
+  username?: string;
+  password?: string;
+  isNewAccount: boolean;
+  timestamp: number;
+}
+
+const pendingCredentials = new Map<number, PendingCredential>();
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  pendingCredentials.delete(tabId);
+});
+
 /**
  * Sends request to Desktop App via Local Loopback HTTP Server (127.0.0.1:12519).
  */
@@ -27,7 +41,7 @@ async function sendRequestToDesktop(
   };
 }
 
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === "VERIFY_TOKEN") {
     const testToken = request.token as string;
     sendLocalServerRpc({ action: "check_status" }, testToken)
@@ -157,6 +171,75 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
       }
     });
     return true;
+  }
+
+  if (request.type === "CHECK_CREDENTIAL_STATUS") {
+    getPairingToken().then(async (token) => {
+      if (!token) {
+        sendResponse({ status: "error", message: "Extension not paired." });
+        return;
+      }
+      try {
+        const response = (await sendRequestToDesktop(
+          { action: "get_credentials", domain: request.domain },
+          token
+        )) as {
+          status: string;
+          data?: Array<{ username?: string; password?: string }>;
+        };
+
+        if (response && response.status === "success" && response.data) {
+          const matched = response.data.find(
+            (c) => c.username === request.username
+          );
+          if (matched) {
+            if (matched.password === request.password) {
+              sendResponse({ status: "success", result: "duplicate" });
+            } else {
+              sendResponse({ status: "success", result: "update" });
+            }
+          } else {
+            sendResponse({ status: "success", result: "new" });
+          }
+        } else {
+          sendResponse({ status: "success", result: "new" });
+        }
+      } catch {
+        sendResponse({ status: "success", result: "new" });
+      }
+    });
+    return true;
+  }
+
+  if (request.type === "SAVE_PENDING_CREDENTIAL") {
+    if (sender.tab && sender.tab.id !== undefined) {
+      pendingCredentials.set(sender.tab.id, {
+        ...request.credential,
+        timestamp: Date.now(),
+      });
+    }
+    sendResponse({ status: "success" });
+    return false;
+  }
+
+  if (request.type === "PEEK_PENDING_CREDENTIAL") {
+    if (sender.tab && sender.tab.id !== undefined) {
+      const cred = pendingCredentials.get(sender.tab.id);
+      if (cred && Date.now() - cred.timestamp < 20000) {
+        sendResponse({ status: "success", credential: cred });
+        return false;
+      }
+    }
+    sendResponse({ status: "empty" });
+    return false;
+  }
+
+  if (request.type === "CONSUME_PENDING_CREDENTIAL") {
+    if (sender.tab && sender.tab.id !== undefined) {
+      pendingCredentials.delete(sender.tab.id);
+    }
+    sendResponse({ status: "success" });
+    return false;
   }
 
   if (request.type === "SAVE_CREDENTIAL") {

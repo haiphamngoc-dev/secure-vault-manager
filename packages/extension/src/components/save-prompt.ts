@@ -125,7 +125,13 @@ export function showSaveCredentialPrompt(
         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
         <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
       </svg>
-      <span>${cred.isNewAccount ? "Tạo tài khoản mới?" : "Lưu mật khẩu vào Vault?"}</span>
+      <span>${
+        cred.isNewAccount
+          ? "Tạo tài khoản mới?"
+          : cred.isUpdate
+            ? "Cập nhật mật khẩu?"
+            : "Lưu mật khẩu vào Vault?"
+      }</span>
     </div>
     <div class="info-box">
       <div class="info-row">
@@ -139,7 +145,9 @@ export function showSaveCredentialPrompt(
     </div>
     <div class="actions">
       <button class="btn btn-cancel" id="btn-dismiss">Không phải lúc này</button>
-      <button class="btn btn-save" id="btn-save">Lưu vào Vault</button>
+      <button class="btn btn-save" id="btn-save">${
+        cred.isUpdate ? "Cập nhật" : "Lưu vào Vault"
+      }</button>
     </div>
   `;
 

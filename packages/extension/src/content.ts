@@ -1,4 +1,4 @@
-import { classifyInputField } from "./services/classifier";
+import { classifyInputField, isElementVisible } from "./services/classifier";
 import { performSmartAutofill } from "./services/autofill";
 import { initFormCapture, CapturedCredential } from "./services/form-capture";
 import { showSaveCredentialPrompt } from "./components/save-prompt";
@@ -74,7 +74,11 @@ const handleKeyDown = (e: KeyboardEvent) => {
   } else if (e.key === "Enter") {
     if (selectedIndex >= 0 && selectedIndex < currentCredentials.length) {
       const cred = currentCredentials[selectedIndex];
-      performAutofill(cred.username || "", cred.password || "");
+      performAutofill(
+        cred.username || "",
+        cred.password || "",
+        cred.totp_secret
+      );
       removeDropdown();
       e.preventDefault();
       e.stopPropagation();
@@ -316,7 +320,11 @@ const showDropdown = (
       const index = parseInt(item.getAttribute("data-index") || "0", 10);
       const cred = credentials[index];
       if (cred) {
-        performAutofill(cred.username || "", cred.password || "");
+        performAutofill(
+          cred.username || "",
+          cred.password || "",
+          cred.totp_secret
+        );
       }
       removeDropdown();
     });
@@ -377,7 +385,11 @@ const handleTrigger = (e: Event) => {
   const target = e.target as HTMLInputElement;
   if (target && target.tagName === "INPUT") {
     const classification = classifyInputField(target);
-    if (classification !== "unknown") {
+    if (
+      classification === "username" ||
+      classification === "one-time-code" ||
+      (classification === "current-password" && target.value === "")
+    ) {
       initDropdown(target);
     }
   }
@@ -407,18 +419,18 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   }
 });
 
-// Initialize form submit listener for floating Save Prompt banner
-initFormCapture((captured: CapturedCredential) => {
+// Helper to display save prompt
+const triggerSavePrompt = (cred: CapturedCredential) => {
   showSaveCredentialPrompt(
-    captured,
-    (cred) => {
+    cred,
+    (finalCred) => {
       chrome.runtime.sendMessage(
         {
           type: "SAVE_CREDENTIAL",
-          domain: cred.domain,
-          username: cred.username,
-          password: cred.password,
-          isNewAccount: cred.isNewAccount,
+          domain: finalCred.domain,
+          username: finalCred.username,
+          password: finalCred.password,
+          isNewAccount: finalCred.isNewAccount,
         },
         (resp) => {
           if (resp && resp.status === "success") {
@@ -438,4 +450,131 @@ initFormCapture((captured: CapturedCredential) => {
       console.log("[SVM Extension] User dismissed save credential prompt.");
     }
   );
+};
+
+// Verify credential status in vault before triggering the prompt (skips duplicates, labels updates)
+const verifyAndTriggerPrompt = (credential: CapturedCredential) => {
+  chrome.runtime.sendMessage(
+    {
+      type: "CHECK_CREDENTIAL_STATUS",
+      domain: credential.domain,
+      username: credential.username,
+      password: credential.password,
+    },
+    (statusResp) => {
+      // Consume the pending credential so we do not prompt again for this submission
+      chrome.runtime.sendMessage({ type: "CONSUME_PENDING_CREDENTIAL" });
+
+      if (statusResp && statusResp.status === "success") {
+        if (statusResp.result === "duplicate") {
+          console.log(
+            "[SVM Extension] Credential already exists in Vault, skipping save prompt."
+          );
+          return;
+        }
+
+        const updatedCred = {
+          ...credential,
+          isNewAccount: statusResp.result === "new",
+          isUpdate: statusResp.result === "update",
+        };
+        triggerSavePrompt(updatedCred);
+      } else {
+        // Fallback to captured credential behavior
+        triggerSavePrompt(credential);
+      }
+    }
+  );
+};
+
+// Initialize form submit listener for floating Save Prompt banner
+initFormCapture((captured: CapturedCredential) => {
+  // Store the credential as pending in the background script
+  chrome.runtime.sendMessage({
+    type: "SAVE_PENDING_CREDENTIAL",
+    credential: {
+      domain: captured.domain,
+      username: captured.username,
+      password: captured.password,
+      isNewAccount: captured.isNewAccount,
+    },
+  });
+
+  // Setup DOM mutation observer to check if login form/password/OTP fields disappear (Case B: SPA logins)
+  let observer: MutationObserver | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const cleanup = () => {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+
+  const checkSuccess = () => {
+    chrome.runtime.sendMessage(
+      { type: "PEEK_PENDING_CREDENTIAL" },
+      (response) => {
+        if (response && response.status === "success" && response.credential) {
+          const inputs = Array.from(document.querySelectorAll("input"));
+          const hasVisibleCredentials = inputs.some(
+            (i) =>
+              isElementVisible(i) &&
+              (classifyInputField(i) === "current-password" ||
+                classifyInputField(i) === "new-password" ||
+                classifyInputField(i) === "one-time-code")
+          );
+
+          if (!hasVisibleCredentials) {
+            cleanup();
+            verifyAndTriggerPrompt(response.credential);
+          }
+        } else {
+          // Pending credential already consumed or expired
+          cleanup();
+        }
+      }
+    );
+  };
+
+  observer = new MutationObserver(() => {
+    checkSuccess();
+  });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+  });
+
+  // Safety net timeout (6 seconds)
+  timeoutId = setTimeout(() => {
+    cleanup();
+  }, 6000);
 });
+
+// Check for pending credentials from previous page submit on load (Case A: Redirects)
+setTimeout(() => {
+  chrome.runtime.sendMessage(
+    { type: "PEEK_PENDING_CREDENTIAL" },
+    (response) => {
+      if (response && response.status === "success" && response.credential) {
+        const inputs = Array.from(document.querySelectorAll("input"));
+        const hasVisibleCredentials = inputs.some(
+          (i) =>
+            isElementVisible(i) &&
+            (classifyInputField(i) === "current-password" ||
+              classifyInputField(i) === "new-password" ||
+              classifyInputField(i) === "one-time-code")
+        );
+
+        if (!hasVisibleCredentials) {
+          verifyAndTriggerPrompt(response.credential);
+        }
+      }
+    }
+  );
+}, 1000);

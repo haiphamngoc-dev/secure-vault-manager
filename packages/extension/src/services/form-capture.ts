@@ -5,6 +5,7 @@ export interface CapturedCredential {
   username?: string;
   password?: string;
   isNewAccount: boolean;
+  isUpdate?: boolean;
 }
 
 type OnSubmitCallback = (cred: CapturedCredential) => void;
