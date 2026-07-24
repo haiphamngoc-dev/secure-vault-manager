@@ -1,4 +1,4 @@
-/* global.css — Extension Design Tokens, Font-face, Theme & Resets */
+/* global.css — Extension Design Tokens, Font-face, Theme & Resets (Synced with Desktop App) */
 
 /* ===== Font Face Declarations (Bundled woff2, offline-first) ===== */
 @font-face {
@@ -17,9 +17,9 @@
   font-display: swap;
 }
 
-/* ===== Design Tokens — Light Mode (Default) ===== */
+/* ===== Design Tokens — Light Mode ===== */
 :root {
-  /* Brand Colors (Cobalt Blue — synced with desktop) */
+  /* Brand Colors (Cobalt Blue — synced with Desktop App) */
   --color-brand-primary: #2563eb;
   --color-brand-primary-hover: #3b82f6;
   --color-brand-primary-active: #1d4ed8;
@@ -27,17 +27,18 @@
   --color-brand-primary-highlight: rgba(37, 99, 235, 0.08);
 
   /* State Colors */
-  --color-danger: #f43f5e;
-  --color-danger-hover: #e11d48;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
   --color-success: #10b981;
 
   /* Neutral — Light Theme */
   --color-neutral-dark: #0f172a;
-  --color-neutral-medium: #475569;
-  --color-neutral-light: rgba(15, 23, 42, 0.08);
-  --color-neutral-bg: #f4f6fa;
+  --color-neutral-medium: #64748b;
+  --color-neutral-light: rgba(15, 23, 42, 0.06);
+  --color-neutral-bg: #f8fafc;
   --color-neutral-card: #ffffff;
-  --color-border: rgba(15, 23, 42, 0.08);
+  --color-neutral-input: #f1f5f9;
+  --color-border: rgba(15, 23, 42, 0.1);
 
   /* Spacing Scale (4px base) */
   --space-1: 4px;
@@ -54,18 +55,27 @@
   --font-heading: "Outfit", "Inter", sans-serif;
 }
 
-/* ===== Design Tokens — Dark Mode ===== */
+/* ===== Design Tokens — Dark Mode (Synced with Desktop App Mantine Theme) ===== */
 body[data-theme="dark"] {
+  /* Brand Colors */
   --color-brand-primary: #3b82f6;
   --color-brand-primary-hover: #60a5fa;
   --color-brand-primary-active: #2563eb;
-  --color-brand-primary-highlight: rgba(59, 130, 246, 0.12);
-  --color-neutral-dark: #f8fafc;
-  --color-neutral-medium: #94a3b8;
-  --color-neutral-light: rgba(255, 255, 255, 0.08);
-  --color-neutral-bg: #070a13;
-  --color-neutral-card: #0e1324;
-  --color-border: rgba(255, 255, 255, 0.08);
+  --color-brand-primary-highlight: rgba(59, 130, 246, 0.16);
+
+  /* State Colors */
+  --color-danger: #f87171;
+  --color-danger-hover: #ef4444;
+  --color-success: #34d399;
+
+  /* Neutral — Dark Theme (Deep Abyss #070a13 / Midnight Navy #0e1324 / Steel Shield #171e35) */
+  --color-neutral-dark: #f8fafc; /* Crisp snow white for high contrast reading */
+  --color-neutral-medium: #94a3b8; /* Clear readable slate 400 */
+  --color-neutral-light: rgba(255, 255, 255, 0.07);
+  --color-neutral-bg: #070a13; /* Deep Abyss body background */
+  --color-neutral-card: #0e1324; /* Midnight Navy card background */
+  --color-neutral-input: #171e35; /* Steel Shield input background */
+  --color-border: rgba(255, 255, 255, 0.12);
 }
 
 /* ===== Base Resets ===== */
@@ -82,4 +92,6 @@ body {
   width: 360px;
   min-height: 420px;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

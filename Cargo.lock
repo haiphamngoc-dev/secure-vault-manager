@@ -3786,15 +3786,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "secure-vault-manager-proxy"
-version = "0.1.1"
-dependencies = [
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "security-framework"
 version = "3.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

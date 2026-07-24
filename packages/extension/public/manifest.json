@@ -30,14 +30,7 @@
       "run_at": "document_start"
     }
   ],
-  "permissions": [
-    "activeTab",
-    "tabs",
-    "storage",
-    "nativeMessaging",
-    "clipboardWrite",
-    "alarms"
-  ],
+  "permissions": ["activeTab", "tabs", "storage", "clipboardWrite"],
   "host_permissions": ["http://127.0.0.1/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'; connect-src 'self' http://127.0.0.1:12519 http://127.0.0.1:12520 http://127.0.0.1:12521;"

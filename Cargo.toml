@@ -1,7 +1,6 @@
 [workspace]
 members = [
     "packages/desktop/src-tauri",
-    "packages/proxy",
     "packages/crypto-wasm"
 ]
 resolver = "2"

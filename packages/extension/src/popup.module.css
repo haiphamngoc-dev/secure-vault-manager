@@ -1,4 +1,4 @@
-/* popup.module.css — Extension Popup Component Styles (CSS Modules) */
+/* popup.module.css — Extension Component Styles (Synced with Desktop App Mantine Theme) */
 
 /* ===== Layout ===== */
 .container {
@@ -13,7 +13,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--color-border);
 }
@@ -34,8 +34,8 @@
   font-family: var(--font-heading);
   background: linear-gradient(
     135deg,
-    var(--color-brand-primary) 0%,
-    var(--color-brand-primary-hover) 100%
+    #60a5fa 0%,
+    var(--color-brand-primary) 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -67,13 +67,13 @@
 
 /* ===== Domain Badge ===== */
 .domainBadge {
-  background-color: rgba(37, 99, 235, 0.12);
-  border: 1px solid rgba(37, 99, 235, 0.25);
+  background-color: var(--color-brand-primary-highlight);
+  border: 1px solid rgba(59, 130, 246, 0.3);
   color: var(--color-brand-primary-hover);
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-3);
   border-radius: 9999px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   align-self: flex-start;
   margin-bottom: var(--space-4);
 }
@@ -110,12 +110,12 @@
 
 .inputLabel {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-neutral-medium);
 }
 
 .textInput {
-  background-color: var(--color-neutral-card);
+  background-color: var(--color-neutral-input);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: var(--space-3) var(--space-3);
@@ -127,10 +127,15 @@
     box-shadow 150ms ease;
 }
 
+.textInput::placeholder {
+  color: var(--color-neutral-medium);
+  opacity: 0.75;
+}
+
 .textInput:focus {
   outline: none;
   border-color: var(--color-brand-primary);
-  box-shadow: 0 0 0 2px rgba(12, 125, 240, 0.2);
+  box-shadow: 0 0 0 3px var(--color-brand-primary-highlight);
 }
 
 /* ===== Primary Button ===== */
@@ -138,13 +143,13 @@
   background: var(--color-brand-primary);
   border: none;
   border-radius: 8px;
-  color: white;
+  color: #ffffff;
   padding: var(--space-3);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(12, 125, 240, 0.2);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
   transition:
     background 150ms ease,
     box-shadow 150ms ease,
@@ -153,7 +158,7 @@
 
 .primaryBtn:hover {
   background: var(--color-brand-primary-hover);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
 }
 
 .primaryBtn:active {
@@ -168,26 +173,28 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
-  padding: var(--space-10) 0;
+  padding: var(--space-8) 0;
   text-align: center;
 }
 
 .lockedIcon {
-  width: 48px;
-  height: 48px;
-  color: var(--color-brand-primary);
-  background: rgba(37, 99, 235, 0.12);
+  width: 52px;
+  height: 52px;
+  color: var(--color-brand-primary-hover);
+  background: var(--color-brand-primary-highlight);
   padding: var(--space-3);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 
 .lockedTitle {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   font-family: var(--font-heading);
+  color: var(--color-neutral-dark);
   margin: 0;
 }
 
@@ -195,7 +202,7 @@
   font-size: 13px;
   color: var(--color-neutral-medium);
   margin: 0;
-  max-width: 260px;
+  max-width: 270px;
   line-height: 1.5;
 }
 
@@ -204,15 +211,29 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-height: 260px;
+  max-height: 270px;
   overflow-y: auto;
+  padding-right: 2px;
+}
+
+.credentialsList::-webkit-scrollbar {
+  width: 4px;
+}
+
+.credentialsList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.credentialsList::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
 }
 
 .credentialCard {
   background-color: var(--color-neutral-card);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -220,14 +241,16 @@
 }
 
 .credentialCard:hover {
-  border-color: var(--color-neutral-medium);
-  background-color: var(--color-neutral-light);
+  border-color: var(--color-brand-primary);
+  background-color: var(--color-neutral-input);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 .credentialInfo {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
 }
 
 .credentialTitle {
@@ -244,8 +267,8 @@
 /* ===== Autofill Button ===== */
 .autofillBtn {
   background: var(--color-brand-primary-highlight);
-  border: 1px solid rgba(12, 125, 240, 0.2);
-  color: var(--color-brand-primary);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: var(--color-brand-primary-hover);
   padding: var(--space-2) var(--space-3);
   border-radius: 8px;
   font-size: 12px;
@@ -258,7 +281,8 @@
 .autofillBtn:hover {
   background: var(--color-brand-primary);
   border-color: var(--color-brand-primary);
-  color: white;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
 }
 
 .autofillBtn:active {
@@ -268,7 +292,7 @@
 /* ===== Empty State ===== */
 .noAccounts {
   text-align: center;
-  padding: var(--space-10) 0;
+  padding: var(--space-8) 0;
   color: var(--color-neutral-medium);
   font-size: 13px;
 }
@@ -276,12 +300,13 @@
 /* ===== Error Message ===== */
 .errorMessage {
   color: var(--color-danger);
-  background-color: rgba(255, 77, 79, 0.08);
-  border: 1px solid rgba(255, 77, 79, 0.15);
+  background-color: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   padding: var(--space-2) var(--space-3);
   border-radius: 8px;
   font-size: 12px;
   margin-bottom: var(--space-3);
+  font-weight: 500;
 }
 
 /* ===== Loading Spinner ===== */
@@ -305,7 +330,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
-  padding: var(--space-6) 0;
+  padding: var(--space-4) 0;
   text-align: center;
   width: 100%;
 }
@@ -322,7 +347,7 @@
   right: var(--space-3);
   background: none;
   border: none;
-  color: var(--color-brand-primary);
+  color: var(--color-brand-primary-hover);
   cursor: pointer;
   padding: var(--space-1);
   border-radius: 4px;
@@ -334,7 +359,7 @@
 
 .biometricsBtn:hover:not(:disabled) {
   background-color: var(--color-neutral-light);
-  color: var(--color-brand-primary-hover);
+  color: var(--color-brand-primary);
 }
 
 .biometricsBtn:active:not(:disabled) {
@@ -350,7 +375,7 @@
   background: var(--color-neutral-light);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: var(--color-neutral-medium);
+  color: var(--color-neutral-dark);
   padding: var(--space-3);
   font-family: inherit;
   font-size: 13px;
@@ -360,15 +385,8 @@
 }
 
 .secondaryBtn:hover:not(:disabled) {
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.12);
   color: var(--color-neutral-dark);
-}
-
-@media (prefers-color-scheme: dark) {
-  .secondaryBtn:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: var(--color-neutral-dark);
-  }
 }
 
 .secondaryBtn:active:not(:disabled) {
@@ -378,4 +396,131 @@
 .secondaryBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ===== Confirmation Modal Overlay ===== */
+.modalOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  animation: fadeIn 150ms ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalCard {
+  background-color: var(--color-neutral-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  padding: var(--space-5);
+  width: 100%;
+  max-width: 310px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: scaleUp 150ms ease-out;
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.modalIconContainer {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background-color: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.modalTitle {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--color-neutral-dark);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.modalDesc {
+  font-size: 12px;
+  color: var(--color-neutral-medium);
+  line-height: 1.5;
+  margin: 0 0 var(--space-5) 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.modalCancelBtn {
+  flex: 1;
+  background-color: var(--color-neutral-input);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-neutral-dark);
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.modalCancelBtn:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.modalConfirmBtn {
+  flex: 1;
+  background-color: #f87171;
+  border: none;
+  border-radius: 8px;
+  color: #0f172a;
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms ease;
+  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.3);
+}
+
+.modalConfirmBtn:hover {
+  background-color: #ef4444;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.modalConfirmBtn:active {
+  transform: translateY(0);
 }

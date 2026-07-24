@@ -4,95 +4,70 @@ import {
   sendLocalServerRpc,
 } from "./services/http-client";
 
-const HOST_NAME = "com.haiphamngoc_dev.secure_vault_manager_proxy";
-
 interface OtpAuthParsed {
   secret: string;
   digits?: number;
   period?: number;
 }
 
-// Setup periodic keep-alive alarm to prevent Service Worker cold-start drops
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.create("svm_keep_alive", { periodInMinutes: 0.4 });
-});
-
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === "svm_keep_alive") {
-    getPairingToken().then((token) => {
-      if (token) {
-        // Ping HTTP status or Native Message in background
-        fetchLocalServerStatus().catch(() => {
-          chrome.runtime.sendNativeMessage(
-            HOST_NAME,
-            { action: "check_status", pairing_token: token },
-            () => {
-              if (chrome.runtime.lastError) {
-                // Ignore background ping errors
-              }
-            }
-          );
-        });
-      }
-    });
-  }
-});
-
 /**
- * Sends a native message to Desktop Proxy with auto-retry logic on Service Worker cold-starts.
- */
-async function sendNativeMessageWithRetry(
-  message: Record<string, unknown>,
-  maxRetries = 2,
-  delayMs = 350
-): Promise<unknown> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await new Promise<unknown>((resolve, reject) => {
-        chrome.runtime.sendNativeMessage(HOST_NAME, message, (resp) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(resp);
-          }
-        });
-      });
-      return response;
-    } catch (err) {
-      if (attempt === maxRetries) {
-        throw err;
-      }
-      await new Promise((r) => setTimeout(r, delayMs));
-    }
-  }
-}
-
-/**
- * Sends request to Desktop using Local Loopback HTTP Server (127.0.0.1:12519) first,
- * with automatic fallback to Native Messaging Host.
+ * Sends request to Desktop App via Local Loopback HTTP Server (127.0.0.1:12519).
  */
 async function sendRequestToDesktop(
   actionPayload: Record<string, unknown>,
   token: string
 ): Promise<unknown> {
-  // 1. Try Local HTTP Server via 127.0.0.1:12519 (Fastest, 100% Snap compatible)
-  try {
-    const httpRes = await sendLocalServerRpc(actionPayload, token);
-    if (httpRes) {
-      return httpRes;
-    }
-  } catch {
-    // Fallback to Native Messaging Host if Local HTTP Server fails
+  const httpRes = await sendLocalServerRpc(actionPayload, token);
+  if (httpRes) {
+    return httpRes;
   }
-
-  // 2. Fallback to Native Messaging Host IPC
-  return await sendNativeMessageWithRetry({
-    ...actionPayload,
-    pairing_token: token,
-  });
+  return {
+    status: "error",
+    message: "Cannot connect to desktop application.",
+  };
 }
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
+  if (request.type === "VERIFY_TOKEN") {
+    const testToken = request.token as string;
+    sendLocalServerRpc({ action: "check_status" }, testToken)
+      .then((rpcCheckRes) => {
+        const rpcCheck = rpcCheckRes as {
+          status: string;
+          message?: string;
+          locked?: boolean;
+        } | null;
+
+        if (
+          !rpcCheck ||
+          rpcCheck.status === "error" ||
+          (rpcCheck.message &&
+            rpcCheck.message.toLowerCase().includes("invalid pairing token"))
+        ) {
+          sendResponse({
+            status: "error",
+            invalidToken: true,
+            message:
+              "Mã kết nối không chính xác. Vui lòng kiểm tra lại trên ứng dụng Desktop.",
+          });
+        } else {
+          sendResponse({
+            status: "success",
+            paired: true,
+            locked: rpcCheck.locked ?? false,
+          });
+        }
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        sendResponse({
+          status: "error",
+          message: message || "Khởi tạo kết nối thất bại.",
+        });
+      });
+    return true;
+  }
+
   if (request.type === "CHECK_STATUS") {
     getPairingToken().then(async (token) => {
       if (!token) {
@@ -105,18 +80,48 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         return;
       }
       try {
-        // Try local HTTP status check first
         const localStatus = await fetchLocalServerStatus();
-        if (localStatus) {
-          sendResponse(localStatus);
+        if (!localStatus) {
+          sendResponse({
+            status: "error",
+            paired: false,
+            message: "Cannot connect to desktop application.",
+          });
           return;
         }
 
-        const response = await sendRequestToDesktop(
+        const rpcCheckRes = await sendLocalServerRpc(
           { action: "check_status" },
           token
         );
-        sendResponse(response);
+        const rpcCheck = rpcCheckRes as {
+          status: string;
+          message?: string;
+          locked?: boolean;
+        } | null;
+
+        if (
+          !rpcCheck ||
+          rpcCheck.status === "error" ||
+          (rpcCheck.message &&
+            rpcCheck.message.toLowerCase().includes("invalid pairing token"))
+        ) {
+          await chrome.storage.local.remove("pairing_token");
+          sendResponse({
+            status: "error",
+            invalidToken: true,
+            paired: false,
+            locked: true,
+            message: "Mã kết nối không hợp lệ hoặc đã bị thay đổi.",
+          });
+          return;
+        }
+
+        sendResponse({
+          status: "success",
+          paired: true,
+          locked: rpcCheck.locked ?? localStatus.locked,
+        });
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         sendResponse({

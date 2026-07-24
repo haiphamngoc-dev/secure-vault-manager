@@ -1,9 +1,0 @@
-[package]
-name = "secure-vault-manager-proxy"
-version = "0.1.1"
-edition = "2021"
-
-[dependencies]
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "fs", "io-std"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"

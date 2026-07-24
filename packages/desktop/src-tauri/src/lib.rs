@@ -235,24 +235,6 @@ pub fn run() {
             if let Ok(settings) = commands::settings::get_settings(app_handle.clone()) {
                 sync_tray_menu_lang(app_handle, &settings.lang);
                 autostart_active = settings.autostart;
-
-                let chrome_id = settings
-                    .chrome_extension_id
-                    .as_deref()
-                    .filter(|s| !s.trim().is_empty())
-                    .unwrap_or(commands::settings::DEFAULT_CHROME_EXTENSION_ID);
-
-                // Auto-register Native Messaging host proxy manifests for Chrome and Firefox
-                let _ = commands::settings::register_extension_proxy(
-                    app_handle.clone(),
-                    "chrome".to_string(),
-                    chrome_id.to_string(),
-                );
-                let _ = commands::settings::register_extension_proxy(
-                    app_handle.clone(),
-                    "firefox".to_string(),
-                    "secure-vault-manager-ext@haiphamngoc.dev".to_string(),
-                );
             }
 
             // Check CLI arguments to handle minimized start
@@ -285,12 +267,6 @@ pub fn run() {
 
             // Populate initial tray menu
             update_tray_menu(app.app_handle());
-
-            // Start the IPC socket/pipe listener
-            #[cfg(not(windows))]
-            ipc::socket::start_unix_socket_listener(app.app_handle().clone());
-            #[cfg(windows)]
-            ipc::pipe::start_named_pipe_listener(app.app_handle().clone());
 
             // Start Local Loopback HTTP Server (127.0.0.1:12519)
             ipc::http_server::start_local_http_server(app.app_handle().clone());
@@ -329,7 +305,6 @@ pub fn run() {
             exit_app,
             commands::settings::get_settings,
             commands::settings::save_settings,
-            commands::settings::register_extension_proxy,
             commands::vault::check_vault_initialized,
             commands::vault::check_is_unlocked,
             commands::vault::initialize_vault,

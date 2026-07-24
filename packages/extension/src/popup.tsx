@@ -8,6 +8,7 @@ import {
   IconPlugConnectedX,
   IconLoader2,
   IconQrcode,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 import { scanVisibleTabForQr } from "./services/qr-scanner";
 
@@ -44,6 +45,7 @@ function Popup() {
   const [desktopRunning, setDesktopRunning] = useState(true);
   const [qrScanning, setQrScanning] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
   const handleScanQr = async () => {
     setQrScanning(true);
@@ -139,6 +141,16 @@ function Popup() {
 
         setIsChecking(false);
         if (!response || response.status === "error") {
+          if (response?.invalidToken) {
+            setPaired(false);
+            setLocked(true);
+            setDesktopRunning(true);
+            setError(
+              "Mã kết nối không còn hợp lệ hoặc đã bị thay đổi trên Desktop App. Vui lòng kết nối lại."
+            );
+            return;
+          }
+
           const msg =
             response?.message || "Cannot connect to desktop application.";
           if (
@@ -179,9 +191,22 @@ function Popup() {
     if (!currentDomain) return;
     chrome.runtime.sendMessage(
       { type: "GET_CREDENTIALS", domain: currentDomain },
-      (response) => {
+      async (response) => {
         if (!response || response.status === "error") {
-          setError(response?.message || "Failed to load credentials.");
+          const msg = response?.message || "Failed to load credentials.";
+          if (
+            msg.toLowerCase().includes("invalid pairing token") ||
+            msg.toLowerCase().includes("not paired")
+          ) {
+            await chrome.storage.local.remove("pairing_token");
+            setPaired(false);
+            setLocked(true);
+            setError(
+              "Mã kết nối không hợp lệ hoặc đã bị thay đổi trên Desktop App. Vui lòng kết nối lại."
+            );
+            return;
+          }
+          setError(msg);
         } else {
           setCredentials(response.data || []);
         }
@@ -217,28 +242,54 @@ function Popup() {
     }
   }, [paired, locked, domain]);
 
-  const handleConnect = async () => {
+  const handleConnect = async (customToken?: string) => {
     setError("");
-    if (!pairingInput.trim()) {
-      setError("Please enter a pairing key.");
+    const token = (
+      typeof customToken === "string" ? customToken : pairingInput
+    ).trim();
+    if (!token) {
+      setError("Vui lòng nhập mã kết nối.");
       return;
     }
-    await chrome.storage.local.set({ pairing_token: pairingInput.trim() });
+
     setIsChecking(true);
-    checkStatus();
+    chrome.runtime.sendMessage(
+      { type: "VERIFY_TOKEN", token },
+      async (verifyRes) => {
+        setIsChecking(false);
+        if (
+          !verifyRes ||
+          verifyRes.status === "error" ||
+          verifyRes.invalidToken
+        ) {
+          setError(
+            verifyRes?.message ||
+              "Mã kết nối không chính xác. Vui lòng kiểm tra lại trên ứng dụng Desktop."
+          );
+          setPaired(false);
+          return;
+        }
+
+        await chrome.storage.local.set({ pairing_token: token });
+        setPaired(true);
+        setLocked(verifyRes.locked ?? false);
+        setPairingInput("");
+        setSuccessMessage("Kết nối thành công!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      }
+    );
   };
 
-  const handleUnpair = async () => {
-    if (
-      window.confirm(
-        "Are you sure you want to disconnect from this desktop vault?"
-      )
-    ) {
-      await chrome.storage.local.remove("pairing_token");
-      setCredentials([]);
-      setPaired(false);
-      setLocked(true);
-    }
+  const handleUnpair = () => {
+    setShowDisconnectModal(true);
+  };
+
+  const confirmUnpair = async () => {
+    await chrome.storage.local.remove("pairing_token");
+    setCredentials([]);
+    setPaired(false);
+    setLocked(true);
+    setShowDisconnectModal(false);
   };
 
   const handleAutofill = (cred: CredentialItem) => {
@@ -416,7 +467,10 @@ function Popup() {
               onChange={(e) => setPairingInput(e.target.value)}
             />
           </div>
-          <button className={classes.primaryBtn} onClick={handleConnect}>
+          <button
+            className={classes.primaryBtn}
+            onClick={() => handleConnect()}
+          >
             Connect
           </button>
         </div>
@@ -537,6 +591,35 @@ function Popup() {
             )}
           </div>
         </>
+      )}
+
+      {showDisconnectModal && (
+        <div className={classes.modalOverlay}>
+          <div className={classes.modalCard}>
+            <div className={classes.modalIconContainer}>
+              <IconAlertTriangle size={24} />
+            </div>
+            <h3 className={classes.modalTitle}>Ngắt kết nối Vault?</h3>
+            <p className={classes.modalDesc}>
+              Bạn có chắc chắn muốn ngắt kết nối Extension với Desktop Vault
+              hiện tại không?
+            </p>
+            <div className={classes.modalActions}>
+              <button
+                className={classes.modalCancelBtn}
+                onClick={() => setShowDisconnectModal(false)}
+              >
+                Hủy
+              </button>
+              <button
+                className={classes.modalConfirmBtn}
+                onClick={confirmUnpair}
+              >
+                Ngắt kết nối
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -13,6 +13,7 @@ interface CredentialItem {
 let activeInput: HTMLInputElement | null = null;
 let currentCredentials: CredentialItem[] = [];
 let selectedIndex = -1;
+let currentRequestId = 0;
 
 // Escape HTML utility to prevent XSS
 function escapeHtml(str: string): string {
@@ -113,10 +114,11 @@ const repositionDropdown = () => {
 
 // Safe remove dropdown
 const removeDropdown = () => {
-  const dropdown = document.getElementById("__svm-extension-dropdown");
-  if (dropdown) {
-    dropdown.remove();
-  }
+  const existingDropdowns = document.querySelectorAll(
+    "[id^='__svm-extension-dropdown']"
+  );
+  existingDropdowns.forEach((el) => el.remove());
+
   if (activeInput) {
     activeInput.removeEventListener("keydown", handleKeyDown);
   }
@@ -132,6 +134,9 @@ const showDropdown = (
   inputEl: HTMLInputElement,
   credentials: CredentialItem[]
 ) => {
+  removeDropdown();
+
+  activeInput = inputEl;
   const rect = inputEl.getBoundingClientRect();
   const top = rect.bottom + window.scrollY;
   const left = rect.left + window.scrollX;
@@ -336,6 +341,7 @@ const initDropdown = async (inputEl: HTMLInputElement) => {
     return;
   }
 
+  const requestId = ++currentRequestId;
   removeDropdown();
 
   activeInput = inputEl;
@@ -343,12 +349,18 @@ const initDropdown = async (inputEl: HTMLInputElement) => {
   if (!domain) return;
 
   chrome.runtime.sendMessage({ type: "CHECK_STATUS" }, (statusResponse) => {
+    if (requestId !== currentRequestId || activeInput !== inputEl) return;
+    if (document.activeElement !== inputEl) return;
     if (!statusResponse || statusResponse.status === "error") return;
+
     if (statusResponse.paired && !statusResponse.locked) {
       chrome.runtime.sendMessage(
         { type: "GET_CREDENTIALS", domain },
         (credsResponse) => {
+          if (requestId !== currentRequestId || activeInput !== inputEl) return;
+          if (document.activeElement !== inputEl) return;
           if (!credsResponse || credsResponse.status === "error") return;
+
           const credentials = credsResponse.data || [];
           if (credentials.length > 0) {
             currentCredentials = credentials;
