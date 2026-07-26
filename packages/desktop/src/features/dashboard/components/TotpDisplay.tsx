@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { Box, Group, Stack, Text, ActionIcon, Tooltip } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
+import { invoke } from "@tauri-apps/api/core";
+import { AppSettings } from "@/features/settings/routes/SettingsPage";
 import { IconCopy, IconCheck, IconShieldLock } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
@@ -52,9 +54,33 @@ export function TotpDisplay({
     };
   }, [uriOrSecret]);
 
-  // Clean up auto-clear clipboard timer on unmount
+  // Load settings for clipboard clearing
+  const [clearClipboard, setClearClipboard] = useState(true);
+  const [clearClipboardInterval, setClearClipboardInterval] = useState(30);
+
   useEffect(() => {
+    invoke<AppSettings>("get_settings")
+      .then((res) => {
+        if (res) {
+          setClearClipboard(res.clear_clipboard !== false);
+          setClearClipboardInterval(res.clear_clipboard_interval ?? 30);
+        }
+      })
+      .catch(console.error);
+
+    const handleSettingsChanged = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setClearClipboard(customEvent.detail.clear_clipboard !== false);
+        setClearClipboardInterval(
+          customEvent.detail.clear_clipboard_interval ?? 30
+        );
+      }
+    };
+    globalThis.addEventListener("settings-changed", handleSettingsChanged);
+
     return () => {
+      globalThis.removeEventListener("settings-changed", handleSettingsChanged);
       if (clearTimerRef.current) {
         clearTimeout(clearTimerRef.current);
       }
@@ -69,21 +95,29 @@ export function TotpDisplay({
 
     notifications.show({
       title: t("totpCopiedTitle", "Đã sao chép mã TOTP"),
-      message: t("totpCopiedMsg", {
-        digits: rawDigits,
-        defaultValue: `Mã ${rawDigits} sẽ tự động bị xóa khỏi Bộ nhớ tạm sau 30 giây để bảo mật.`,
-      }),
+      message: clearClipboard
+        ? t("totpCopiedMsg", {
+            digits: rawDigits,
+            seconds: clearClipboardInterval,
+            defaultValue: `Mã ${rawDigits} sẽ tự động bị xóa khỏi Bộ nhớ tạm sau ${clearClipboardInterval} giây để bảo mật.`,
+          })
+        : t("totpCopiedMsgNoClear", {
+            digits: rawDigits,
+            defaultValue: `Mã ${rawDigits} đã được sao chép vào bộ nhớ tạm.`,
+          }),
       color: "blue",
       autoClose: 3000,
     });
 
-    // Auto-clear clipboard after 30 seconds
     if (clearTimerRef.current) {
       clearTimeout(clearTimerRef.current);
     }
-    clearTimerRef.current = setTimeout(() => {
-      clipboard.copy("");
-    }, 30000);
+
+    if (clearClipboard) {
+      clearTimerRef.current = setTimeout(() => {
+        clipboard.copy("");
+      }, clearClipboardInterval * 1000);
+    }
   };
 
   // Format code display: e.g. "123 456"

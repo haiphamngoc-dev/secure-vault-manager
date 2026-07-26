@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { AppSettings } from "@/features/settings/routes/SettingsPage";
 import {
   Box,
   Card,
@@ -66,6 +68,35 @@ export function DashboardPage() {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const searchQuery = searchParams.get("q") || "";
   const [itemToDeleteId, setItemToDeleteId] = useState<string | null>(null);
+
+  // Load settings for clipboard clearing
+  const [clearClipboard, setClearClipboard] = useState(true);
+  const [clearClipboardInterval, setClearClipboardInterval] = useState(30);
+
+  useEffect(() => {
+    invoke<AppSettings>("get_settings")
+      .then((res) => {
+        if (res) {
+          setClearClipboard(res.clear_clipboard !== false);
+          setClearClipboardInterval(res.clear_clipboard_interval ?? 30);
+        }
+      })
+      .catch(console.error);
+
+    const handleSettingsChanged = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setClearClipboard(customEvent.detail.clear_clipboard !== false);
+        setClearClipboardInterval(
+          customEvent.detail.clear_clipboard_interval ?? 30
+        );
+      }
+    };
+    globalThis.addEventListener("settings-changed", handleSettingsChanged);
+    return () => {
+      globalThis.removeEventListener("settings-changed", handleSettingsChanged);
+    };
+  }, []);
 
   // Sync category changes and clear selection during render
   const [prevCategory, setPrevCategory] = useState(activeCategory);
@@ -415,11 +446,18 @@ export function DashboardPage() {
                                   clipboard.copy(info.code);
                                   notifications.show({
                                     title: "Đã sao chép mã TOTP",
-                                    message: `Mã ${info.code} sẽ tự động bị xóa khỏi Clipboard sau 30s.`,
+                                    message: clearClipboard
+                                      ? `Mã ${info.code} sẽ tự động bị xóa khỏi Clipboard sau ${clearClipboardInterval}s.`
+                                      : `Mã ${info.code} đã được sao chép vào bộ nhớ tạm.`,
                                     color: "blue",
                                     autoClose: 2000,
                                   });
-                                  setTimeout(() => clipboard.copy(""), 30000);
+                                  if (clearClipboard) {
+                                    setTimeout(
+                                      () => clipboard.copy(""),
+                                      clearClipboardInterval * 1000
+                                    );
+                                  }
                                 }
                               }}
                             >

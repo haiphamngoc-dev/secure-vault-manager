@@ -96,10 +96,7 @@ pub fn start_local_http_server(app: tauri::AppHandle) {
                     return;
                 }
                 Err(e) => {
-                    println!(
-                        "Port {} occupied ({}), trying next port...",
-                        port, e
-                    );
+                    println!("Port {} occupied ({}), trying next port...", port, e);
                 }
             }
         }
@@ -108,9 +105,7 @@ pub fn start_local_http_server(app: tauri::AppHandle) {
 }
 
 /// Public status endpoint (unencrypted)
-async fn handle_status(
-    State(state): State<Arc<ServerState>>,
-) -> impl IntoResponse {
+async fn handle_status(State(state): State<Arc<ServerState>>) -> impl IntoResponse {
     let app = &state.app;
     let app_state = app.state::<crate::AppState>();
 

@@ -53,6 +53,7 @@ import { useClipboard } from "@mantine/hooks";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
 import { notifications } from "@mantine/notifications";
+import { AppSettings } from "@/features/settings/routes/SettingsPage";
 import { resizeImageToBase64 } from "@/shared/utils/image";
 import { DateInput } from "@mantine/dates";
 import dayjs from "dayjs";
@@ -238,6 +239,38 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   const [revealedFields, setRevealedFields] = useState<Record<string, boolean>>(
     {}
   );
+
+  const [alwaysShowPasswords, setAlwaysShowPasswords] = useState(false);
+  const [shortcutActive, setShortcutActive] = useState(false);
+
+  useEffect(() => {
+    invoke<AppSettings>("get_settings")
+      .then((res) => {
+        if (res) {
+          setAlwaysShowPasswords(!!res.always_show_passwords);
+        }
+      })
+      .catch(console.error);
+
+    const handleSettingsChanged = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setAlwaysShowPasswords(!!customEvent.detail.always_show_passwords);
+      }
+    };
+    const handleReveal = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setShortcutActive(!!customEvent.detail);
+    };
+
+    globalThis.addEventListener("settings-changed", handleSettingsChanged);
+    globalThis.addEventListener("reveal-concealed-fields", handleReveal);
+
+    return () => {
+      globalThis.removeEventListener("settings-changed", handleSettingsChanged);
+      globalThis.removeEventListener("reveal-concealed-fields", handleReveal);
+    };
+  }, []);
 
   // Form states (used in Edit mode)
   const [category, setCategory] = useState(item.category);
@@ -715,9 +748,11 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     }
 
     if (field.type === "password") {
+      const isRevealed = alwaysShowPasswords || shortcutActive;
       return (
         <PasswordInput
           {...commonProps}
+          visible={isRevealed ? true : undefined}
           placeholder={
             field.isCustom
               ? t("passwordValuePlaceholder", "Giá trị mật khẩu")
@@ -1424,7 +1459,10 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                         }
 
                         const isPassword = field.type === "password";
-                        const isRevealed = revealedFields[field.id];
+                        const isRevealed =
+                          alwaysShowPasswords ||
+                          revealedFields[field.id] ||
+                          shortcutActive;
                         const displayValue =
                           isPassword && !isRevealed ? "••••••••" : field.value;
 

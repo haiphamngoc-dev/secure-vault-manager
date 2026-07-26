@@ -77,6 +77,36 @@ pub fn initialize_vault(
     Ok(())
 }
 
+pub fn update_sleep_blocker(app: &tauri::AppHandle, state: &AppState) {
+    let settings = crate::commands::settings::get_settings(app.clone()).unwrap_or_default();
+    let is_unlocked = state.vault_key.lock().unwrap().is_some();
+
+    let mut handle_guard = state.keepawake_handle.lock().unwrap();
+    if settings.prevent_sleep && is_unlocked {
+        if handle_guard.is_none() {
+            println!("Activating keepawake sleep blocker...");
+            match keepawake::Builder::default()
+                .display(true)
+                .idle(true)
+                .reason("Secure Vault Manager is unlocked")
+                .create()
+            {
+                Ok(h) => {
+                    *handle_guard = Some(h);
+                }
+                Err(e) => {
+                    eprintln!("Failed to create keepawake handle: {:?}", e);
+                }
+            }
+        }
+    } else {
+        if handle_guard.is_some() {
+            println!("Deactivating keepawake sleep blocker...");
+            *handle_guard = None;
+        }
+    }
+}
+
 /// Command to unlock the existing vault database and load its decryption key into memory.
 #[tauri::command]
 pub fn unlock_vault(
@@ -97,15 +127,28 @@ pub fn unlock_vault(
     *state.vault_key.lock().unwrap() = Some(key);
     *state.vault_salt.lock().unwrap() = Some(salt);
     *state.current_vault_file.lock().unwrap() = Some(profile.file_name.clone());
+
+    // Record last password auth timestamp
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    if let Ok(mut settings) = crate::commands::settings::get_settings(app.clone()) {
+        settings.last_password_auth = Some(now);
+        let _ = crate::commands::settings::save_settings(app.clone(), settings);
+    }
+
+    update_sleep_blocker(&app, &state);
     Ok(())
 }
 
 /// Command to lock the vault by wiping the decryption key and salt from memory.
 #[tauri::command]
-pub fn lock_vault(state: State<'_, AppState>) -> Result<(), String> {
+pub fn lock_vault(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<(), String> {
     *state.vault_key.lock().unwrap() = None;
     *state.vault_salt.lock().unwrap() = None;
     *state.current_vault_file.lock().unwrap() = None;
+    update_sleep_blocker(&app, &state);
     Ok(())
 }
 

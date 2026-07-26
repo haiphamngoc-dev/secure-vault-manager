@@ -1,6 +1,5 @@
 pub mod http_server;
 
-
 use serde::{Deserialize, Serialize};
 use tauri::{Emitter, Manager};
 
@@ -278,9 +277,9 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 .filter(|item| {
                     if let Some(ref urls) = item.urls {
                         if !urls.is_empty() {
-                            return urls.iter().any(|u| {
-                                matches_domain(&u.url, &domain, &u.autofill_behavior)
-                            });
+                            return urls
+                                .iter()
+                                .any(|u| matches_domain(&u.url, &domain, &u.autofill_behavior));
                         }
                     }
                     if let Some(ref url) = item.url {
@@ -403,7 +402,11 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 .as_secs();
 
             let existing_item = vault.items.iter_mut().find(|i| {
-                let matches_url = i.url.as_ref().map(|u| u.to_lowercase().contains(&domain_lower)).unwrap_or(false);
+                let matches_url = i
+                    .url
+                    .as_ref()
+                    .map(|u| u.to_lowercase().contains(&domain_lower))
+                    .unwrap_or(false);
                 let matches_title = i.title.to_lowercase().contains(&domain_lower);
                 let matches_user = username.is_none() || i.username == username;
                 (matches_url || matches_title) && matches_user
@@ -434,7 +437,9 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 vault.items.push(new_item);
             }
 
-            if let Err(e) = crate::core::storage::save_existing_vault(app, &key, &salt, &vault, &file_name) {
+            if let Err(e) =
+                crate::core::storage::save_existing_vault(app, &key, &salt, &vault, &file_name)
+            {
                 return ProxyResponse {
                     status: "error".to_string(),
                     data: None,
@@ -534,14 +539,21 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 .as_secs();
 
             let target_item = vault.items.iter_mut().find(|i| {
-                let matches_url = i.url.as_ref().map(|u| u.to_lowercase().contains(&domain)).unwrap_or(false);
+                let matches_url = i
+                    .url
+                    .as_ref()
+                    .map(|u| u.to_lowercase().contains(&domain))
+                    .unwrap_or(false);
                 let matches_title = i.title.to_lowercase().contains(&domain);
                 matches_url || matches_title
             });
 
             if let Some(item) = target_item {
                 let fields = item.custom_fields.get_or_insert_with(Vec::new);
-                if let Some(totp_field) = fields.iter_mut().find(|f| f.label.to_lowercase().contains("totp") || f.label.to_lowercase().contains("one-time password")) {
+                if let Some(totp_field) = fields.iter_mut().find(|f| {
+                    f.label.to_lowercase().contains("totp")
+                        || f.label.to_lowercase().contains("one-time password")
+                }) {
                     totp_field.value = totp_secret;
                 } else {
                     fields.push(crate::core::vault::CustomField {
@@ -554,7 +566,9 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 }
                 item.updated_at = now;
 
-                if let Err(e) = crate::core::storage::save_existing_vault(app, &key, &salt, &vault, &file_name) {
+                if let Err(e) =
+                    crate::core::storage::save_existing_vault(app, &key, &salt, &vault, &file_name)
+                {
                     return ProxyResponse {
                         status: "error".to_string(),
                         data: None,
@@ -606,9 +620,9 @@ fn extract_host(url_str: &str) -> String {
     if let Some(pos) = cleaned.find(':') {
         cleaned = cleaned[..pos].to_string();
     }
-    
+
     cleaned = cleaned.trim_end_matches('.').to_string();
-    
+
     if cleaned.starts_with("www.") {
         cleaned = cleaned[4..].to_string();
     }
@@ -626,13 +640,13 @@ fn get_base_domain(host: &str) -> &str {
     }
     let second_to_last = parts[len - 2];
     let last = parts[len - 1];
-    
+
     let parts_to_keep = if second_to_last.len() <= 3 && last.len() <= 3 && len >= 3 {
         3
     } else {
         2
     };
-    
+
     let drop_count = len - parts_to_keep;
     let mut offset = 0;
     for i in 0..drop_count {
@@ -649,14 +663,14 @@ fn matches_domain(item_url: &str, tab_domain: &str, behavior: &str) -> bool {
     if behavior == "never" {
         return false;
     }
-    
+
     let item_host = extract_host(item_url);
     let tab_host = extract_host(tab_domain);
-    
+
     if item_host.is_empty() || tab_host.is_empty() {
         return false;
     }
-    
+
     if behavior == "exact" {
         item_host == tab_host
     } else {
@@ -689,15 +703,43 @@ mod tests {
     #[test]
     fn test_matches_domain() {
         // Anywhere behavior
-        assert!(matches_domain("https://accounts.google.com", "google.com", "anywhere"));
-        assert!(matches_domain("https://google.com", "accounts.google.com", "anywhere"));
-        assert!(matches_domain("https://google.com", "mail.google.com", "anywhere"));
-        assert!(!matches_domain("https://google.com", "github.com", "anywhere"));
+        assert!(matches_domain(
+            "https://accounts.google.com",
+            "google.com",
+            "anywhere"
+        ));
+        assert!(matches_domain(
+            "https://google.com",
+            "accounts.google.com",
+            "anywhere"
+        ));
+        assert!(matches_domain(
+            "https://google.com",
+            "mail.google.com",
+            "anywhere"
+        ));
+        assert!(!matches_domain(
+            "https://google.com",
+            "github.com",
+            "anywhere"
+        ));
 
         // Exact behavior
-        assert!(matches_domain("https://accounts.google.com", "accounts.google.com", "exact"));
-        assert!(!matches_domain("https://accounts.google.com", "google.com", "exact"));
-        assert!(!matches_domain("https://google.com", "accounts.google.com", "exact"));
+        assert!(matches_domain(
+            "https://accounts.google.com",
+            "accounts.google.com",
+            "exact"
+        ));
+        assert!(!matches_domain(
+            "https://accounts.google.com",
+            "google.com",
+            "exact"
+        ));
+        assert!(!matches_domain(
+            "https://google.com",
+            "accounts.google.com",
+            "exact"
+        ));
 
         // Never behavior
         assert!(!matches_domain("https://google.com", "google.com", "never"));

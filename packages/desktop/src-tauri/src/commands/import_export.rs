@@ -62,10 +62,7 @@ fn build_import_preview(items: Vec<VaultItem>, existing: &[VaultItem]) -> Import
     let mut warnings = Vec::new();
 
     for (idx, item) in items.iter().enumerate() {
-        let cat = item
-            .category
-            .clone()
-            .unwrap_or_else(|| "Login".to_string());
+        let cat = item.category.clone().unwrap_or_else(|| "Login".to_string());
         *categories_summary.entry(cat).or_insert(0) += 1;
 
         if is_duplicate(item, existing) {
@@ -98,7 +95,8 @@ pub fn parse_1pux_bytes(
     existing_items: Option<Vec<VaultItem>>,
 ) -> Result<ImportPreview, String> {
     let cursor = std::io::Cursor::new(bytes);
-    let mut archive = ZipArchive::new(cursor).map_err(|e| format!("File .1pux không đúng định dạng nén ZIP: {}", e))?;
+    let mut archive = ZipArchive::new(cursor)
+        .map_err(|e| format!("File .1pux không đúng định dạng nén ZIP: {}", e))?;
 
     let mut export_data_content = String::new();
     let mut found = false;
@@ -224,18 +222,18 @@ pub fn parse_1pux_bytes(
                                         .get("designation")
                                         .and_then(|d| d.as_str())
                                         .unwrap_or("");
-                                    let name = lf
-                                        .get("name")
-                                        .and_then(|d| d.as_str())
-                                        .unwrap_or("");
-                                    let val = lf
-                                        .get("value")
-                                        .and_then(|v| v.as_str())
-                                        .unwrap_or("");
+                                    let name =
+                                        lf.get("name").and_then(|d| d.as_str()).unwrap_or("");
+                                    let val =
+                                        lf.get("value").and_then(|v| v.as_str()).unwrap_or("");
 
-                                    if (designation == "username" || name == "username") && username.is_none() {
+                                    if (designation == "username" || name == "username")
+                                        && username.is_none()
+                                    {
                                         username = Some(val.to_string());
-                                    } else if (designation == "password" || name == "password") && password.is_none() {
+                                    } else if (designation == "password" || name == "password")
+                                        && password.is_none()
+                                    {
                                         password = Some(val.to_string());
                                     }
                                 }
@@ -244,107 +242,117 @@ pub fn parse_1pux_bytes(
                             let mut f_counter = 0;
 
                             // Helper lambda to process a field object from 1PUX
-                            let mut extract_field = |field: &serde_json::Value, sec_name: Option<&str>| {
-                                let field_title = field
-                                    .get("title")
-                                    .or_else(|| field.get("t"))
-                                    .or_else(|| field.get("name"))
-                                    .or_else(|| field.get("n"))
-                                    .and_then(|v| v.as_str())
-                                    .unwrap_or("");
+                            let mut extract_field =
+                                |field: &serde_json::Value, sec_name: Option<&str>| {
+                                    let field_title = field
+                                        .get("title")
+                                        .or_else(|| field.get("t"))
+                                        .or_else(|| field.get("name"))
+                                        .or_else(|| field.get("n"))
+                                        .and_then(|v| v.as_str())
+                                        .unwrap_or("");
 
-                                let field_id = field
-                                    .get("id")
-                                    .or_else(|| field.get("n"))
-                                    .and_then(|v| v.as_str())
-                                    .unwrap_or("");
+                                    let field_id = field
+                                        .get("id")
+                                        .or_else(|| field.get("n"))
+                                        .and_then(|v| v.as_str())
+                                        .unwrap_or("");
 
-                                let k_type = field
-                                    .get("k")
-                                    .or_else(|| field.get("fieldType"))
-                                    .and_then(|v| v.as_str())
-                                    .unwrap_or("string");
+                                    let k_type = field
+                                        .get("k")
+                                        .or_else(|| field.get("fieldType"))
+                                        .and_then(|v| v.as_str())
+                                        .unwrap_or("string");
 
-                                let mut val_str = String::new();
-                                let mut detected_type = k_type.to_string();
+                                    let mut val_str = String::new();
+                                    let mut detected_type = k_type.to_string();
 
-                                if let Some(val_node) = field.get("value").or_else(|| field.get("v")) {
-                                    if let Some(s) = val_node.as_str() {
-                                        val_str = s.to_string();
-                                    } else if let Some(obj) = val_node.as_object() {
-                                        if let Some(totp) = obj.get("totp").and_then(|v| v.as_str()) {
-                                            val_str = totp.to_string();
-                                            detected_type = "totp".to_string();
-                                        } else if let Some(concealed) = obj.get("concealed").and_then(|v| v.as_str()) {
-                                            val_str = concealed.to_string();
-                                            detected_type = "concealed".to_string();
-                                        } else if let Some(string_val) = obj.get("string").and_then(|v| v.as_str()) {
-                                            val_str = string_val.to_string();
-                                            detected_type = "string".to_string();
-                                        } else {
-                                            for (key, val) in obj {
-                                                if let Some(s) = val.as_str() {
-                                                    val_str = s.to_string();
-                                                    detected_type = key.clone();
-                                                    break;
+                                    if let Some(val_node) =
+                                        field.get("value").or_else(|| field.get("v"))
+                                    {
+                                        if let Some(s) = val_node.as_str() {
+                                            val_str = s.to_string();
+                                        } else if let Some(obj) = val_node.as_object() {
+                                            if let Some(totp) =
+                                                obj.get("totp").and_then(|v| v.as_str())
+                                            {
+                                                val_str = totp.to_string();
+                                                detected_type = "totp".to_string();
+                                            } else if let Some(concealed) =
+                                                obj.get("concealed").and_then(|v| v.as_str())
+                                            {
+                                                val_str = concealed.to_string();
+                                                detected_type = "concealed".to_string();
+                                            } else if let Some(string_val) =
+                                                obj.get("string").and_then(|v| v.as_str())
+                                            {
+                                                val_str = string_val.to_string();
+                                                detected_type = "string".to_string();
+                                            } else {
+                                                for (key, val) in obj {
+                                                    if let Some(s) = val.as_str() {
+                                                        val_str = s.to_string();
+                                                        detected_type = key.clone();
+                                                        break;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
 
-                                if val_str.is_empty() {
-                                    return;
-                                }
+                                    if val_str.is_empty() {
+                                        return;
+                                    }
 
-                                let is_totp = detected_type == "totp"
-                                    || k_type.eq_ignore_ascii_case("OTP")
-                                    || val_str.starts_with("otpauth://")
-                                    || field_id.starts_with("TOTP_")
-                                    || field_title.to_lowercase().contains("one-time")
-                                    || field_title.to_lowercase().contains("totp");
+                                    let is_totp = detected_type == "totp"
+                                        || k_type.eq_ignore_ascii_case("OTP")
+                                        || val_str.starts_with("otpauth://")
+                                        || field_id.starts_with("TOTP_")
+                                        || field_title.to_lowercase().contains("one-time")
+                                        || field_title.to_lowercase().contains("totp");
 
-                                if username.is_none()
-                                    && (field_title.eq_ignore_ascii_case("username")
-                                        || field_title.to_lowercase().contains("username"))
-                                    && !is_totp
-                                {
-                                    username = Some(val_str.clone());
-                                } else if password.is_none()
-                                    && (field_title.eq_ignore_ascii_case("password")
-                                        || field_title.to_lowercase().contains("password"))
-                                    && !is_totp
-                                {
-                                    password = Some(val_str.clone());
-                                } else if !field_title.eq_ignore_ascii_case("notesPlain") {
-                                    let label = if is_totp {
-                                        if field_title.is_empty() {
-                                            "One-Time Password (TOTP)".to_string()
-                                        } else {
+                                    if username.is_none()
+                                        && (field_title.eq_ignore_ascii_case("username")
+                                            || field_title.to_lowercase().contains("username"))
+                                        && !is_totp
+                                    {
+                                        username = Some(val_str.clone());
+                                    } else if password.is_none()
+                                        && (field_title.eq_ignore_ascii_case("password")
+                                            || field_title.to_lowercase().contains("password"))
+                                        && !is_totp
+                                    {
+                                        password = Some(val_str.clone());
+                                    } else if !field_title.eq_ignore_ascii_case("notesPlain") {
+                                        let label = if is_totp {
+                                            if field_title.is_empty() {
+                                                "One-Time Password (TOTP)".to_string()
+                                            } else {
+                                                field_title.to_string()
+                                            }
+                                        } else if !field_title.is_empty() {
                                             field_title.to_string()
-                                        }
-                                    } else if !field_title.is_empty() {
-                                        field_title.to_string()
-                                    } else {
-                                        format!("Field {}", f_counter + 1)
-                                    };
+                                        } else {
+                                            format!("Field {}", f_counter + 1)
+                                        };
 
-                                    let field_type = if is_totp || detected_type == "concealed" {
-                                        "concealed".to_string()
-                                    } else {
-                                        detected_type
-                                    };
+                                        let field_type = if is_totp || detected_type == "concealed"
+                                        {
+                                            "concealed".to_string()
+                                        } else {
+                                            detected_type
+                                        };
 
-                                    custom_fields.push(CustomField {
-                                        id: format!("cf-{}", f_counter),
-                                        label,
-                                        value: val_str,
-                                        r#type: field_type,
-                                        section: sec_name.map(|s| s.to_string()),
-                                    });
-                                    f_counter += 1;
-                                }
-                            };
+                                        custom_fields.push(CustomField {
+                                            id: format!("cf-{}", f_counter),
+                                            label,
+                                            value: val_str,
+                                            r#type: field_type,
+                                            section: sec_name.map(|s| s.to_string()),
+                                        });
+                                        f_counter += 1;
+                                    }
+                                };
 
                             // Process top-level fields array
                             if let Some(fields) = details
@@ -367,14 +375,15 @@ pub fn parse_1pux_bytes(
                                         .or_else(|| section.get("t"))
                                         .and_then(|v| v.as_str());
 
-                                    if let Some(fields) = section.get("fields").and_then(|f| f.as_array()) {
+                                    if let Some(fields) =
+                                        section.get("fields").and_then(|f| f.as_array())
+                                    {
                                         for field in fields {
                                             extract_field(field, section_title);
                                         }
                                     }
                                 }
                             }
-
 
                             parsed_items.push(VaultItem {
                                 id: item_id,
@@ -402,7 +411,6 @@ pub fn parse_1pux_bytes(
         }
     }
 
-
     let existing = existing_items.unwrap_or_default();
     Ok(build_import_preview(parsed_items, &existing))
 }
@@ -416,7 +424,6 @@ pub fn parse_1pux_file(
     let bytes = std::fs::read(&file_path).map_err(|e| format!("Không thể mở file .1pux: {}", e))?;
     parse_1pux_bytes(bytes, existing_items)
 }
-
 
 /// Parse a JSON string containing exported vault items
 #[tauri::command]
@@ -435,8 +442,12 @@ pub fn parse_json_import(
         return Err("Tệp JSON không chứa danh sách items hợp lệ.".to_string());
     };
 
-    let items: Vec<VaultItem> = serde_json::from_value(items_array)
-        .map_err(|e| format!("Dữ liệu items trong JSON không khớp cấu trúc VaultItem: {}", e))?;
+    let items: Vec<VaultItem> = serde_json::from_value(items_array).map_err(|e| {
+        format!(
+            "Dữ liệu items trong JSON không khớp cấu trúc VaultItem: {}",
+            e
+        )
+    })?;
 
     let existing = existing_items.unwrap_or_default();
     Ok(build_import_preview(items, &existing))
@@ -472,7 +483,9 @@ pub fn parse_csv_import(
         match name_lower.as_str() {
             "title" | "name" | "tên" | "tieu de" => title_idx = Some(idx),
             "url" | "website" | "link" | "trang web" => url_idx = Some(idx),
-            "username" | "user" | "login" | "tên đăng nhập" | "email" => username_idx = Some(idx),
+            "username" | "user" | "login" | "tên đăng nhập" | "email" => {
+                username_idx = Some(idx)
+            }
             "password" | "pass" | "mật khẩu" | "mat khau" => password_idx = Some(idx),
             "notes" | "note" | "comment" | "ghi chú" => notes_idx = Some(idx),
             "category" | "type" | "loại" | "danh mục" => category_idx = Some(idx),
@@ -489,7 +502,8 @@ pub fn parse_csv_import(
     let mut items = Vec::new();
 
     for (row_num, result) in reader.records().enumerate() {
-        let record = result.map_err(|e| format!("Lỗi đọc dòng {} trong CSV: {}", row_num + 1, e))?;
+        let record =
+            result.map_err(|e| format!("Lỗi đọc dòng {} trong CSV: {}", row_num + 1, e))?;
 
         let get_val = |idx_opt: Option<usize>| -> Option<String> {
             idx_opt
@@ -569,9 +583,11 @@ pub fn execute_import(
                 "overwrite" => {
                     // Replace existing matching item
                     let title_lower = new_item.title.trim().to_lowercase();
-                    if let Some(pos) = current_vault.items.iter().position(|ex| {
-                        ex.title.trim().to_lowercase() == title_lower
-                    }) {
+                    if let Some(pos) = current_vault
+                        .items
+                        .iter()
+                        .position(|ex| ex.title.trim().to_lowercase() == title_lower)
+                    {
                         current_vault.items[pos] = new_item;
                         overwritten_count += 1;
                     } else {
@@ -619,23 +635,19 @@ pub fn export_vault_data(
     let vault = crate::core::storage::load_vault_with_key(&app, key, file_name)?;
 
     let export_items: Vec<&VaultItem> = match &item_ids {
-        Some(ids) => vault
-            .items
-            .iter()
-            .filter(|i| ids.contains(&i.id))
-            .collect(),
+        Some(ids) => vault.items.iter().filter(|i| ids.contains(&i.id)).collect(),
         None => vault.items.iter().collect(),
     };
 
     match format.to_lowercase().as_str() {
-        "json" => {
-            serde_json::to_string_pretty(&export_items)
-                .map_err(|e| format!("Lỗi định dạng dữ liệu JSON: {}", e))
-        }
+        "json" => serde_json::to_string_pretty(&export_items)
+            .map_err(|e| format!("Lỗi định dạng dữ liệu JSON: {}", e)),
         "csv" => {
             let mut wtr = csv::Writer::from_writer(Vec::new());
-            wtr.write_record(&["title", "username", "password", "url", "notes", "category", "tags"])
-                .map_err(|e| format!("Lỗi ghi tiêu đề CSV: {}", e))?;
+            wtr.write_record(&[
+                "title", "username", "password", "url", "notes", "category", "tags",
+            ])
+            .map_err(|e| format!("Lỗi ghi tiêu đề CSV: {}", e))?;
 
             for item in export_items {
                 let tags_str = item.tags.as_ref().map(|t| t.join(", ")).unwrap_or_default();
@@ -651,7 +663,9 @@ pub fn export_vault_data(
                 .map_err(|e| format!("Lỗi ghi dòng CSV: {}", e))?;
             }
 
-            let bytes = wtr.into_inner().map_err(|e| format!("Lỗi xuất dữ liệu CSV: {}", e))?;
+            let bytes = wtr
+                .into_inner()
+                .map_err(|e| format!("Lỗi xuất dữ liệu CSV: {}", e))?;
             String::from_utf8(bytes).map_err(|e| format!("Lỗi UTF-8 CSV: {}", e))
         }
         _ => Err("Định dạng xuất không được hỗ trợ. Sử dụng 'json' hoặc 'csv'.".to_string()),
@@ -764,8 +778,7 @@ pub fn parse_svm_file(
     password: String,
     existing_items: Option<Vec<VaultItem>>,
 ) -> Result<ImportPreview, String> {
-    let bytes = std::fs::read(&file_path)
-        .map_err(|e| format!("Không thể đọc tệp .svm: {}", e))?;
+    let bytes = std::fs::read(&file_path).map_err(|e| format!("Không thể đọc tệp .svm: {}", e))?;
     parse_svm_bytes(bytes, password, existing_items)
 }
 
@@ -935,14 +948,20 @@ mod tests {
         let client_id_cf = &custom_fields[1];
         assert_eq!(client_id_cf.label, "Client ID");
         assert_eq!(client_id_cf.value, "658865054233-j48kiqjbpmfklq4aa");
-        assert_eq!(client_id_cf.section.as_deref(), Some("Nexus360 OAuth2 Client"));
+        assert_eq!(
+            client_id_cf.section.as_deref(),
+            Some("Nexus360 OAuth2 Client")
+        );
 
         // Check Client Secret field
         let client_sec_cf = &custom_fields[2];
         assert_eq!(client_sec_cf.label, "Client Secret");
         assert_eq!(client_sec_cf.value, "GOCSPX-I1TO...");
         assert_eq!(client_sec_cf.r#type, "concealed");
-        assert_eq!(client_sec_cf.section.as_deref(), Some("Nexus360 OAuth2 Client"));
+        assert_eq!(
+            client_sec_cf.section.as_deref(),
+            Some("Nexus360 OAuth2 Client")
+        );
     }
 
     #[test]
@@ -963,10 +982,7 @@ mod tests {
             icon: None,
         }];
 
-        let vault = crate::core::vault::Vault {
-            version: 1,
-            items,
-        };
+        let vault = crate::core::vault::Vault { version: 1, items };
 
         let json_bytes = serde_json::to_vec(&vault).unwrap();
         let password = "MySecretSvmPassword123!";
@@ -976,7 +992,8 @@ mod tests {
         rand::thread_rng().fill_bytes(&mut salt);
 
         let derived_key = crate::core::crypto::derive_key(password, &salt).unwrap();
-        let (ciphertext, actual_nonce) = crate::core::crypto::encrypt(&derived_key, &json_bytes).unwrap();
+        let (ciphertext, actual_nonce) =
+            crate::core::crypto::encrypt(&derived_key, &json_bytes).unwrap();
 
         let mut svm_payload = Vec::new();
         svm_payload.extend_from_slice(b"SVM1");
@@ -999,6 +1016,3 @@ mod tests {
         );
     }
 }
-
-
-

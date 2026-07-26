@@ -12,7 +12,6 @@ pub struct CustomField {
     pub section: Option<String>,
 }
 
-
 /// Represents a URL configuration with an associated autofill behavior.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]

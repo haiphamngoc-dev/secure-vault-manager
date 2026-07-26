@@ -41,6 +41,7 @@ axum = "0.7"
 tower-http = { version = "0.5", features = ["cors"] }
 sha2 = "0.10"
 aes-gcm = "0.10"
+keepawake = "0.4"
 
 
 

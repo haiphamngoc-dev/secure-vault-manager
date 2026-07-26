@@ -59,6 +59,8 @@ pub struct AppState {
     pub is_visible: Mutex<bool>,
     /// Track which vault file is currently unlocked.
     pub current_vault_file: Mutex<Option<String>>,
+    /// Handle to prevent the system from sleeping, active when vault is unlocked and prevent_sleep is enabled.
+    pub keepawake_handle: Mutex<Option<keepawake::AwakeHandle>>,
 }
 
 /// Updates the system tray menu items dynamically.
@@ -196,6 +198,7 @@ pub fn run() {
             lang: std::sync::Mutex::new(AppLang::Vi),
             is_visible: std::sync::Mutex::new(false), // Starts false, updated in setup
             current_vault_file: std::sync::Mutex::new(None),
+            keepawake_handle: std::sync::Mutex::new(None),
         })
         .setup(|app| {
             // Load icon from default window icon

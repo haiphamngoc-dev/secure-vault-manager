@@ -10,6 +10,14 @@ fn default_true() -> bool {
     true
 }
 
+fn default_confirm_password_interval() -> String {
+    "14d".to_string()
+}
+
+fn default_clear_clipboard_interval() -> u32 {
+    30
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     pub lang: String,
@@ -22,6 +30,28 @@ pub struct AppSettings {
     #[serde(default)]
     pub autostart: bool,
     pub pairing_token: Option<String>,
+    #[serde(default)]
+    pub last_password_auth: Option<u64>,
+
+    // New 1Password-style settings
+    #[serde(default)]
+    pub unlock_with_biometrics: bool,
+    #[serde(default = "default_confirm_password_interval")]
+    pub confirm_password_interval: String,
+    #[serde(default = "default_true")]
+    pub lock_on_sleep: bool,
+    #[serde(default)]
+    pub prevent_sleep: bool,
+    #[serde(default = "default_true")]
+    pub clear_clipboard: bool,
+    #[serde(default = "default_clear_clipboard_interval")]
+    pub clear_clipboard_interval: u32,
+    #[serde(default)]
+    pub always_show_passwords: bool,
+    #[serde(default)]
+    pub hold_shortcut_to_reveal: bool,
+    #[serde(default = "default_true")]
+    pub always_show_wifi_qr: bool,
 }
 
 impl Default for AppSettings {
@@ -34,6 +64,17 @@ impl Default for AppSettings {
             minimize_to_tray: true,
             autostart: false,
             pairing_token: None,
+            last_password_auth: None,
+
+            unlock_with_biometrics: false,
+            confirm_password_interval: "14d".to_string(),
+            lock_on_sleep: true,
+            prevent_sleep: false,
+            clear_clipboard: true,
+            clear_clipboard_interval: 30,
+            always_show_passwords: false,
+            hold_shortcut_to_reveal: false,
+            always_show_wifi_qr: true,
         }
     }
 }
@@ -58,7 +99,13 @@ pub fn get_settings(app: tauri::AppHandle) -> Result<AppSettings, String> {
     let mut settings: AppSettings = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse settings JSON: {}", e))?;
 
-    if settings.chrome_extension_id.as_deref().unwrap_or("").trim().is_empty() {
+    if settings
+        .chrome_extension_id
+        .as_deref()
+        .unwrap_or("")
+        .trim()
+        .is_empty()
+    {
         settings.chrome_extension_id = Some(DEFAULT_CHROME_EXTENSION_ID.to_string());
     }
 
@@ -84,7 +131,10 @@ pub fn save_settings(app: tauri::AppHandle, settings: AppSettings) -> Result<(),
         let _ = autostart_manager.disable();
     }
 
+    // Update sleep blocker state if needed
+    if let Some(state) = app.try_state::<crate::AppState>() {
+        crate::commands::vault::update_sleep_blocker(&app, &state);
+    }
+
     Ok(())
 }
-
-
