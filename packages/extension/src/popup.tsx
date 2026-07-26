@@ -14,6 +14,7 @@ import { scanVisibleTabForQr } from "./services/qr-scanner";
 
 interface CredentialItem {
   id: string;
+  title: string;
   username?: string;
   password?: string;
   totp_secret?: string;
@@ -571,7 +572,9 @@ function Popup() {
               filteredCredentials.map((cred) => (
                 <div key={cred.id} className={classes.credentialCard}>
                   <div className={classes.credentialInfo}>
-                    <span className={classes.credentialTitle}>{domain}</span>
+                    <span className={classes.credentialTitle}>
+                      {cred.title}
+                    </span>
                     <span className={classes.credentialUsername}>
                       {cred.username || "No username"}
                     </span>

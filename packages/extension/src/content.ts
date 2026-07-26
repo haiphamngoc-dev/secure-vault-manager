@@ -5,6 +5,7 @@ import { showSaveCredentialPrompt } from "./components/save-prompt";
 
 interface CredentialItem {
   id: string;
+  title?: string;
   username?: string;
   password?: string;
   totp_secret?: string;
@@ -293,10 +294,10 @@ const showDropdown = (
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
             </div>
-            <div class="item-info">
-              <div class="item-username">${escapeHtml(cred.username || "No username")}</div>
-              <div class="item-secondary">Click to autofill</div>
-            </div>
+             <div class="item-info">
+               <div class="item-username">${escapeHtml(cred.title || cred.username || "No title")}</div>
+               <div class="item-secondary">${escapeHtml(cred.username ? cred.username : "Click to autofill")}</div>
+             </div>
           </div>
         `
           )

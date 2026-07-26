@@ -32,6 +32,7 @@ pub struct ProxyResponse {
 #[derive(Debug, Serialize)]
 pub struct ProxyCredential {
     pub id: String,
+    pub title: String,
     pub username: Option<String>,
     pub password: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -275,8 +276,16 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 .items
                 .into_iter()
                 .filter(|item| {
+                    if let Some(ref urls) = item.urls {
+                        if !urls.is_empty() {
+                            return urls.iter().any(|u| {
+                                matches_domain(&u.url, &domain, &u.autofill_behavior)
+                            });
+                        }
+                    }
                     if let Some(ref url) = item.url {
-                        url.to_lowercase().contains(&domain)
+                        let behavior = item.autofill_behavior.as_deref().unwrap_or("anywhere");
+                        matches_domain(url, &domain, behavior)
                     } else {
                         false
                     }
@@ -297,6 +306,7 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                     });
                     ProxyCredential {
                         id: item.id,
+                        title: item.title,
                         username: item.username,
                         password: item.password,
                         totp_secret,
@@ -412,6 +422,8 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                     username,
                     password,
                     url: Some(format!("https://{}", domain)),
+                    autofill_behavior: None,
+                    urls: None,
                     notes: None,
                     category: Some("Web logins".to_string()),
                     updated_at: now,
@@ -578,5 +590,116 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
             locked: None,
             paired: None,
         },
+    }
+}
+
+fn extract_host(url_str: &str) -> String {
+    let mut cleaned = url_str.to_lowercase();
+    if cleaned.contains("://") {
+        if let Some(pos) = cleaned.find("://") {
+            cleaned = cleaned[pos + 3..].to_string();
+        }
+    }
+    if let Some(pos) = cleaned.find('/') {
+        cleaned = cleaned[..pos].to_string();
+    }
+    if let Some(pos) = cleaned.find(':') {
+        cleaned = cleaned[..pos].to_string();
+    }
+    
+    cleaned = cleaned.trim_end_matches('.').to_string();
+    
+    if cleaned.starts_with("www.") {
+        cleaned = cleaned[4..].to_string();
+    }
+    cleaned
+}
+
+fn get_base_domain(host: &str) -> &str {
+    let parts: Vec<&str> = host.split('.').collect();
+    let len = parts.len();
+    if len < 3 {
+        return host;
+    }
+    if parts.iter().all(|p| p.chars().all(|c| c.is_ascii_digit())) {
+        return host;
+    }
+    let second_to_last = parts[len - 2];
+    let last = parts[len - 1];
+    
+    let parts_to_keep = if second_to_last.len() <= 3 && last.len() <= 3 && len >= 3 {
+        3
+    } else {
+        2
+    };
+    
+    let drop_count = len - parts_to_keep;
+    let mut offset = 0;
+    for i in 0..drop_count {
+        offset += parts[i].len() + 1;
+    }
+    if offset < host.len() {
+        &host[offset..]
+    } else {
+        host
+    }
+}
+
+fn matches_domain(item_url: &str, tab_domain: &str, behavior: &str) -> bool {
+    if behavior == "never" {
+        return false;
+    }
+    
+    let item_host = extract_host(item_url);
+    let tab_host = extract_host(tab_domain);
+    
+    if item_host.is_empty() || tab_host.is_empty() {
+        return false;
+    }
+    
+    if behavior == "exact" {
+        item_host == tab_host
+    } else {
+        // "anywhere"
+        get_base_domain(&item_host) == get_base_domain(&tab_host)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_host() {
+        assert_eq!(extract_host("https://google.com"), "google.com");
+        assert_eq!(extract_host("http://www.google.com/test"), "google.com");
+        assert_eq!(extract_host("www.google.com:8080/path"), "google.com");
+        assert_eq!(extract_host("sub.google.co.uk."), "sub.google.co.uk");
+        assert_eq!(extract_host("127.0.0.1"), "127.0.0.1");
+    }
+
+    #[test]
+    fn test_get_base_domain() {
+        assert_eq!(get_base_domain("google.com"), "google.com");
+        assert_eq!(get_base_domain("accounts.google.com"), "google.com");
+        assert_eq!(get_base_domain("sub.google.co.uk"), "google.co.uk");
+        assert_eq!(get_base_domain("127.0.0.1"), "127.0.0.1");
+    }
+
+    #[test]
+    fn test_matches_domain() {
+        // Anywhere behavior
+        assert!(matches_domain("https://accounts.google.com", "google.com", "anywhere"));
+        assert!(matches_domain("https://google.com", "accounts.google.com", "anywhere"));
+        assert!(matches_domain("https://google.com", "mail.google.com", "anywhere"));
+        assert!(!matches_domain("https://google.com", "github.com", "anywhere"));
+
+        // Exact behavior
+        assert!(matches_domain("https://accounts.google.com", "accounts.google.com", "exact"));
+        assert!(!matches_domain("https://accounts.google.com", "google.com", "exact"));
+        assert!(!matches_domain("https://google.com", "accounts.google.com", "exact"));
+
+        // Never behavior
+        assert!(!matches_domain("https://google.com", "google.com", "never"));
     }
 }

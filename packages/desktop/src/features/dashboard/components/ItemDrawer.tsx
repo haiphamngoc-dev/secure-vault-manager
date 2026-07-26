@@ -25,6 +25,8 @@ import {
   Transition,
   Select,
   Autocomplete,
+  Radio,
+  Paper,
 } from "@mantine/core";
 import {
   IconX,
@@ -59,6 +61,31 @@ import {
   getDatabaseTypeInfo,
   getDatabaseLogo,
 } from "@/shared/utils/databaseTypes";
+
+const generateId = () =>
+  crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).substring(2, 9);
+
+const extractDomain = (urlStr: string): string => {
+  if (!urlStr) return "";
+  try {
+    let cleaned = urlStr.trim().toLowerCase();
+    if (!/^https?:\/\//i.test(cleaned)) {
+      cleaned = "https://" + cleaned;
+    }
+    const url = new URL(cleaned);
+    return url.hostname.replace(/^www\./i, "");
+  } catch {
+    return "";
+  }
+};
+
+interface WebsiteInput {
+  id: string;
+  value: string;
+  autofillBehavior: string;
+}
 
 interface ItemDrawerProps {
   item: VaultItem;
@@ -215,12 +242,32 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   // Form states (used in Edit mode)
   const [category, setCategory] = useState(item.category);
   const [title, setTitle] = useState(item.title);
+  const getInitialWebsites = useCallback((currentItem: VaultItem) => {
+    if (currentItem.category !== "Login") {
+      return [{ id: generateId(), value: "", autofillBehavior: "anywhere" }];
+    }
+    if (currentItem.urls && currentItem.urls.length > 0) {
+      return currentItem.urls.map((u) => ({
+        id: generateId(),
+        value: u.url,
+        autofillBehavior: u.autofillBehavior || "anywhere",
+      }));
+    }
+    return [
+      {
+        id: generateId(),
+        value: currentItem.url || "",
+        autofillBehavior: currentItem.autofillBehavior || "anywhere",
+      },
+    ];
+  }, []);
+
   const [formFields, setFormFields] = useState<FormField[]>(() =>
     getInitialFormFields(item)
   );
   const [extraSections, setExtraSections] = useState<string[]>([]);
-  const [websites, setWebsites] = useState<string[]>(() =>
-    item.category === "Login" && item.url ? [item.url] : [""]
+  const [websites, setWebsites] = useState<WebsiteInput[]>(() =>
+    getInitialWebsites(item)
   );
   const [notes, setNotes] = useState(item.notes || "");
   const [tags, setTags] = useState<string[]>(item.tags || []);
@@ -240,7 +287,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     setTitle(item.title);
     setFormFields(getInitialFormFields(item));
     setExtraSections([]);
-    setWebsites(item.category === "Login" && item.url ? [item.url] : [""]);
+    setWebsites(getInitialWebsites(item));
     setNotes(item.notes || "");
     setTags(item.tags || []);
     setTagInput("");
@@ -248,7 +295,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
     setUserHasCustomIcon(false);
     setCopiedFieldId(null);
     scrollAreaRef.current?.scrollTo({ top: 0 });
-  }, [item, getInitialFormFields]);
+  }, [item, getInitialFormFields, getInitialWebsites]);
 
   const activeType = ITEM_TYPES.find((t) => t.id === category);
 
@@ -341,9 +388,28 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   const handleWebsiteChange = (index: number, val: string) => {
     setWebsites((prev) => {
       const copy = [...prev];
-      copy[index] = val;
+      copy[index] = { ...copy[index], value: val };
       return copy;
     });
+  };
+
+  const handleWebsiteBehaviorChange = (index: number, behavior: string) => {
+    setWebsites((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], autofillBehavior: behavior };
+      return copy;
+    });
+  };
+
+  const handleAddWebsite = () => {
+    setWebsites((prev) => [
+      ...prev,
+      { id: generateId(), value: "", autofillBehavior: "anywhere" },
+    ]);
+  };
+
+  const handleRemoveWebsite = (index: number) => {
+    setWebsites((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   const processImageFile = (file: File): Promise<string> => {
@@ -547,10 +613,22 @@ export const ItemDrawer = React.memo(function ItemDrawer({
 
     const url =
       category === "Login"
-        ? websites[0]
+        ? websites[0]?.value
         : findFieldVal("server") ||
           findFieldVal("endpoint") ||
           findFieldVal("ipAddress");
+
+    const autofillBehavior =
+      category === "Login" ? websites[0]?.autofillBehavior : undefined;
+    const urlsToSave =
+      category === "Login"
+        ? websites
+            .filter((w) => w.value.trim() !== "")
+            .map((w) => ({
+              url: w.value,
+              autofillBehavior: w.autofillBehavior,
+            }))
+        : undefined;
 
     const customFieldsToSave = formFields
       .filter((field) => {
@@ -586,6 +664,8 @@ export const ItemDrawer = React.memo(function ItemDrawer({
       username: username || undefined,
       password: password || undefined,
       url: url || undefined,
+      autofillBehavior: autofillBehavior || undefined,
+      urls: urlsToSave && urlsToSave.length > 0 ? urlsToSave : undefined,
       notes: notes || undefined,
       customFields:
         customFieldsToSave.length > 0 ? customFieldsToSave : undefined,
@@ -1043,22 +1123,203 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                   );
                 })}
 
-                {item.category === "Login" && (
+                {category === "Login" && (
                   <Box className={classes.section}>
-                    <Text size="xs" fw={600} c="dimmed">
+                    <Text size="xs" fw={600} c="dimmed" mb="xs">
                       {t("websiteLabel")}
                     </Text>
-                    <TextInput
-                      placeholder="https://example.com"
-                      value={websites[0]}
-                      onChange={(e) =>
-                        handleWebsiteChange(0, e.currentTarget.value)
-                      }
-                      onBlur={(e) => handleUrlBlur(e.currentTarget.value)}
-                      leftSection={<IconGlobe size={14} />}
-                      radius="md"
-                      size="sm"
-                    />
+                    {websites.map((web, idx) => (
+                      <Box
+                        key={web.id}
+                        mb="md"
+                        style={{
+                          borderBottom:
+                            idx < websites.length - 1
+                              ? "1px dashed var(--color-neutral-light)"
+                              : "none",
+                          paddingBottom: "12px",
+                          width: "100%",
+                        }}
+                      >
+                        <Group
+                          align="flex-end"
+                          gap="xs"
+                          style={{ width: "100%" }}
+                        >
+                          <TextInput
+                            placeholder="https://example.com"
+                            value={web.value}
+                            onChange={(e) =>
+                              handleWebsiteChange(idx, e.currentTarget.value)
+                            }
+                            onBlur={(e) => {
+                              if (idx === 0) {
+                                handleUrlBlur(e.currentTarget.value);
+                              }
+                            }}
+                            leftSection={<IconGlobe size={14} />}
+                            radius="md"
+                            size="sm"
+                            style={{ flex: 1 }}
+                          />
+                          {websites.length > 1 && (
+                            <ActionIcon
+                              variant="subtle"
+                              color="red"
+                              onClick={() => handleRemoveWebsite(idx)}
+                              mb={4}
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          )}
+                        </Group>
+
+                        {/* Autofill Behavior section for this website */}
+                        <Box mt="xs" pl="sm">
+                          <Text
+                            size="xs"
+                            fw={700}
+                            c="dimmed"
+                            style={{ letterSpacing: "0.5px" }}
+                            mb="xs"
+                          >
+                            {t("autofillBehaviorLabel", "AUTOFILL BEHAVIOR")}
+                          </Text>
+                          <Radio.Group
+                            value={web.autofillBehavior}
+                            onChange={(val) =>
+                              handleWebsiteBehaviorChange(idx, val)
+                            }
+                          >
+                            <Stack gap="xs">
+                              <Group
+                                justify="space-between"
+                                align="center"
+                                style={{ width: "100%" }}
+                              >
+                                <Radio
+                                  value="anywhere"
+                                  label={t(
+                                    "autofillAnywhere",
+                                    "Fill anywhere on this website"
+                                  )}
+                                  size="sm"
+                                  styles={{
+                                    label: {
+                                      cursor: "pointer",
+                                      fontSize: "12px",
+                                    },
+                                  }}
+                                />
+                                <Badge
+                                  size="xs"
+                                  variant="light"
+                                  color="blue"
+                                  radius="sm"
+                                >
+                                  {t("defaultBadge", "Default")}
+                                </Badge>
+                              </Group>
+                              <Radio
+                                value="exact"
+                                label={t(
+                                  "autofillExact",
+                                  "Only fill on this exact host"
+                                )}
+                                size="sm"
+                                styles={{
+                                  label: {
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                  },
+                                }}
+                              />
+                              <Radio
+                                value="never"
+                                label={t(
+                                  "autofillNever",
+                                  "Never fill on this website"
+                                )}
+                                size="sm"
+                                styles={{
+                                  label: {
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                  },
+                                }}
+                              />
+                            </Stack>
+                          </Radio.Group>
+
+                          {web.value.trim() !== "" && (
+                            <Paper
+                              p="xs"
+                              mt="xs"
+                              radius="md"
+                              style={{
+                                backgroundColor:
+                                  "light-dark(var(--mantine-color-blue-light), rgba(37, 99, 235, 0.15))",
+                                border:
+                                  "1px solid light-dark(var(--mantine-color-blue-light-hover), rgba(37, 99, 235, 0.25))",
+                              }}
+                            >
+                              <Text
+                                size="xs"
+                                c="light-dark(var(--mantine-color-blue-9), var(--mantine-color-blue-2))"
+                              >
+                                {web.autofillBehavior === "anywhere" && (
+                                  <>
+                                    {t(
+                                      "autofillAnywhereDesc",
+                                      "This item will fill on"
+                                    )}{" "}
+                                    <strong>
+                                      {extractDomain(web.value) ||
+                                        "example.com"}
+                                    </strong>{" "}
+                                    {t(
+                                      "autofillAnywhereDescEnd",
+                                      "and some related websites."
+                                    )}
+                                  </>
+                                )}
+                                {web.autofillBehavior === "exact" && (
+                                  <>
+                                    {t(
+                                      "autofillExactDesc",
+                                      "This item will only fill on this exact host:"
+                                    )}{" "}
+                                    <strong>
+                                      {extractDomain(web.value) ||
+                                        "example.com"}
+                                    </strong>
+                                    .
+                                  </>
+                                )}
+                                {web.autofillBehavior === "never" && (
+                                  <>
+                                    {t(
+                                      "autofillNeverDesc",
+                                      "This item will never fill on this website."
+                                    )}
+                                  </>
+                                )}
+                              </Text>
+                            </Paper>
+                          )}
+                        </Box>
+                      </Box>
+                    ))}
+                    <Button
+                      variant="subtle"
+                      color="indigo"
+                      size="xs"
+                      onClick={handleAddWebsite}
+                      leftSection={<IconPlus size={14} />}
+                      mt="xs"
+                    >
+                      {t("addWebsiteBtn")}
+                    </Button>
                   </Box>
                 )}
 
@@ -1225,32 +1486,129 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                   );
                 })}
 
-                {item.category === "Login" && item.url && (
+                {item.category === "Login" && (item.urls || item.url) && (
                   <Box className={classes.section}>
                     <Text className={classes.fieldLabel}>
                       {t("websiteLabel")}
                     </Text>
-                    <Group justify="space-between" align="center">
-                      <Text
-                        className={classes.fieldValueLink}
-                        onClick={() => handleOpenWebsite(item.url!)}
-                      >
-                        {item.url}
-                      </Text>
-                      <Tooltip
-                        label={t("openWebsite", "Mở trang web")}
-                        withArrow
-                      >
-                        <ActionIcon
-                          variant="subtle"
-                          color="blue"
-                          size="sm"
-                          onClick={() => handleOpenWebsite(item.url!)}
-                        >
-                          <IconGlobe size={14} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
+                    {item.urls && item.urls.length > 0 ? (
+                      <Stack gap="md">
+                        {item.urls.map((web, idx) => (
+                          <Box
+                            key={idx}
+                            style={{
+                              borderBottom:
+                                idx < item.urls!.length - 1
+                                  ? "1px dashed var(--color-neutral-light)"
+                                  : "none",
+                              paddingBottom:
+                                idx < item.urls!.length - 1 ? "8px" : "0",
+                            }}
+                          >
+                            <Group justify="space-between" align="center">
+                              <Text
+                                className={classes.fieldValueLink}
+                                onClick={() => handleOpenWebsite(web.url)}
+                                style={{ wordBreak: "break-all" }}
+                              >
+                                {web.url}
+                              </Text>
+                              <Tooltip
+                                label={t("openWebsite", "Mở trang web")}
+                                withArrow
+                              >
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="blue"
+                                  size="sm"
+                                  onClick={() => handleOpenWebsite(web.url)}
+                                >
+                                  <IconGlobe size={14} />
+                                </ActionIcon>
+                              </Tooltip>
+                            </Group>
+                            <Group gap="xs" mt="xs">
+                              <Text size="xs" c="dimmed">
+                                {t(
+                                  "autofillBehaviorViewLabel",
+                                  "Autofill Behavior:"
+                                )}
+                              </Text>
+                              <Badge
+                                size="xs"
+                                variant="light"
+                                color={
+                                  web.autofillBehavior === "never"
+                                    ? "red"
+                                    : web.autofillBehavior === "exact"
+                                      ? "orange"
+                                      : "blue"
+                                }
+                              >
+                                {web.autofillBehavior === "never"
+                                  ? t("autofillNeverBadge", "Never fill")
+                                  : web.autofillBehavior === "exact"
+                                    ? t("autofillExactBadge", "Exact host")
+                                    : t(
+                                        "autofillAnywhereBadge",
+                                        "Fill anywhere"
+                                      )}
+                              </Badge>
+                            </Group>
+                          </Box>
+                        ))}
+                      </Stack>
+                    ) : item.url ? (
+                      <Box>
+                        <Group justify="space-between" align="center">
+                          <Text
+                            className={classes.fieldValueLink}
+                            onClick={() => handleOpenWebsite(item.url!)}
+                            style={{ wordBreak: "break-all" }}
+                          >
+                            {item.url}
+                          </Text>
+                          <Tooltip
+                            label={t("openWebsite", "Mở trang web")}
+                            withArrow
+                          >
+                            <ActionIcon
+                              variant="subtle"
+                              color="blue"
+                              size="sm"
+                              onClick={() => handleOpenWebsite(item.url!)}
+                            >
+                              <IconGlobe size={14} />
+                            </ActionIcon>
+                          </Tooltip>
+                        </Group>
+                        <Group gap="xs" mt="xs">
+                          <Text size="xs" c="dimmed">
+                            {t(
+                              "autofillBehaviorViewLabel",
+                              "Autofill Behavior:"
+                            )}
+                          </Text>
+                          <Badge
+                            size="xs"
+                            variant="light"
+                            color={
+                              item.autofillBehavior === "never"
+                                ? "red"
+                                : item.autofillBehavior === "exact"
+                                  ? "orange"
+                                  : "blue"
+                            }
+                          >
+                            {item.autofillBehavior === "never"
+                              ? t("autofillNeverBadge", "Never fill")
+                              : item.autofillBehavior === "exact"
+                                ? t("autofillExactBadge", "Exact host")
+                                : t("autofillAnywhereBadge", "Fill anywhere")}
+                          </Badge>
+                        </Group>
+                      </Box>
+                    ) : null}
                   </Box>
                 )}
 

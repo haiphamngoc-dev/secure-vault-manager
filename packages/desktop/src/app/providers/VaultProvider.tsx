@@ -26,6 +26,8 @@ export interface VaultItem {
   username?: string;
   password?: string;
   url?: string;
+  autofillBehavior?: string;
+  urls?: Array<{ url: string; autofillBehavior: string }>;
   notes?: string;
   updatedAt: number;
   customFields?: CustomField[];

@@ -397,7 +397,12 @@ export function SettingsPage() {
                 </Stack>
               )}
 
-              <Group justify="space-between" align="center" wrap="wrap" gap="md">
+              <Group
+                justify="space-between"
+                align="center"
+                wrap="wrap"
+                gap="md"
+              >
                 <Button
                   variant="outline"
                   color="blue"

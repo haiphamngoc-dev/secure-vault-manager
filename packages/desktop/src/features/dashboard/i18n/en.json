@@ -182,5 +182,18 @@
   "categoryLabel": "Category",
   "errorUpload": "Image Upload Error",
   "errorUploadDesc": "Unable to process this image file.",
-  "dragToResize": "Drag to resize"
+  "dragToResize": "Drag to resize",
+  "autofillBehaviorLabel": "Autofill Behavior",
+  "autofillBehaviorViewLabel": "Autofill Behavior:",
+  "defaultBadge": "Default",
+  "autofillAnywhere": "Fill anywhere on this website",
+  "autofillExact": "Only fill on this exact host",
+  "autofillNever": "Never fill on this website",
+  "autofillAnywhereBadge": "Fill anywhere",
+  "autofillExactBadge": "Exact host",
+  "autofillNeverBadge": "Never fill",
+  "autofillAnywhereDesc": "This item will fill on",
+  "autofillAnywhereDescEnd": "and some related websites.",
+  "autofillExactDesc": "This item will only fill on this exact host:",
+  "autofillNeverDesc": "This item will never fill on this website."
 }

@@ -13,6 +13,14 @@ pub struct CustomField {
 }
 
 
+/// Represents a URL configuration with an associated autofill behavior.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemUrl {
+    pub url: String,
+    pub autofill_behavior: String,
+}
+
 /// Represents a single credential item stored in the secure vault.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -27,6 +35,12 @@ pub struct VaultItem {
     pub password: Option<String>,
     /// Target URL (e.g. "https://accounts.google.com").
     pub url: Option<String>,
+    /// Autofill behavior for the primary URL.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub autofill_behavior: Option<String>,
+    /// List of website URLs and their autofill behavior configurations.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub urls: Option<Vec<ItemUrl>>,
     /// Custom textual notes or description.
     pub notes: Option<String>,
     /// Grouping category (e.g. "Work", "Personal").

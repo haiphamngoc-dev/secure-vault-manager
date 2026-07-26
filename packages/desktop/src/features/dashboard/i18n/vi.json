@@ -182,5 +182,18 @@
   "categoryLabel": "Danh mục",
   "errorUpload": "Lỗi tải ảnh",
   "errorUploadDesc": "Không thể xử lý file ảnh này.",
-  "dragToResize": "Kéo để điều chỉnh kích thước"
+  "dragToResize": "Kéo để điều chỉnh kích thước",
+  "autofillBehaviorLabel": "Hành vi tự động điền",
+  "autofillBehaviorViewLabel": "Hành vi tự động điền:",
+  "defaultBadge": "Mặc định",
+  "autofillAnywhere": "Điền ở bất kỳ đâu trên trang web này",
+  "autofillExact": "Chỉ điền trên chính xác host này",
+  "autofillNever": "Không bao giờ điền trên trang web này",
+  "autofillAnywhereBadge": "Điền ở bất kỳ đâu",
+  "autofillExactBadge": "Chính xác host",
+  "autofillNeverBadge": "Không bao giờ điền",
+  "autofillAnywhereDesc": "Mục này sẽ tự động điền trên",
+  "autofillAnywhereDescEnd": "và một số trang web liên quan.",
+  "autofillExactDesc": "Mục này sẽ chỉ tự động điền trên chính xác host:",
+  "autofillNeverDesc": "Mục này sẽ không bao giờ tự động điền trên trang web này."
 }
