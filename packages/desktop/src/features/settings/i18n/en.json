@@ -47,5 +47,8 @@
   "exportDataLabel": "Export Data",
   "exportDataDesc": "Export vault items to JSON or CSV format.",
   "importBtn": "Import Vault Data",
-  "exportBtn": "Export Vault Data"
+  "exportBtn": "Export Vault Data",
+  "downloadExtensionLabel": "Get Browser Extension:",
+  "chromeExtensionBtn": "Chrome Web Store",
+  "firefoxExtensionBtn": "Firefox Add-ons"
 }

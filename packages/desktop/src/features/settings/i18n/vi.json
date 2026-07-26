@@ -45,5 +45,8 @@
   "exportDataLabel": "Xuất dữ liệu (Export)",
   "exportDataDesc": "Xuất dữ liệu Vault thành tệp JSON hoặc CSV.",
   "importBtn": "Nhập dữ liệu (Import)",
-  "exportBtn": "Xuất dữ liệu (Export)"
+  "exportBtn": "Xuất dữ liệu (Export)",
+  "downloadExtensionLabel": "Tải Browser Extension:",
+  "chromeExtensionBtn": "Chrome Web Store",
+  "firefoxExtensionBtn": "Firefox Add-ons"
 }

@@ -23,9 +23,12 @@ import {
   IconDatabase,
   IconUpload,
   IconDownload,
+  IconBrandChrome,
+  IconBrandFirefox,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { invoke } from "@tauri-apps/api/core";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { ImportModal } from "@/features/dashboard/components/ImportModal";
 import { ExportModal } from "@/features/dashboard/components/ExportModal";
 import { useOutletContext } from "react-router-dom";
@@ -394,7 +397,7 @@ export function SettingsPage() {
                 </Stack>
               )}
 
-              <Group justify="flex-start">
+              <Group justify="space-between" align="center" wrap="wrap" gap="md">
                 <Button
                   variant="outline"
                   color="blue"
@@ -405,6 +408,40 @@ export function SettingsPage() {
                 >
                   {t("regeneratePairKeyBtn", "Sinh lại mã kết nối mới")}
                 </Button>
+
+                <Group gap="xs" align="center" wrap="wrap">
+                  <Text size="xs" c="dimmed" fw={500}>
+                    {t("downloadExtensionLabel", "Tải Browser Extension:")}
+                  </Text>
+                  <Button
+                    variant="light"
+                    color="blue"
+                    size="xs"
+                    radius="md"
+                    leftSection={<IconBrandChrome size={14} />}
+                    onClick={() =>
+                      openUrl(
+                        "https://chromewebstore.google.com/detail/secure-vault-manager-exte/pnahlaohpcfkgjkdhhfdkapdbgjchdfe"
+                      ).catch(console.error)
+                    }
+                  >
+                    {t("chromeExtensionBtn", "Chrome Web Store")}
+                  </Button>
+                  <Button
+                    variant="light"
+                    color="orange"
+                    size="xs"
+                    radius="md"
+                    leftSection={<IconBrandFirefox size={14} />}
+                    onClick={() =>
+                      openUrl(
+                        "https://addons.mozilla.org/en-US/firefox/addon/secure-vault-manager-extension/"
+                      ).catch(console.error)
+                    }
+                  >
+                    {t("firefoxExtensionBtn", "Firefox Add-ons")}
+                  </Button>
+                </Group>
               </Group>
             </Stack>
           </Box>
