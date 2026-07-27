@@ -17,8 +17,10 @@ import {
   IconLock,
   IconWorld,
   IconKey,
+  IconCup,
 } from "@tabler/icons-react";
 import classes from "./AboutModal.module.css";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 interface AboutModalProps {
   opened: boolean;
@@ -126,16 +128,29 @@ export function AboutModal({ opened, onClose }: Readonly<AboutModalProps>) {
           )}
         </Text>
 
-        <Button
-          variant="default"
-          size="xs"
-          onClick={onClose}
-          mt="xs"
-          px="xl"
-          radius="md"
-        >
-          {t("titlebar.close", "Đóng")}
-        </Button>
+        <Group gap="xs" mt="xs">
+          <Button
+            variant="light"
+            color="pink"
+            size="xs"
+            leftSection={<IconCup size={14} />}
+            onClick={() =>
+              openUrl("https://ko-fi.com/haiphamngoc").catch(console.error)
+            }
+            radius="md"
+          >
+            Buy me a coffee
+          </Button>
+          <Button
+            variant="default"
+            size="xs"
+            onClick={onClose}
+            px="xl"
+            radius="md"
+          >
+            {t("titlebar.close", "Đóng")}
+          </Button>
+        </Group>
       </Stack>
     </Modal>
   );
