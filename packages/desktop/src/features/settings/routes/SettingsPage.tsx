@@ -10,6 +10,7 @@ import {
   Group,
   ActionIcon,
   Switch,
+  Alert,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useClipboard } from "@mantine/hooks";
@@ -25,6 +26,7 @@ import {
   IconDownload,
   IconBrandChrome,
   IconBrandFirefox,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { invoke } from "@tauri-apps/api/core";
@@ -33,8 +35,6 @@ import { ImportModal } from "@/features/dashboard/components/ImportModal";
 import { ExportModal } from "@/features/dashboard/components/ExportModal";
 import { useOutletContext } from "react-router-dom";
 import { MainHeader } from "@/shared/layouts/components/MainHeader";
-import { useVault } from "@/app/providers/VaultProvider";
-import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import classes from "./SettingsPage.module.css";
 
 const DEFAULT_CHROME_EXTENSION_ID = "pnahlaohpcfkgjkdhhfdkapdbgjchdfe";
@@ -60,6 +60,7 @@ export interface AppSettings {
   always_show_wifi_qr: boolean;
   last_password_auth?: number | null;
   lock_on_close: boolean;
+  enable_extension: boolean;
 }
 
 export function SettingsPage() {
@@ -82,12 +83,8 @@ export function SettingsPage() {
     hold_shortcut_to_reveal: false,
     always_show_wifi_qr: true,
     lock_on_close: true,
+    enable_extension: true,
   });
-
-  const { currentVaultId } = useVault();
-  const [isChangePasswordOpen, setIsChangePasswordOpen] =
-    useState<boolean>(false);
-
   const [pairingKey, setPairingKey] = useState<string>("");
   const [isPairing, setIsPairing] = useState<boolean>(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
@@ -116,6 +113,7 @@ export function SettingsPage() {
           hold_shortcut_to_reveal: res.hold_shortcut_to_reveal === true,
           always_show_wifi_qr: res.always_show_wifi_qr !== false,
           lock_on_close: res.lock_on_close !== false,
+          enable_extension: res.enable_extension !== false,
         });
 
         if (res.pairing_token) {
@@ -398,16 +396,6 @@ export function SettingsPage() {
                       },
                     }}
                   />
-                  <Button
-                    onClick={() => setIsChangePasswordOpen(true)}
-                    variant="outline"
-                    color="blue"
-                    leftSection={<IconLock size={16} />}
-                    mt="md"
-                    style={{ alignSelf: "flex-start" }}
-                  >
-                    {t("changePasswordBtn", "Thay đổi mật khẩu")}
-                  </Button>
                 </Stack>
               </Box>
 
@@ -707,115 +695,154 @@ export function SettingsPage() {
               <Text>{t("extensionSection")}</Text>
             </div>
             <Stack gap="md">
-              <Text size="sm" c="dimmed">
-                {t(
-                  "extensionPairingDesc",
-                  "Mã kết nối (Pairing Key) được sử dụng để ghép đôi ứng dụng Desktop với tiện ích trình duyệt. Mã này luôn được giữ nguyên trừ khi bạn chủ động sinh lại mã mới."
+              <Switch
+                label={t(
+                  "enableExtensionLabel",
+                  "Kích hoạt kết nối Browser Extension"
                 )}
-              </Text>
+                description={t(
+                  "enableExtensionDesc",
+                  "Cho phép tiện ích trình duyệt giao tiếp với ứng dụng qua cổng cục bộ loopback."
+                )}
+                checked={settings.enable_extension}
+                onChange={(event) =>
+                  updateSetting("enable_extension", event.currentTarget.checked)
+                }
+                color="blue"
+              />
 
-              {pairingKey && (
-                <Stack gap="xs" p="xs" className={classes.pairingKeyBox}>
-                  <Text size="sm" fw={600}>
-                    {t("pairingKeyLabel", "Mã kết nối (Pairing Key)")}
-                  </Text>
-                  <Group gap="xs" wrap="nowrap">
-                    <PasswordInput
-                      readOnly
-                      value={pairingKey}
-                      radius="md"
-                      size="sm"
-                      styles={{
-                        input: {
-                          fontFamily: "var(--mantine-font-family-monospace)",
-                        },
-                      }}
-                      className={classes.flex1}
-                    />
-                    <ActionIcon
-                      variant="light"
-                      color="blue"
-                      size="lg"
-                      radius="md"
-                      onClick={() => {
-                        clipboard.copy(pairingKey);
-                        notifications.show({
-                          message: t(
-                            "copiedPairingKey",
-                            "Đã sao chép mã kết nối vào Clipboard!"
-                          ),
-                          color: "green",
-                          autoClose: 1500,
-                        });
-                      }}
-                    >
-                      {clipboard.copied ? (
-                        <IconCheck size={18} />
-                      ) : (
-                        <IconCopy size={18} />
-                      )}
-                    </ActionIcon>
-                  </Group>
-                  <Text size="xs" c="dimmed">
+              {settings.enable_extension ? (
+                <>
+                  <Text size="sm" c="dimmed">
                     {t(
-                      "pairingKeyMaskDesc",
-                      "Mã được ẩn mặc định. Nhấn biểu tượng mắt để xem mã hoặc bấm nút sao chép để dán vào Extension."
+                      "extensionPairingDesc",
+                      "Mã kết nối (Pairing Key) được sử dụng để ghép đôi ứng dụng Desktop với tiện ích trình duyệt. Mã này luôn được giữ nguyên trừ khi bạn chủ động sinh lại mã mới."
                     )}
                   </Text>
-                </Stack>
-              )}
 
-              <Group
-                justify="space-between"
-                align="center"
-                wrap="wrap"
-                gap="md"
-              >
-                <Button
-                  variant="outline"
-                  color="blue"
-                  size="xs"
+                  {pairingKey && (
+                    <Stack gap="xs" p="xs" className={classes.pairingKeyBox}>
+                      <Text size="sm" fw={600}>
+                        {t("pairingKeyLabel", "Mã kết nối (Pairing Key)")}
+                      </Text>
+                      <Group gap="xs" wrap="nowrap">
+                        <PasswordInput
+                          readOnly
+                          value={pairingKey}
+                          radius="md"
+                          size="sm"
+                          styles={{
+                            input: {
+                              fontFamily:
+                                "var(--mantine-font-family-monospace)",
+                            },
+                          }}
+                          className={classes.flex1}
+                        />
+                        <ActionIcon
+                          variant="light"
+                          color="blue"
+                          size="lg"
+                          radius="md"
+                          onClick={() => {
+                            clipboard.copy(pairingKey);
+                            notifications.show({
+                              message: t(
+                                "copiedPairingKey",
+                                "Đã sao chép mã kết nối vào Clipboard!"
+                              ),
+                              color: "green",
+                              autoClose: 1500,
+                            });
+                          }}
+                        >
+                          {clipboard.copied ? (
+                            <IconCheck size={18} />
+                          ) : (
+                            <IconCopy size={18} />
+                          )}
+                        </ActionIcon>
+                      </Group>
+                      <Text size="xs" c="dimmed">
+                        {t(
+                          "pairingKeyMaskDesc",
+                          "Mã được ẩn mặc định. Nhấn biểu tượng mắt để xem mã hoặc bấm nút sao chép để dán vào Extension."
+                        )}
+                      </Text>
+                    </Stack>
+                  )}
+
+                  <Group
+                    justify="space-between"
+                    align="center"
+                    wrap="wrap"
+                    gap="md"
+                  >
+                    <Button
+                      variant="outline"
+                      color="blue"
+                      size="xs"
+                      radius="md"
+                      onClick={handlePair}
+                      loading={isPairing}
+                    >
+                      {t("regeneratePairKeyBtn", "Sinh lại mã kết nối mới")}
+                    </Button>
+
+                    <Group gap="xs" align="center" wrap="wrap">
+                      <Text size="xs" c="dimmed" fw={500}>
+                        {t("downloadExtensionLabel", "Tải Browser Extension:")}
+                      </Text>
+                      <Button
+                        variant="light"
+                        color="blue"
+                        size="xs"
+                        radius="md"
+                        leftSection={<IconBrandChrome size={14} />}
+                        onClick={() =>
+                          openUrl(
+                            "https://chromewebstore.google.com/detail/secure-vault-manager-exte/pnahlaohpcfkgjkdhhfdkapdbgjchdfe"
+                          ).catch(console.error)
+                        }
+                      >
+                        {t("chromeExtensionBtn", "Chrome Web Store")}
+                      </Button>
+                      <Button
+                        variant="light"
+                        color="orange"
+                        size="xs"
+                        radius="md"
+                        leftSection={<IconBrandFirefox size={14} />}
+                        onClick={() =>
+                          openUrl(
+                            "https://addons.mozilla.org/en-US/firefox/addon/secure-vault-manager-extension/"
+                          ).catch(console.error)
+                        }
+                      >
+                        {t("firefoxExtensionBtn", "Firefox Add-ons")}
+                      </Button>
+                    </Group>
+                  </Group>
+                </>
+              ) : (
+                <Alert
+                  color="orange"
+                  title={t(
+                    "extensionDisabledAlertTitle",
+                    "Tích hợp Browser Extension đang Tắt"
+                  )}
+                  icon={<IconAlertTriangle size={20} />}
                   radius="md"
-                  onClick={handlePair}
-                  loading={isPairing}
+                  mt="xs"
                 >
-                  {t("regeneratePairKeyBtn", "Sinh lại mã kết nối mới")}
-                </Button>
-
-                <Group gap="xs" align="center" wrap="wrap">
-                  <Text size="xs" c="dimmed" fw={500}>
-                    {t("downloadExtensionLabel", "Tải Browser Extension:")}
+                  <Text size="sm">
+                    {t(
+                      "extensionDisabledAlertDesc",
+                      "Cổng kết nối nội bộ (local HTTP loopback server) đã được đóng hoàn toàn. Không có lưu lượng mạng nội bộ nào được lắng nghe, đảm bảo tính bảo mật tối đa cho môi trường này."
+                    )}
                   </Text>
-                  <Button
-                    variant="light"
-                    color="blue"
-                    size="xs"
-                    radius="md"
-                    leftSection={<IconBrandChrome size={14} />}
-                    onClick={() =>
-                      openUrl(
-                        "https://chromewebstore.google.com/detail/secure-vault-manager-exte/pnahlaohpcfkgjkdhhfdkapdbgjchdfe"
-                      ).catch(console.error)
-                    }
-                  >
-                    {t("chromeExtensionBtn", "Chrome Web Store")}
-                  </Button>
-                  <Button
-                    variant="light"
-                    color="orange"
-                    size="xs"
-                    radius="md"
-                    leftSection={<IconBrandFirefox size={14} />}
-                    onClick={() =>
-                      openUrl(
-                        "https://addons.mozilla.org/en-US/firefox/addon/secure-vault-manager-extension/"
-                      ).catch(console.error)
-                    }
-                  >
-                    {t("firefoxExtensionBtn", "Firefox Add-ons")}
-                  </Button>
-                </Group>
-              </Group>
+                </Alert>
+              )}
             </Stack>
           </Box>
         </Stack>
@@ -828,11 +855,6 @@ export function SettingsPage() {
         <ExportModal
           opened={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
-        />
-        <ChangePasswordModal
-          opened={isChangePasswordOpen}
-          onClose={() => setIsChangePasswordOpen(false)}
-          vaultId={currentVaultId}
         />
       </Box>
     </Box>

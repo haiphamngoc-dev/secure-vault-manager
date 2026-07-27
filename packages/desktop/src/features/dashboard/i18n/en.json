@@ -1,4 +1,10 @@
 {
+  "editVault": "Edit Vault",
+  "editVaultTitle": "Edit Vault",
+  "changeVaultPasswordLabel": "Change Vault Password",
+  "changeVaultPasswordDesc": "Enable to change the unlock password for this Vault.",
+  "successEditVault": "Vault configuration updated successfully!",
+  "successEditVaultName": "Vault renamed successfully!",
   "newItemBtn": "New Item",
   "vaultItems": "Vault Items",
   "allSub": "All Items",

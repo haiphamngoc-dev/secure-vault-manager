@@ -90,7 +90,21 @@ pub fn start_local_http_server(app: tauri::AppHandle) {
             match tokio::net::TcpListener::bind(addr).await {
                 Ok(listener) => {
                     println!("Local HTTP Server listening on http://{}", addr);
-                    if let Err(e) = axum::serve(listener, router).await {
+
+                    let (tx, rx) = tokio::sync::oneshot::channel::<()>();
+                    let app_state = app.state::<crate::AppState>();
+                    {
+                        let mut guard = app_state.http_server_shutdown.lock().unwrap();
+                        *guard = Some(tx);
+                    }
+
+                    let server = axum::serve(listener, router)
+                        .with_graceful_shutdown(async move {
+                            let _ = rx.await;
+                            println!("Local HTTP Server shutdown signal received.");
+                        });
+
+                    if let Err(e) = server.await {
                         eprintln!("Local HTTP Server error: {}", e);
                     }
                     return;
@@ -102,6 +116,16 @@ pub fn start_local_http_server(app: tauri::AppHandle) {
         }
         eprintln!("Failed to bind Local HTTP Server on any fallback port (12519-12521).");
     });
+}
+
+/// Signals the running Local Loopback HTTP Server to shutdown.
+pub fn stop_local_http_server(app: &tauri::AppHandle) {
+    let app_state = app.state::<crate::AppState>();
+    let mut guard = app_state.http_server_shutdown.lock().unwrap();
+    if let Some(tx) = guard.take() {
+        let _ = tx.send(());
+        println!("Signalled Local HTTP Server to stop.");
+    }
 }
 
 /// Public status endpoint (unencrypted)

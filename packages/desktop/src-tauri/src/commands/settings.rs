@@ -54,6 +54,8 @@ pub struct AppSettings {
     pub always_show_wifi_qr: bool,
     #[serde(default = "default_true")]
     pub lock_on_close: bool,
+    #[serde(default = "default_true")]
+    pub enable_extension: bool,
 }
 
 impl Default for AppSettings {
@@ -78,6 +80,7 @@ impl Default for AppSettings {
             hold_shortcut_to_reveal: false,
             always_show_wifi_qr: true,
             lock_on_close: true,
+            enable_extension: true,
         }
     }
 }
@@ -117,6 +120,8 @@ pub fn get_settings(app: tauri::AppHandle) -> Result<AppSettings, String> {
 
 #[tauri::command]
 pub fn save_settings(app: tauri::AppHandle, settings: AppSettings) -> Result<(), String> {
+    let prev_settings = get_settings(app.clone()).unwrap_or_default();
+
     let path = get_settings_path(&app)?;
     let json_bytes = serde_json::to_vec(&settings)
         .map_err(|e| format!("Failed to serialize settings: {}", e))?;
@@ -137,6 +142,15 @@ pub fn save_settings(app: tauri::AppHandle, settings: AppSettings) -> Result<(),
     // Update sleep blocker state if needed
     if let Some(state) = app.try_state::<crate::AppState>() {
         crate::commands::vault::update_sleep_blocker(&app, &state);
+    }
+
+    // Sync loopback HTTP server based on enable_extension changes
+    if prev_settings.enable_extension != settings.enable_extension {
+        if settings.enable_extension {
+            crate::ipc::http_server::start_local_http_server(app.clone());
+        } else {
+            crate::ipc::http_server::stop_local_http_server(&app);
+        }
     }
 
     Ok(())

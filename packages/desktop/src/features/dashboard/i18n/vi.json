@@ -1,4 +1,10 @@
 {
+  "editVault": "Chỉnh sửa Vault",
+  "editVaultTitle": "Chỉnh sửa Vault",
+  "changeVaultPasswordLabel": "Thay đổi mật khẩu Vault",
+  "changeVaultPasswordDesc": "Kích hoạt để thay đổi mật khẩu mở khóa cho Vault này.",
+  "successEditVault": "Cập nhật Vault thành công!",
+  "successEditVaultName": "Đổi tên Vault thành công!",
   "newItemBtn": "Thêm mới",
   "vaultItems": "Kho bảo mật",
   "allSub": "Tất cả mục",

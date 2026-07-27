@@ -61,6 +61,8 @@ pub struct AppState {
     pub current_vault_file: Mutex<Option<String>>,
     /// Handle to prevent the system from sleeping, active when vault is unlocked and prevent_sleep is enabled.
     pub keepawake_handle: Mutex<Option<keepawake::AwakeHandle>>,
+    /// A channel sender used to signal the local loopback HTTP server to shutdown.
+    pub http_server_shutdown: Mutex<Option<tokio::sync::oneshot::Sender<()>>>,
 }
 
 /// Updates the system tray menu items dynamically.
@@ -206,6 +208,7 @@ pub fn run() {
             is_visible: std::sync::Mutex::new(false), // Starts false, updated in setup
             current_vault_file: std::sync::Mutex::new(None),
             keepawake_handle: std::sync::Mutex::new(None),
+            http_server_shutdown: std::sync::Mutex::new(None),
         })
         .setup(|app| {
             // Load icon from default window icon
@@ -278,8 +281,14 @@ pub fn run() {
             // Populate initial tray menu
             update_tray_menu(app.app_handle());
 
-            // Start Local Loopback HTTP Server (127.0.0.1:12519)
-            ipc::http_server::start_local_http_server(app.app_handle().clone());
+            // Start Local Loopback HTTP Server (127.0.0.1:12519) if enabled in settings
+            let enable_extension = commands::settings::get_settings(app.app_handle().clone())
+                .map(|s| s.enable_extension)
+                .unwrap_or(true);
+
+            if enable_extension {
+                ipc::http_server::start_local_http_server(app.app_handle().clone());
+            }
 
             Ok(())
         })

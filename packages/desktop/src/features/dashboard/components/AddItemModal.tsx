@@ -574,12 +574,14 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
     if (!password) password = findFieldVal("cvv");
     if (!password) password = findFieldVal("pin");
 
+    const firstNonEmptyWeb = websites.find((w) => w.value.trim() !== "");
     const url =
-      selectedType === "Login"
-        ? websites[0]?.value
-        : findFieldVal("server") ||
+      firstNonEmptyWeb?.value ||
+      (selectedType !== "Login"
+        ? findFieldVal("server") ||
           findFieldVal("endpoint") ||
-          findFieldVal("ipAddress");
+          findFieldVal("ipAddress")
+        : "");
 
     // Now, any field in formFields that is NOT mapped to first-class fields (username, password, url)
     // should be saved in customFields!
@@ -612,17 +614,13 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
         section: field.section || undefined,
       }));
 
-    const autofillBehavior =
-      selectedType === "Login" ? websites[0]?.autofillBehavior : undefined;
-    const urlsToSave =
-      selectedType === "Login"
-        ? websites
-            .filter((w) => w.value.trim() !== "")
-            .map((w) => ({
-              url: w.value,
-              autofillBehavior: w.autofillBehavior,
-            }))
-        : undefined;
+    const autofillBehavior = firstNonEmptyWeb?.autofillBehavior || "anywhere";
+    const urlsToSave = websites
+      .filter((w) => w.value.trim() !== "")
+      .map((w) => ({
+        url: w.value,
+        autofillBehavior: w.autofillBehavior,
+      }));
 
     addItem({
       title,
@@ -910,187 +908,182 @@ export function AddItemModal({ opened, onClose }: Readonly<AddItemModalProps>) {
           )}
 
           {/* Specialized Login websites input */}
-          {selectedType === "Login" && (
-            <Box className={classes.formSection}>
-              <Text size="sm" fw={600} mb="xs">
-                {t("websiteLabel")}
-              </Text>
-              {websites.map((web, idx) => (
-                <Box
-                  key={web.id}
-                  mb="md"
-                  style={{
-                    borderBottom:
-                      idx < websites.length - 1
-                        ? "1px dashed var(--color-neutral-light)"
-                        : "none",
-                    paddingBottom: "12px",
-                  }}
-                >
-                  <Group align="flex-end" gap="xs" style={{ width: "100%" }}>
-                    <TextInput
-                      placeholder="https://example.com"
-                      value={web.value}
-                      onChange={(e) =>
-                        handleWebsiteChange(idx, e.currentTarget.value)
-                      }
-                      onBlur={(e) => {
-                        if (idx === 0) {
-                          handleUrlBlur(e.currentTarget.value);
-                        }
-                      }}
-                      leftSection={<IconGlobe size={16} />}
-                      radius="md"
-                      size="sm"
-                      style={{ flex: 1 }}
-                    />
-                    {websites.length > 1 && (
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        onClick={() => handleRemoveWebsite(idx)}
-                        mb={4}
-                      >
-                        <IconTrash size={16} />
-                      </ActionIcon>
-                    )}
-                  </Group>
-
-                  {/* Autofill Behavior section for this website */}
-                  <Box mt="xs" pl="sm">
-                    <Text
-                      size="xs"
-                      fw={700}
-                      c="dimmed"
-                      style={{ letterSpacing: "0.5px" }}
-                      mb="xs"
-                    >
-                      {t("autofillBehaviorLabel", "AUTOFILL BEHAVIOR")}
-                    </Text>
-                    <Radio.Group
-                      value={web.autofillBehavior}
-                      onChange={(val) => handleWebsiteBehaviorChange(idx, val)}
-                    >
-                      <Stack gap="xs">
-                        <Group
-                          justify="space-between"
-                          align="center"
-                          style={{ width: "100%" }}
-                        >
-                          <Radio
-                            value="anywhere"
-                            label={t(
-                              "autofillAnywhere",
-                              "Fill anywhere on this website"
-                            )}
-                            size="sm"
-                            styles={{
-                              label: { cursor: "pointer", fontSize: "12px" },
-                            }}
-                          />
-                          <Badge
-                            size="xs"
-                            variant="light"
-                            color="blue"
-                            radius="sm"
-                          >
-                            {t("defaultBadge", "Default")}
-                          </Badge>
-                        </Group>
-                        <Radio
-                          value="exact"
-                          label={t(
-                            "autofillExact",
-                            "Only fill on this exact host"
-                          )}
-                          size="sm"
-                          styles={{
-                            label: { cursor: "pointer", fontSize: "12px" },
-                          }}
-                        />
-                        <Radio
-                          value="never"
-                          label={t(
-                            "autofillNever",
-                            "Never fill on this website"
-                          )}
-                          size="sm"
-                          styles={{
-                            label: { cursor: "pointer", fontSize: "12px" },
-                          }}
-                        />
-                      </Stack>
-                    </Radio.Group>
-
-                    {web.value.trim() !== "" && (
-                      <Paper
-                        p="xs"
-                        mt="xs"
-                        radius="md"
-                        style={{
-                          backgroundColor:
-                            "light-dark(var(--mantine-color-blue-light), rgba(37, 99, 235, 0.15))",
-                          border:
-                            "1px solid light-dark(var(--mantine-color-blue-light-hover), rgba(37, 99, 235, 0.25))",
-                        }}
-                      >
-                        <Text
-                          size="xs"
-                          c="light-dark(var(--mantine-color-blue-9), var(--mantine-color-blue-2))"
-                        >
-                          {web.autofillBehavior === "anywhere" && (
-                            <>
-                              {t(
-                                "autofillAnywhereDesc",
-                                "This item will fill on"
-                              )}{" "}
-                              <strong>
-                                {extractDomain(web.value) || "example.com"}
-                              </strong>{" "}
-                              {t(
-                                "autofillAnywhereDescEnd",
-                                "and some related websites."
-                              )}
-                            </>
-                          )}
-                          {web.autofillBehavior === "exact" && (
-                            <>
-                              {t(
-                                "autofillExactDesc",
-                                "This item will only fill on this exact host:"
-                              )}{" "}
-                              <strong>
-                                {extractDomain(web.value) || "example.com"}
-                              </strong>
-                              .
-                            </>
-                          )}
-                          {web.autofillBehavior === "never" && (
-                            <>
-                              {t(
-                                "autofillNeverDesc",
-                                "This item will never fill on this website."
-                              )}
-                            </>
-                          )}
-                        </Text>
-                      </Paper>
-                    )}
-                  </Box>
-                </Box>
-              ))}
-              <Button
-                variant="subtle"
-                color="indigo"
-                size="xs"
-                onClick={handleAddWebsite}
-                leftSection={<IconPlus size={14} />}
-                mt="xs"
+          <Box className={classes.formSection}>
+            <Text size="sm" fw={600} mb="xs">
+              {t("websiteLabel")}
+            </Text>
+            {websites.map((web, idx) => (
+              <Box
+                key={web.id}
+                mb="md"
+                style={{
+                  borderBottom:
+                    idx < websites.length - 1
+                      ? "1px dashed var(--color-neutral-light)"
+                      : "none",
+                  paddingBottom: "12px",
+                }}
               >
-                {t("addWebsiteBtn")}
-              </Button>
-            </Box>
-          )}
+                <Group align="flex-end" gap="xs" style={{ width: "100%" }}>
+                  <TextInput
+                    placeholder="https://example.com"
+                    value={web.value}
+                    onChange={(e) =>
+                      handleWebsiteChange(idx, e.currentTarget.value)
+                    }
+                    onBlur={(e) => {
+                      if (idx === 0) {
+                        handleUrlBlur(e.currentTarget.value);
+                      }
+                    }}
+                    leftSection={<IconGlobe size={16} />}
+                    radius="md"
+                    size="sm"
+                    style={{ flex: 1 }}
+                  />
+                  {websites.length > 1 && (
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      onClick={() => handleRemoveWebsite(idx)}
+                      mb={4}
+                    >
+                      <IconTrash size={16} />
+                    </ActionIcon>
+                  )}
+                </Group>
+
+                {/* Autofill Behavior section for this website */}
+                <Box mt="xs" pl="sm">
+                  <Text
+                    size="xs"
+                    fw={700}
+                    c="dimmed"
+                    style={{ letterSpacing: "0.5px" }}
+                    mb="xs"
+                  >
+                    {t("autofillBehaviorLabel", "AUTOFILL BEHAVIOR")}
+                  </Text>
+                  <Radio.Group
+                    value={web.autofillBehavior}
+                    onChange={(val) => handleWebsiteBehaviorChange(idx, val)}
+                  >
+                    <Stack gap="xs">
+                      <Group
+                        justify="space-between"
+                        align="center"
+                        style={{ width: "100%" }}
+                      >
+                        <Radio
+                          value="anywhere"
+                          label={t(
+                            "autofillAnywhere",
+                            "Fill anywhere on this website"
+                          )}
+                          size="sm"
+                          styles={{
+                            label: { cursor: "pointer", fontSize: "12px" },
+                          }}
+                        />
+                        <Badge
+                          size="xs"
+                          variant="light"
+                          color="blue"
+                          radius="sm"
+                        >
+                          {t("defaultBadge", "Default")}
+                        </Badge>
+                      </Group>
+                      <Radio
+                        value="exact"
+                        label={t(
+                          "autofillExact",
+                          "Only fill on this exact host"
+                        )}
+                        size="sm"
+                        styles={{
+                          label: { cursor: "pointer", fontSize: "12px" },
+                        }}
+                      />
+                      <Radio
+                        value="never"
+                        label={t("autofillNever", "Never fill on this website")}
+                        size="sm"
+                        styles={{
+                          label: { cursor: "pointer", fontSize: "12px" },
+                        }}
+                      />
+                    </Stack>
+                  </Radio.Group>
+
+                  {web.value.trim() !== "" && (
+                    <Paper
+                      p="xs"
+                      mt="xs"
+                      radius="md"
+                      style={{
+                        backgroundColor:
+                          "light-dark(var(--mantine-color-blue-light), rgba(37, 99, 235, 0.15))",
+                        border:
+                          "1px solid light-dark(var(--mantine-color-blue-light-hover), rgba(37, 99, 235, 0.25))",
+                      }}
+                    >
+                      <Text
+                        size="xs"
+                        c="light-dark(var(--mantine-color-blue-9), var(--mantine-color-blue-2))"
+                      >
+                        {web.autofillBehavior === "anywhere" && (
+                          <>
+                            {t(
+                              "autofillAnywhereDesc",
+                              "This item will fill on"
+                            )}{" "}
+                            <strong>
+                              {extractDomain(web.value) || "example.com"}
+                            </strong>{" "}
+                            {t(
+                              "autofillAnywhereDescEnd",
+                              "and some related websites."
+                            )}
+                          </>
+                        )}
+                        {web.autofillBehavior === "exact" && (
+                          <>
+                            {t(
+                              "autofillExactDesc",
+                              "This item will only fill on this exact host:"
+                            )}{" "}
+                            <strong>
+                              {extractDomain(web.value) || "example.com"}
+                            </strong>
+                            .
+                          </>
+                        )}
+                        {web.autofillBehavior === "never" && (
+                          <>
+                            {t(
+                              "autofillNeverDesc",
+                              "This item will never fill on this website."
+                            )}
+                          </>
+                        )}
+                      </Text>
+                    </Paper>
+                  )}
+                </Box>
+              </Box>
+            ))}
+            <Button
+              variant="subtle"
+              color="indigo"
+              size="xs"
+              onClick={handleAddWebsite}
+              leftSection={<IconPlus size={14} />}
+              mt="xs"
+            >
+              {t("addWebsiteBtn")}
+            </Button>
+          </Box>
 
           {/* Add more fields dropdown */}
           <Group mb="md">

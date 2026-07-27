@@ -43,6 +43,7 @@ import {
   IconUpload,
   IconFolderPlus,
   IconCalendar,
+  IconAlertTriangle,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useVault, VaultItem } from "@/app/providers/VaultProvider";
@@ -276,9 +277,6 @@ export const ItemDrawer = React.memo(function ItemDrawer({
   const [category, setCategory] = useState(item.category);
   const [title, setTitle] = useState(item.title);
   const getInitialWebsites = useCallback((currentItem: VaultItem) => {
-    if (currentItem.category !== "Login") {
-      return [{ id: generateId(), value: "", autofillBehavior: "anywhere" }];
-    }
     if (currentItem.urls && currentItem.urls.length > 0) {
       return currentItem.urls.map((u) => ({
         id: generateId(),
@@ -286,11 +284,20 @@ export const ItemDrawer = React.memo(function ItemDrawer({
         autofillBehavior: u.autofillBehavior || "anywhere",
       }));
     }
+    if (currentItem.url) {
+      return [
+        {
+          id: generateId(),
+          value: currentItem.url,
+          autofillBehavior: currentItem.autofillBehavior || "anywhere",
+        },
+      ];
+    }
     return [
       {
         id: generateId(),
-        value: currentItem.url || "",
-        autofillBehavior: currentItem.autofillBehavior || "anywhere",
+        value: "",
+        autofillBehavior: "anywhere",
       },
     ];
   }, []);
@@ -644,24 +651,23 @@ export const ItemDrawer = React.memo(function ItemDrawer({
       findFieldVal("cvv") ||
       findFieldVal("pin");
 
+    const firstNonEmptyWeb = websites.find((w) => w.value.trim() !== "");
     const url =
-      category === "Login"
-        ? websites[0]?.value
-        : findFieldVal("server") ||
+      firstNonEmptyWeb?.value ||
+      (category !== "Login"
+        ? findFieldVal("server") ||
           findFieldVal("endpoint") ||
-          findFieldVal("ipAddress");
+          findFieldVal("ipAddress")
+        : "");
 
-    const autofillBehavior =
-      category === "Login" ? websites[0]?.autofillBehavior : undefined;
-    const urlsToSave =
-      category === "Login"
-        ? websites
-            .filter((w) => w.value.trim() !== "")
-            .map((w) => ({
-              url: w.value,
-              autofillBehavior: w.autofillBehavior,
-            }))
-        : undefined;
+    const autofillBehavior = firstNonEmptyWeb?.autofillBehavior || "anywhere";
+
+    const urlsToSave = websites
+      .filter((w) => w.value.trim() !== "")
+      .map((w) => ({
+        url: w.value,
+        autofillBehavior: w.autofillBehavior,
+      }));
 
     const customFieldsToSave = formFields
       .filter((field) => {
@@ -1053,10 +1059,31 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                             }))}
                             radius="md"
                             size="sm"
+                            searchable
                             leftSection={
                               activeType &&
                               React.createElement(activeType.icon, { size: 16 })
                             }
+                            renderOption={({ option }) => {
+                              const typeObj = ITEM_TYPES.find(
+                                (t) => t.id === option.value
+                              );
+                              return (
+                                <Group
+                                  gap="xs"
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  {typeObj &&
+                                    React.createElement(typeObj.icon, {
+                                      size: 16,
+                                    })}
+                                  <Text size="sm">{option.label}</Text>
+                                </Group>
+                              );
+                            }}
                           />
                         </Box>
                       )}
@@ -1158,205 +1185,201 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                   );
                 })}
 
-                {category === "Login" && (
-                  <Box className={classes.section}>
-                    <Text size="xs" fw={600} c="dimmed" mb="xs">
-                      {t("websiteLabel")}
-                    </Text>
-                    {websites.map((web, idx) => (
-                      <Box
-                        key={web.id}
-                        mb="md"
-                        style={{
-                          borderBottom:
-                            idx < websites.length - 1
-                              ? "1px dashed var(--color-neutral-light)"
-                              : "none",
-                          paddingBottom: "12px",
-                          width: "100%",
-                        }}
-                      >
-                        <Group
-                          align="flex-end"
-                          gap="xs"
-                          style={{ width: "100%" }}
-                        >
-                          <TextInput
-                            placeholder="https://example.com"
-                            value={web.value}
-                            onChange={(e) =>
-                              handleWebsiteChange(idx, e.currentTarget.value)
-                            }
-                            onBlur={(e) => {
-                              if (idx === 0) {
-                                handleUrlBlur(e.currentTarget.value);
-                              }
-                            }}
-                            leftSection={<IconGlobe size={14} />}
-                            radius="md"
-                            size="sm"
-                            style={{ flex: 1 }}
-                          />
-                          {websites.length > 1 && (
-                            <ActionIcon
-                              variant="subtle"
-                              color="red"
-                              onClick={() => handleRemoveWebsite(idx)}
-                              mb={4}
-                            >
-                              <IconTrash size={16} />
-                            </ActionIcon>
-                          )}
-                        </Group>
-
-                        {/* Autofill Behavior section for this website */}
-                        <Box mt="xs" pl="sm">
-                          <Text
-                            size="xs"
-                            fw={700}
-                            c="dimmed"
-                            style={{ letterSpacing: "0.5px" }}
-                            mb="xs"
-                          >
-                            {t("autofillBehaviorLabel", "AUTOFILL BEHAVIOR")}
-                          </Text>
-                          <Radio.Group
-                            value={web.autofillBehavior}
-                            onChange={(val) =>
-                              handleWebsiteBehaviorChange(idx, val)
-                            }
-                          >
-                            <Stack gap="xs">
-                              <Group
-                                justify="space-between"
-                                align="center"
-                                style={{ width: "100%" }}
-                              >
-                                <Radio
-                                  value="anywhere"
-                                  label={t(
-                                    "autofillAnywhere",
-                                    "Fill anywhere on this website"
-                                  )}
-                                  size="sm"
-                                  styles={{
-                                    label: {
-                                      cursor: "pointer",
-                                      fontSize: "12px",
-                                    },
-                                  }}
-                                />
-                                <Badge
-                                  size="xs"
-                                  variant="light"
-                                  color="blue"
-                                  radius="sm"
-                                >
-                                  {t("defaultBadge", "Default")}
-                                </Badge>
-                              </Group>
-                              <Radio
-                                value="exact"
-                                label={t(
-                                  "autofillExact",
-                                  "Only fill on this exact host"
-                                )}
-                                size="sm"
-                                styles={{
-                                  label: {
-                                    cursor: "pointer",
-                                    fontSize: "12px",
-                                  },
-                                }}
-                              />
-                              <Radio
-                                value="never"
-                                label={t(
-                                  "autofillNever",
-                                  "Never fill on this website"
-                                )}
-                                size="sm"
-                                styles={{
-                                  label: {
-                                    cursor: "pointer",
-                                    fontSize: "12px",
-                                  },
-                                }}
-                              />
-                            </Stack>
-                          </Radio.Group>
-
-                          {web.value.trim() !== "" && (
-                            <Paper
-                              p="xs"
-                              mt="xs"
-                              radius="md"
-                              style={{
-                                backgroundColor:
-                                  "light-dark(var(--mantine-color-blue-light), rgba(37, 99, 235, 0.15))",
-                                border:
-                                  "1px solid light-dark(var(--mantine-color-blue-light-hover), rgba(37, 99, 235, 0.25))",
-                              }}
-                            >
-                              <Text
-                                size="xs"
-                                c="light-dark(var(--mantine-color-blue-9), var(--mantine-color-blue-2))"
-                              >
-                                {web.autofillBehavior === "anywhere" && (
-                                  <>
-                                    {t(
-                                      "autofillAnywhereDesc",
-                                      "This item will fill on"
-                                    )}{" "}
-                                    <strong>
-                                      {extractDomain(web.value) ||
-                                        "example.com"}
-                                    </strong>{" "}
-                                    {t(
-                                      "autofillAnywhereDescEnd",
-                                      "and some related websites."
-                                    )}
-                                  </>
-                                )}
-                                {web.autofillBehavior === "exact" && (
-                                  <>
-                                    {t(
-                                      "autofillExactDesc",
-                                      "This item will only fill on this exact host:"
-                                    )}{" "}
-                                    <strong>
-                                      {extractDomain(web.value) ||
-                                        "example.com"}
-                                    </strong>
-                                    .
-                                  </>
-                                )}
-                                {web.autofillBehavior === "never" && (
-                                  <>
-                                    {t(
-                                      "autofillNeverDesc",
-                                      "This item will never fill on this website."
-                                    )}
-                                  </>
-                                )}
-                              </Text>
-                            </Paper>
-                          )}
-                        </Box>
-                      </Box>
-                    ))}
-                    <Button
-                      variant="subtle"
-                      color="indigo"
-                      size="xs"
-                      onClick={handleAddWebsite}
-                      leftSection={<IconPlus size={14} />}
-                      mt="xs"
+                <Box className={classes.section}>
+                  <Text size="xs" fw={600} c="dimmed" mb="xs">
+                    {t("websiteLabel")}
+                  </Text>
+                  {websites.map((web, idx) => (
+                    <Box
+                      key={web.id}
+                      mb="md"
+                      style={{
+                        borderBottom:
+                          idx < websites.length - 1
+                            ? "1px dashed var(--color-neutral-light)"
+                            : "none",
+                        paddingBottom: "12px",
+                        width: "100%",
+                      }}
                     >
-                      {t("addWebsiteBtn")}
-                    </Button>
-                  </Box>
-                )}
+                      <Group
+                        align="flex-end"
+                        gap="xs"
+                        style={{ width: "100%" }}
+                      >
+                        <TextInput
+                          placeholder="https://example.com"
+                          value={web.value}
+                          onChange={(e) =>
+                            handleWebsiteChange(idx, e.currentTarget.value)
+                          }
+                          onBlur={(e) => {
+                            if (idx === 0) {
+                              handleUrlBlur(e.currentTarget.value);
+                            }
+                          }}
+                          leftSection={<IconGlobe size={14} />}
+                          radius="md"
+                          size="sm"
+                          style={{ flex: 1 }}
+                        />
+                        {websites.length > 1 && (
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            onClick={() => handleRemoveWebsite(idx)}
+                            mb={4}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        )}
+                      </Group>
+
+                      {/* Autofill Behavior section for this website */}
+                      <Box mt="xs" pl="sm">
+                        <Text
+                          size="xs"
+                          fw={700}
+                          c="dimmed"
+                          style={{ letterSpacing: "0.5px" }}
+                          mb="xs"
+                        >
+                          {t("autofillBehaviorLabel", "AUTOFILL BEHAVIOR")}
+                        </Text>
+                        <Radio.Group
+                          value={web.autofillBehavior}
+                          onChange={(val) =>
+                            handleWebsiteBehaviorChange(idx, val)
+                          }
+                        >
+                          <Stack gap="xs">
+                            <Group
+                              justify="space-between"
+                              align="center"
+                              style={{ width: "100%" }}
+                            >
+                              <Radio
+                                value="anywhere"
+                                label={t(
+                                  "autofillAnywhere",
+                                  "Fill anywhere on this website"
+                                )}
+                                size="sm"
+                                styles={{
+                                  label: {
+                                    cursor: "pointer",
+                                    fontSize: "12px",
+                                  },
+                                }}
+                              />
+                              <Badge
+                                size="xs"
+                                variant="light"
+                                color="blue"
+                                radius="sm"
+                              >
+                                {t("defaultBadge", "Default")}
+                              </Badge>
+                            </Group>
+                            <Radio
+                              value="exact"
+                              label={t(
+                                "autofillExact",
+                                "Only fill on this exact host"
+                              )}
+                              size="sm"
+                              styles={{
+                                label: {
+                                  cursor: "pointer",
+                                  fontSize: "12px",
+                                },
+                              }}
+                            />
+                            <Radio
+                              value="never"
+                              label={t(
+                                "autofillNever",
+                                "Never fill on this website"
+                              )}
+                              size="sm"
+                              styles={{
+                                label: {
+                                  cursor: "pointer",
+                                  fontSize: "12px",
+                                },
+                              }}
+                            />
+                          </Stack>
+                        </Radio.Group>
+
+                        {web.value.trim() !== "" && (
+                          <Paper
+                            p="xs"
+                            mt="xs"
+                            radius="md"
+                            style={{
+                              backgroundColor:
+                                "light-dark(var(--mantine-color-blue-light), rgba(37, 99, 235, 0.15))",
+                              border:
+                                "1px solid light-dark(var(--mantine-color-blue-light-hover), rgba(37, 99, 235, 0.25))",
+                            }}
+                          >
+                            <Text
+                              size="xs"
+                              c="light-dark(var(--mantine-color-blue-9), var(--mantine-color-blue-2))"
+                            >
+                              {web.autofillBehavior === "anywhere" && (
+                                <>
+                                  {t(
+                                    "autofillAnywhereDesc",
+                                    "This item will fill on"
+                                  )}{" "}
+                                  <strong>
+                                    {extractDomain(web.value) || "example.com"}
+                                  </strong>{" "}
+                                  {t(
+                                    "autofillAnywhereDescEnd",
+                                    "and some related websites."
+                                  )}
+                                </>
+                              )}
+                              {web.autofillBehavior === "exact" && (
+                                <>
+                                  {t(
+                                    "autofillExactDesc",
+                                    "This item will only fill on this exact host:"
+                                  )}{" "}
+                                  <strong>
+                                    {extractDomain(web.value) || "example.com"}
+                                  </strong>
+                                  .
+                                </>
+                              )}
+                              {web.autofillBehavior === "never" && (
+                                <>
+                                  {t(
+                                    "autofillNeverDesc",
+                                    "This item will never fill on this website."
+                                  )}
+                                </>
+                              )}
+                            </Text>
+                          </Paper>
+                        )}
+                      </Box>
+                    </Box>
+                  ))}
+                  <Button
+                    variant="subtle"
+                    color="indigo"
+                    size="xs"
+                    onClick={handleAddWebsite}
+                    leftSection={<IconPlus size={14} />}
+                    mt="xs"
+                  >
+                    {t("addWebsiteBtn")}
+                  </Button>
+                </Box>
 
                 {/* Button to add a new Section Block */}
                 <Button
@@ -1524,7 +1547,7 @@ export const ItemDrawer = React.memo(function ItemDrawer({
                   );
                 })}
 
-                {item.category === "Login" && (item.urls || item.url) && (
+                {((item.urls && item.urls.length > 0) || item.url) && (
                   <Box className={classes.section}>
                     <Text className={classes.fieldLabel}>
                       {t("websiteLabel")}
@@ -1726,7 +1749,19 @@ export const ItemDrawer = React.memo(function ItemDrawer({
           <Modal
             opened={!!sectionToDelete}
             onClose={() => setSectionToDelete(null)}
-            title={t("confirmDeleteSectionTitle", "Xóa Section")}
+            title={
+              <Group
+                gap="xs"
+                style={{ display: "inline-flex", alignItems: "center" }}
+              >
+                <IconAlertTriangle
+                  size={20}
+                  color="var(--mantine-color-red-6)"
+                  style={{ flexShrink: 0 }}
+                />
+                <span>{t("confirmDeleteSectionTitle", "Xóa Section")}</span>
+              </Group>
+            }
             radius="lg"
             centered
             size="sm"
@@ -1734,8 +1769,13 @@ export const ItemDrawer = React.memo(function ItemDrawer({
               blur: 8,
               backgroundOpacity: 0.35,
             }}
+            classNames={{
+              content: classes.modalContent,
+              header: classes.modalHeader,
+              title: classes.modalTitle,
+            }}
           >
-            <Stack gap="md">
+            <Stack gap="md" mt="md">
               <Text size="sm">
                 {t("confirmDeleteSectionDesc", {
                   name: sectionToDelete?.name,
@@ -1773,8 +1813,13 @@ export const ItemDrawer = React.memo(function ItemDrawer({
               blur: 8,
               backgroundOpacity: 0.35,
             }}
+            classNames={{
+              content: classes.modalContent,
+              header: classes.modalHeader,
+              title: classes.modalTitle,
+            }}
           >
-            <Stack gap="md">
+            <Stack gap="md" mt="md">
               <TextInput
                 placeholder="https://example.com"
                 label={t("websiteUrl", "Địa chỉ URL")}
