@@ -115,10 +115,17 @@ fn toggle_window_visibility(app: &tauri::AppHandle) {
             let _ = window.hide();
             *is_visible_guard = false;
 
-            // Lock vault and emit event on window hide
-            *state.vault_key.lock().unwrap() = None;
-            *state.vault_salt.lock().unwrap() = None;
-            let _ = window.emit("vault-locked", ());
+            // Lock vault and emit event on window hide if lock_on_close is enabled
+            let lock_on_close = commands::settings::get_settings(app.clone())
+                .map(|s| s.lock_on_close)
+                .unwrap_or(true);
+
+            if lock_on_close {
+                *state.vault_key.lock().unwrap() = None;
+                *state.vault_salt.lock().unwrap() = None;
+                *state.current_vault_file.lock().unwrap() = None;
+                let _ = window.emit("vault-locked", ());
+            }
         } else {
             let _ = window.show();
             let _ = window.set_focus();
@@ -279,9 +286,10 @@ pub fn run() {
         // Global listener for window events (e.g. intercepts close to minimize to tray)
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let minimize = commands::settings::get_settings(window.app_handle().clone())
-                    .map(|s| s.minimize_to_tray)
-                    .unwrap_or(true);
+                let settings = commands::settings::get_settings(window.app_handle().clone())
+                    .unwrap_or_default();
+                let minimize = settings.minimize_to_tray;
+                let lock_on_close = settings.lock_on_close;
 
                 if minimize {
                     let _ = window.hide();
@@ -290,11 +298,13 @@ pub fn run() {
                     let state = window.state::<AppState>();
                     *state.is_visible.lock().unwrap() = false;
 
-                    // Lock vault and emit event on window close
-                    *state.vault_key.lock().unwrap() = None;
-                    *state.vault_salt.lock().unwrap() = None;
-                    *state.current_vault_file.lock().unwrap() = None;
-                    let _ = window.emit("vault-locked", ());
+                    // Lock vault and emit event on window close if lock_on_close is enabled
+                    if lock_on_close {
+                        *state.vault_key.lock().unwrap() = None;
+                        *state.vault_salt.lock().unwrap() = None;
+                        *state.current_vault_file.lock().unwrap() = None;
+                        let _ = window.emit("vault-locked", ());
+                    }
 
                     update_tray_menu(window.app_handle());
                 } else {
@@ -320,6 +330,7 @@ pub fn run() {
             commands::vault::set_default_vault,
             commands::vault::delete_vault,
             commands::vault::get_current_vault_id,
+            commands::vault::change_vault_password,
             commands::pairing::start_pairing,
             commands::icon::download_favicon,
             commands::import_export::parse_1pux_file,

@@ -52,6 +52,8 @@ pub struct AppSettings {
     pub hold_shortcut_to_reveal: bool,
     #[serde(default = "default_true")]
     pub always_show_wifi_qr: bool,
+    #[serde(default = "default_true")]
+    pub lock_on_close: bool,
 }
 
 impl Default for AppSettings {
@@ -75,6 +77,7 @@ impl Default for AppSettings {
             always_show_passwords: false,
             hold_shortcut_to_reveal: false,
             always_show_wifi_qr: true,
+            lock_on_close: true,
         }
     }
 }

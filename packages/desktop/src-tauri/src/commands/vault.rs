@@ -276,3 +276,51 @@ pub fn get_current_vault_id(
     let profile = registry.vaults.iter().find(|v| v.file_name == *file_name);
     Ok(profile.map(|p| p.id.clone()))
 }
+
+/// Command to change the vault master password.
+#[tauri::command]
+pub fn change_vault_password(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+    vault_id: String,
+    old_password: String,
+    new_password: String,
+) -> Result<(), String> {
+    if new_password.len() < 8 {
+        return Err("Password must be at least 8 characters long.".to_string());
+    }
+
+    // 1. Load registry to find filename
+    let registry = load_registry(&app)?;
+    let profile = registry
+        .vaults
+        .iter()
+        .find(|v| v.id == vault_id)
+        .ok_or_else(|| "Vault profile not found.".to_string())?;
+
+    // 2. Try to unlock and load the vault with the old password to verify it
+    let (vault, _old_key, _old_salt) = unlock_and_load_vault(&app, &old_password, &profile.file_name)
+        .map_err(|_| "Incorrect old password.".to_string())?;
+
+    // 3. Generate a new salt
+    let mut new_salt = [0u8; 16];
+    use rand::RngCore;
+    rand::thread_rng().fill_bytes(&mut new_salt);
+
+    // 4. Derive new key using the new password and new salt
+    let new_key = crate::core::crypto::derive_key(&new_password, &new_salt)?;
+
+    // 5. Encrypt and save the vault with the new key and salt
+    save_existing_vault(&app, &new_key, &new_salt, &vault, &profile.file_name)?;
+
+    // 6. If this vault is the currently unlocked vault in AppState, update its key and salt
+    let current_file_guard = state.current_vault_file.lock().unwrap();
+    if let Some(ref current_file) = *current_file_guard {
+        if current_file == &profile.file_name {
+            *state.vault_key.lock().unwrap() = Some(new_key);
+            *state.vault_salt.lock().unwrap() = Some(new_salt);
+        }
+    }
+
+    Ok(())
+}

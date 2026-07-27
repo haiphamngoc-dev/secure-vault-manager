@@ -75,5 +75,20 @@
   "holdShortcutToRevealLabel": "Hold Ctrl+Alt to toggle revealed fields",
   "holdShortcutToRevealDesc": "Temporarily reveal hidden fields while holding the Ctrl+Alt keyboard shortcut.",
   "alwaysShowWifiQrLabel": "Always show Wi-Fi QR codes",
-  "alwaysShowWifiQrDesc": "Automatically display QR codes for Wi-Fi items."
+  "alwaysShowWifiQrDesc": "Automatically display QR codes for Wi-Fi items.",
+  "lockOnCloseLabel": "Lock vault when closing window",
+  "lockOnCloseDesc": "Automatically lock vault when the application window is minimized to the system tray.",
+  "masterPasswordGroup": "Master Password",
+  "changePasswordBtn": "Change Password",
+  "changePasswordDesc": "Change the password used to encrypt and unlock this vault.",
+  "changePasswordModalTitle": "Change Master Password",
+  "oldPasswordLabel": "Current Password",
+  "newPasswordLabel": "New Password",
+  "confirmNewPasswordLabel": "Confirm New Password",
+  "passwordLengthError": "Password must be at least 8 characters long",
+  "passwordsDoNotMatch": "Confirm password does not match",
+  "oldPasswordRequired": "Current password is required",
+  "changePasswordSuccess": "Master password changed successfully!",
+  "changePasswordError": "Failed to change password. Please verify your current password.",
+  "cancelBtn": "Cancel"
 }

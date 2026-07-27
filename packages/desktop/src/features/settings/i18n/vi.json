@@ -73,5 +73,20 @@
   "holdShortcutToRevealLabel": "Nhấn giữ Ctrl+Alt để hiển thị nhanh",
   "holdShortcutToRevealDesc": "Mở ẩn tạm thời các trường nhạy cảm trong khi đè phím Ctrl+Alt.",
   "alwaysShowWifiQrLabel": "Luôn hiển thị mã QR Wi-Fi",
-  "alwaysShowWifiQrDesc": "Tự động hiển thị mã QR kết nối nhanh cho các mật khẩu Wi-Fi."
+  "alwaysShowWifiQrDesc": "Tự động hiển thị mã QR kết nối nhanh cho các mật khẩu Wi-Fi.",
+  "lockOnCloseLabel": "Khóa Vault khi đóng cửa sổ",
+  "lockOnCloseDesc": "Tự động khóa Vault khi cửa sổ ứng dụng bị ẩn xuống khay hệ thống.",
+  "masterPasswordGroup": "Mật khẩu chính (Master Password)",
+  "changePasswordBtn": "Thay đổi mật khẩu",
+  "changePasswordDesc": "Đổi mật khẩu dùng để mã hóa và mở khóa vault này.",
+  "changePasswordModalTitle": "Thay đổi mật khẩu chính",
+  "oldPasswordLabel": "Mật khẩu hiện tại",
+  "newPasswordLabel": "Mật khẩu mới",
+  "confirmNewPasswordLabel": "Xác nhận mật khẩu mới",
+  "passwordLengthError": "Mật khẩu phải dài ít nhất 8 ký tự",
+  "passwordsDoNotMatch": "Mật khẩu xác nhận không khớp",
+  "oldPasswordRequired": "Vui lòng nhập mật khẩu hiện tại",
+  "changePasswordSuccess": "Thay đổi mật khẩu chính thành công!",
+  "changePasswordError": "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại.",
+  "cancelBtn": "Hủy"
 }

@@ -33,6 +33,8 @@ import { ImportModal } from "@/features/dashboard/components/ImportModal";
 import { ExportModal } from "@/features/dashboard/components/ExportModal";
 import { useOutletContext } from "react-router-dom";
 import { MainHeader } from "@/shared/layouts/components/MainHeader";
+import { useVault } from "@/app/providers/VaultProvider";
+import { ChangePasswordModal } from "../components/ChangePasswordModal";
 import classes from "./SettingsPage.module.css";
 
 const DEFAULT_CHROME_EXTENSION_ID = "pnahlaohpcfkgjkdhhfdkapdbgjchdfe";
@@ -57,6 +59,7 @@ export interface AppSettings {
   hold_shortcut_to_reveal: boolean;
   always_show_wifi_qr: boolean;
   last_password_auth?: number | null;
+  lock_on_close: boolean;
 }
 
 export function SettingsPage() {
@@ -78,7 +81,12 @@ export function SettingsPage() {
     always_show_passwords: false,
     hold_shortcut_to_reveal: false,
     always_show_wifi_qr: true,
+    lock_on_close: true,
   });
+
+  const { currentVaultId } = useVault();
+  const [isChangePasswordOpen, setIsChangePasswordOpen] =
+    useState<boolean>(false);
 
   const [pairingKey, setPairingKey] = useState<string>("");
   const [isPairing, setIsPairing] = useState<boolean>(false);
@@ -107,6 +115,7 @@ export function SettingsPage() {
           always_show_passwords: res.always_show_passwords === true,
           hold_shortcut_to_reveal: res.hold_shortcut_to_reveal === true,
           always_show_wifi_qr: res.always_show_wifi_qr !== false,
+          lock_on_close: res.lock_on_close !== false,
         });
 
         if (res.pairing_token) {
@@ -292,6 +301,17 @@ export function SettingsPage() {
                 color="blue"
               />
               <Switch
+                label={t("lockOnCloseLabel")}
+                description={t("lockOnCloseDesc")}
+                checked={settings.lock_on_close}
+                disabled={!settings.minimize_to_tray}
+                onChange={(event) =>
+                  updateSetting("lock_on_close", event.currentTarget.checked)
+                }
+                color="blue"
+                mt="xs"
+              />
+              <Switch
                 label={t("autostartLabel")}
                 description={t("autostartDesc")}
                 checked={settings.autostart}
@@ -378,6 +398,16 @@ export function SettingsPage() {
                       },
                     }}
                   />
+                  <Button
+                    onClick={() => setIsChangePasswordOpen(true)}
+                    variant="outline"
+                    color="blue"
+                    leftSection={<IconLock size={16} />}
+                    mt="md"
+                    style={{ alignSelf: "flex-start" }}
+                  >
+                    {t("changePasswordBtn", "Thay đổi mật khẩu")}
+                  </Button>
                 </Stack>
               </Box>
 
@@ -798,6 +828,11 @@ export function SettingsPage() {
         <ExportModal
           opened={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
+        />
+        <ChangePasswordModal
+          opened={isChangePasswordOpen}
+          onClose={() => setIsChangePasswordOpen(false)}
+          vaultId={currentVaultId}
         />
       </Box>
     </Box>
