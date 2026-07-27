@@ -4,7 +4,7 @@
  * Combines Tauri window controls, page titles, global search, and utility toggles.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -126,6 +126,20 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
   const [localSearchQuery, setLocalSearchQuery] = useState(urlSearchQuery);
   const [prevUrlQuery, setPrevUrlQuery] = useState(urlSearchQuery);
   const [debouncedSearchQuery] = useDebouncedValue(localSearchQuery, 200);
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleFocusSearch = () => {
+      setIsMobileSearchOpen(true);
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }, 50);
+    };
+    window.addEventListener("focus-search", handleFocusSearch);
+    return () => window.removeEventListener("focus-search", handleFocusSearch);
+  }, []);
 
   // Sync state during render when URL query changes externally
   if (urlSearchQuery !== prevUrlQuery) {
@@ -409,6 +423,12 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
                 {showSearch && (
                   <>
                     <TextInput
+                      ref={searchInputRef}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          e.currentTarget.blur();
+                        }
+                      }}
                       placeholder={t(
                         "titlebar.searchPlaceholder",
                         "Tìm kiếm dữ liệu..."
@@ -481,6 +501,12 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
                   <IconChevronLeft size={16} />
                 </ActionIcon>
                 <TextInput
+                  ref={searchInputRef}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.currentTarget.blur();
+                    }
+                  }}
                   placeholder={t(
                     "titlebar.searchPlaceholder",
                     "Tìm kiếm dữ liệu..."
@@ -543,6 +569,12 @@ export function TitleBar({ onMenuClick }: Readonly<TitleBarProps>) {
                     data-tauri-drag-region
                   >
                     <TextInput
+                      ref={searchInputRef}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          e.currentTarget.blur();
+                        }
+                      }}
                       placeholder={t(
                         "titlebar.searchPlaceholder",
                         "Tìm kiếm dữ liệu..."

@@ -8,11 +8,35 @@ import { AddItemModal } from "@/features/dashboard/components/AddItemModal";
 import { ExportModal } from "@/features/dashboard/components/ExportModal";
 import { useAutoLock } from "@/features/settings/hooks/useAutoLock";
 import { notifications } from "@mantine/notifications";
+import { useHotkeys } from "@mantine/hooks";
 import classes from "./MainLayout.module.css";
 
 export function MainLayout() {
   useAutoLock();
   const { lock, deleteItems } = useVault();
+
+  useHotkeys([
+    [
+      "mod + L",
+      () => {
+        lock().catch(console.error);
+      },
+    ],
+    [
+      "mod + N",
+      (e) => {
+        e.preventDefault();
+        setIsAddModalOpen(true);
+      },
+    ],
+    [
+      "mod + F",
+      (e) => {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("focus-search"));
+      },
+    ],
+  ]);
   const { t } = useTranslation();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -122,6 +146,11 @@ export function MainLayout() {
         overlayProps={{
           blur: 8,
           backgroundOpacity: 0.35,
+        }}
+        classNames={{
+          content: classes.modalContent,
+          header: classes.modalHeader,
+          title: classes.modalTitle,
         }}
       >
         <Stack gap="md">
