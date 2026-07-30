@@ -38,6 +38,12 @@ pub struct ProxyCredential {
     pub totp_secret: Option<String>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum MatchPriority {
+    Exact = 0,
+    Related = 1,
+}
+
 pub async fn read_msg<R: tokio::io::AsyncReadExt + Unpin>(
     reader: &mut R,
 ) -> Result<Option<Vec<u8>>, String> {
@@ -271,46 +277,80 @@ pub async fn process_request(app: &tauri::AppHandle, req: ProxyRequest) -> Proxy
                 };
             }
 
-            let matching: Vec<ProxyCredential> = vault
+            let mut matching_items: Vec<(ProxyCredential, MatchPriority)> = vault
                 .items
                 .into_iter()
-                .filter(|item| {
+                .filter_map(|item| {
+                    let mut best_priority: Option<MatchPriority> = None;
+
+                    let mut check_and_update_priority = |url_str: &str, behavior: &str| {
+                        if matches_domain(url_str, &domain, behavior) {
+                            let item_host = extract_host(url_str);
+                            let tab_host = extract_host(&domain);
+                            let priority = if !item_host.is_empty() && item_host == tab_host {
+                                MatchPriority::Exact
+                            } else {
+                                MatchPriority::Related
+                            };
+
+                            match best_priority {
+                                None => best_priority = Some(priority),
+                                Some(existing) => {
+                                    if priority < existing {
+                                        best_priority = Some(priority);
+                                    }
+                                }
+                            }
+                        }
+                    };
+
                     if let Some(ref urls) = item.urls {
                         if !urls.is_empty() {
-                            return urls
-                                .iter()
-                                .any(|u| matches_domain(&u.url, &domain, &u.autofill_behavior));
-                        }
-                    }
-                    if let Some(ref url) = item.url {
-                        let behavior = item.autofill_behavior.as_deref().unwrap_or("anywhere");
-                        matches_domain(url, &domain, behavior)
-                    } else {
-                        false
-                    }
-                })
-                .map(|item| {
-                    let totp_secret = item.custom_fields.as_ref().and_then(|fields| {
-                        fields.iter().find_map(|f| {
-                            let label_lower = f.label.to_lowercase();
-                            if label_lower.contains("totp")
-                                || label_lower.contains("one-time password")
-                                || f.value.starts_with("otpauth://")
-                            {
-                                Some(f.value.clone())
-                            } else {
-                                None
+                            for u in urls {
+                                check_and_update_priority(&u.url, &u.autofill_behavior);
                             }
-                        })
-                    });
-                    ProxyCredential {
-                        id: item.id,
-                        title: item.title,
-                        username: item.username,
-                        password: item.password,
-                        totp_secret,
+                        } else if let Some(ref url) = item.url {
+                            let behavior = item.autofill_behavior.as_deref().unwrap_or("anywhere");
+                            check_and_update_priority(url, behavior);
+                        }
+                    } else if let Some(ref url) = item.url {
+                        let behavior = item.autofill_behavior.as_deref().unwrap_or("anywhere");
+                        check_and_update_priority(url, behavior);
                     }
+
+                    best_priority.map(|priority| {
+                        let totp_secret = item.custom_fields.as_ref().and_then(|fields| {
+                            fields.iter().find_map(|f| {
+                                let label_lower = f.label.to_lowercase();
+                                if label_lower.contains("totp")
+                                    || label_lower.contains("one-time password")
+                                    || f.value.starts_with("otpauth://")
+                                {
+                                    Some(f.value.clone())
+                                } else {
+                                    None
+                                }
+                            })
+                        });
+                        (
+                            ProxyCredential {
+                                id: item.id,
+                                title: item.title,
+                                username: item.username,
+                                password: item.password,
+                                totp_secret,
+                            },
+                            priority,
+                        )
+                    })
                 })
+                .collect();
+
+            matching_items.sort_by_key(|(_, priority)| *priority);
+
+            let matching: Vec<ProxyCredential> = matching_items
+                .into_iter()
+                .map(|(cred, _)| cred)
                 .collect();
 
             ProxyResponse {
@@ -743,5 +783,111 @@ mod tests {
 
         // Never behavior
         assert!(!matches_domain("https://google.com", "google.com", "never"));
+    }
+
+    #[test]
+    fn test_sorting_priority() {
+        use crate::core::vault::VaultItem;
+
+        let item1 = VaultItem {
+            id: "1".to_string(),
+            title: "Google Related".to_string(),
+            username: Some("user1".to_string()),
+            password: Some("pass1".to_string()),
+            url: Some("https://google.com".to_string()),
+            autofill_behavior: Some("anywhere".to_string()),
+            urls: None,
+            notes: None,
+            category: None,
+            updated_at: 0,
+            custom_fields: None,
+            tags: None,
+            icon: None,
+        };
+
+        let item2 = VaultItem {
+            id: "2".to_string(),
+            title: "Google Exact".to_string(),
+            username: Some("user2".to_string()),
+            password: Some("pass2".to_string()),
+            url: Some("https://accounts.google.com".to_string()),
+            autofill_behavior: Some("exact".to_string()),
+            urls: None,
+            notes: None,
+            category: None,
+            updated_at: 0,
+            custom_fields: None,
+            tags: None,
+            icon: None,
+        };
+
+        let vault_items = vec![item1, item2];
+        let domain = "accounts.google.com".to_string();
+
+        let mut matching_items: Vec<(ProxyCredential, MatchPriority)> = vault_items
+            .into_iter()
+            .filter_map(|item| {
+                let mut best_priority: Option<MatchPriority> = None;
+
+                let mut check_and_update_priority = |url_str: &str, behavior: &str| {
+                    if matches_domain(url_str, &domain, behavior) {
+                        let item_host = extract_host(url_str);
+                        let tab_host = extract_host(&domain);
+                        let priority = if !item_host.is_empty() && item_host == tab_host {
+                            MatchPriority::Exact
+                        } else {
+                            MatchPriority::Related
+                        };
+
+                        match best_priority {
+                            None => best_priority = Some(priority),
+                            Some(existing) => {
+                                if priority < existing {
+                                    best_priority = Some(priority);
+                                }
+                            }
+                        }
+                    }
+                };
+
+                if let Some(ref urls) = item.urls {
+                    if !urls.is_empty() {
+                        for u in urls {
+                            check_and_update_priority(&u.url, &u.autofill_behavior);
+                        }
+                    } else if let Some(ref url) = item.url {
+                        let behavior = item.autofill_behavior.as_deref().unwrap_or("anywhere");
+                        check_and_update_priority(url, behavior);
+                    }
+                } else if let Some(ref url) = item.url {
+                    let behavior = item.autofill_behavior.as_deref().unwrap_or("anywhere");
+                    check_and_update_priority(url, behavior);
+                }
+
+                best_priority.map(|priority| {
+                    (
+                        ProxyCredential {
+                            id: item.id,
+                            title: item.title,
+                            username: item.username,
+                            password: item.password,
+                            totp_secret: None,
+                        },
+                        priority,
+                    )
+                })
+            })
+            .collect();
+
+        matching_items.sort_by_key(|(_, priority)| *priority);
+
+        assert_eq!(matching_items.len(), 2);
+        // The first one should be "Google Exact" because it matches host exactly
+        assert_eq!(matching_items[0].0.id, "2");
+        assert_eq!(matching_items[0].1, MatchPriority::Exact);
+
+        // The second one should be "Google Related"
+        assert_eq!(matching_items[1].0.id, "1");
+        assert_eq!(matching_items[1].1, MatchPriority::Related);
     }
 }
